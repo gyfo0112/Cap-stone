@@ -14,9 +14,12 @@ import {
 } from 'lucide-react';
 import './App.css';
 import logo from './images/logo.png';
+import { useCctvLayer } from './useCctvLayer';
 
 function App() {
   const [menu, setMenu] = useState('route');
+  const [layers, setLayers] = useState({ cctv: false });
+  const toggleLayer = (key) => setLayers((s) => ({ ...s, [key]: !s[key] }));
 
   return (
     <div className="app">
@@ -75,12 +78,12 @@ function App() {
       <section className="controlPanel">
         {menu === 'route' && <RoutePanel />}
         {menu === 'help' && <HelpPanel />}
-        {menu === 'facility' && <FacilityPanel />}
+        {menu === 'facility' && <FacilityPanel layers={layers} onToggle={toggleLayer} />}
       </section>
 
       {/* 오른쪽 지도 영역 */}
       <main className="mapArea">
-        <MapView />
+        <MapView layers={layers} />
       </main>
     </div>
   );
@@ -98,17 +101,20 @@ function MapPlaceholder({ text }) {
   );
 }
 
-function MapView() {
+function MapView({ layers }) {
   const apiKey = import.meta.env.VITE_KAKAO_MAP_KEY;
   if (!apiKey) {
     return <MapPlaceholder text=".env.local 파일에 VITE_KAKAO_MAP_KEY를 설정하세요." />;
   }
-  return <KakaoMap apiKey={apiKey} />;
+  return <KakaoMap apiKey={apiKey} layers={layers} />;
 }
 
-function KakaoMap({ apiKey }) {
+function KakaoMap({ apiKey, layers }) {
   const boxRef = useRef(null);
   const [error, setError] = useState('');
+  const [map, setMap] = useState(null);
+
+  useCctvLayer(map, layers.cctv);
 
   useEffect(() => {
     let cancelled = false;
@@ -117,10 +123,12 @@ function KakaoMap({ apiKey }) {
       if (cancelled || !boxRef.current) return;
       window.kakao.maps.load(() => {
         if (cancelled || !boxRef.current) return;
-        new window.kakao.maps.Map(boxRef.current, {
-          center: new window.kakao.maps.LatLng(SEOUL_CENTER.lat, SEOUL_CENTER.lng),
-          level: 5,
-        });
+        setMap(
+          new window.kakao.maps.Map(boxRef.current, {
+            center: new window.kakao.maps.LatLng(SEOUL_CENTER.lat, SEOUL_CENTER.lng),
+            level: 5,
+          }),
+        );
       });
     };
 
@@ -136,7 +144,7 @@ function KakaoMap({ apiKey }) {
       script = document.createElement('script');
       script.id = 'kakao-map-sdk';
       script.async = true;
-      script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${apiKey}&autoload=false`;
+      script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${apiKey}&autoload=false&libraries=clusterer`;
       document.head.appendChild(script);
     }
 
@@ -324,37 +332,40 @@ function HelpPanel() {
   );
 }
 
-function FacilityPanel() {
+function FacilityPanel({ layers, onToggle }) {
   return (
     <div className="panelContent">
       <h1>공공시설 확인</h1>
 
       <p className="subtitle">지도에서 원하는 안전시설을 확인하세요.</p>
 
-      <button className="facilityButton">
+      <button
+        className={layers.cctv ? 'facilityButton active' : 'facilityButton'}
+        onClick={() => onToggle('cctv')}
+      >
         <Camera />
 
         <div>
           <strong>CCTV 위치</strong>
-          <span>주변 CCTV 확인</span>
+          <span>{layers.cctv ? '표시 중 · 다시 눌러 숨기기' : '지도에 CCTV 표시'}</span>
         </div>
       </button>
 
-      <button className="facilityButton">
+      <button className="facilityButton" disabled>
         <Lightbulb />
 
         <div>
           <strong>가로등 위치</strong>
-          <span>주변 가로등 확인</span>
+          <span>준비 중</span>
         </div>
       </button>
 
-      <button className="facilityButton">
+      <button className="facilityButton" disabled>
         <ShieldCheck />
 
         <div>
           <strong>여성지킴이 귀갓길</strong>
-          <span>안전 귀갓길 구역 확인</span>
+          <span>준비 중</span>
         </div>
       </button>
     </div>

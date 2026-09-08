@@ -696,10 +696,26 @@ button {
   transition: 0.2s;
 }
 
-.facilityButton:hover {
+.facilityButton:hover:not(:disabled) {
   background: #f5f9ff;
 
   border-color: #2f85f7;
+}
+
+.facilityButton.active {
+  background: #f3f8ff;
+
+  border: 1.5px solid #2d89ff;
+}
+
+.facilityButton.active span {
+  color: #2f85f7;
+}
+
+.facilityButton:disabled {
+  opacity: 0.5;
+
+  cursor: default;
 }
 
 .facilityButton svg {
