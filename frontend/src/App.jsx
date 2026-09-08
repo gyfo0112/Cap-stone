@@ -136,12 +136,16 @@ function KakaoMap({ apiKey }) {
       script = document.createElement('script');
       script.id = 'kakao-map-sdk';
       script.async = true;
-      script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${apiKey}&autoload=false`;
+      script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${apiKey}&autoload=false`;
       document.head.appendChild(script);
     }
 
     const onError = () => {
-      if (!cancelled) setError('카카오맵 SDK를 불러오지 못했습니다. 앱키와 플랫폼 도메인 등록을 확인하세요.');
+      if (!cancelled) {
+        setError(
+          '카카오맵 SDK를 불러오지 못했습니다. Kakao Developers에서 카카오맵 활성화, 비즈월렛 연결, Web 플랫폼 도메인 등록을 확인하세요.',
+        );
+      }
     };
     script.addEventListener('load', draw);
     script.addEventListener('error', onError);
