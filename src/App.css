@@ -1,0 +1,778 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+
+  color: #202938;
+  overflow: hidden;
+}
+
+button,
+input {
+  font-family: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.app {
+  display: grid;
+
+  grid-template-columns:
+    165px
+    370px
+    1fr;
+
+  width: 100vw;
+  height: 100vh;
+}
+
+/* =========================
+   왼쪽 메뉴
+========================= */
+
+.sidebar {
+  background: #fffdfa;
+
+  border-right: 1px solid #eef0f2;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  padding: 25px 12px 24px;
+
+  z-index: 10;
+}
+
+.logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  margin-bottom: 45px;
+}
+
+.logoIcon {
+  position: relative;
+
+  width: 70px;
+  height: 55px;
+
+  margin-bottom: 8px;
+}
+
+.roof {
+  color: #3385ff;
+
+  position: absolute;
+
+  font-weight: 900;
+  font-size: 70px;
+
+  top: -33px;
+  left: 7px;
+
+  transform: scaleX(1.15);
+}
+
+.people {
+  position: absolute;
+
+  font-size: 15px;
+
+  color: #ffb632;
+
+  left: 24px;
+  top: 27px;
+
+  letter-spacing: -4px;
+}
+
+.logoText {
+  font-size: 21px;
+
+  font-weight: 800;
+
+  color: #343b49;
+}
+
+.logoText span {
+  color: #ff9e2d;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+
+  gap: 14px;
+}
+
+.menuItem {
+  width: 100%;
+
+  border: 0;
+
+  background: transparent;
+
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  padding: 13px 12px;
+
+  border-radius: 10px;
+
+  color: #606977;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  text-align: left;
+
+  transition: 0.2s;
+}
+
+.menuItem:hover {
+  background: #f4f7fb;
+}
+
+.menuItem.active {
+  background: #eaf3ff;
+
+  color: #1477f8;
+}
+
+.sidebarBottom {
+  display: flex;
+  flex-direction: column;
+
+  gap: 20px;
+}
+
+.emergencyButton {
+  border: 0;
+
+  padding: 14px 10px;
+
+  border-radius: 10px;
+
+  background: linear-gradient(135deg, #ff6969, #ff4646);
+
+  color: white;
+
+  font-weight: 700;
+  font-size: 14px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  box-shadow: 0 6px 16px rgba(255, 74, 74, 0.22);
+}
+
+.loginButton {
+  border: 0;
+
+  background: transparent;
+
+  display: flex;
+  align-items: center;
+
+  gap: 13px;
+
+  padding: 10px 13px;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  color: #46505f;
+}
+
+/* =========================
+   가운데 패널
+========================= */
+
+.controlPanel {
+  position: relative;
+
+  background: white;
+
+  padding: 28px 22px;
+
+  box-shadow: 5px 0 24px rgba(0, 0, 0, 0.07);
+
+  z-index: 8;
+
+  overflow-y: auto;
+}
+
+.panelContent h1 {
+  margin: 0;
+
+  font-size: 28px;
+
+  font-weight: 800;
+
+  letter-spacing: -1px;
+}
+
+.subtitle {
+  margin-top: 7px;
+  margin-bottom: 23px;
+
+  color: #8c95a4;
+
+  font-size: 14px;
+}
+
+/* 출발지 / 도착지 */
+
+.locationBox {
+  position: relative;
+
+  border: 1px solid #e2e6ea;
+
+  border-radius: 12px;
+
+  overflow: hidden;
+
+  background: white;
+
+  margin-bottom: 27px;
+}
+
+.locationInput {
+  height: 55px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 50px 0 18px;
+
+  gap: 12px;
+}
+
+.locationInput input {
+  border: 0;
+
+  outline: 0;
+
+  width: 100%;
+
+  font-size: 15px;
+
+  color: #444;
+}
+
+.divider {
+  height: 1px;
+
+  background: #eceef1;
+
+  margin-left: 44px;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+
+  border-radius: 50%;
+
+  flex-shrink: 0;
+}
+
+.dot.blue {
+  background: #147cff;
+}
+
+.dot.red {
+  background: #ff4d63;
+}
+
+.swap {
+  position: absolute;
+
+  right: 10px;
+  top: 43px;
+
+  width: 32px;
+  height: 32px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: white;
+
+  border: 1px solid #e1e4e8;
+
+  border-radius: 50%;
+
+  color: #7b8492;
+}
+
+/* 경로 옵션 */
+
+.sectionTitle {
+  font-size: 16px;
+
+  margin: 0 0 13px;
+}
+
+.routeOptions {
+  display: grid;
+
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 10px;
+}
+
+.routeOption {
+  min-height: 105px;
+
+  border: 1px solid #e4e7eb;
+
+  border-radius: 12px;
+
+  background: white;
+
+  color: #687180;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+}
+
+.routeOption strong {
+  font-size: 14px;
+}
+
+.routeOption small {
+  font-size: 11px;
+
+  color: #9da5b2;
+}
+
+.activeOption {
+  color: #187cff;
+
+  border: 1.5px solid #2d89ff;
+
+  background: #f3f8ff;
+}
+
+.activeOption small {
+  color: #ff7944;
+}
+
+.searchRouteButton {
+  width: 100%;
+
+  height: 55px;
+
+  margin-top: 18px;
+
+  border: none;
+
+  border-radius: 12px;
+
+  background: #2c82f6;
+
+  color: white;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  gap: 10px;
+
+  font-size: 16px;
+  font-weight: 700;
+
+  box-shadow: 0 7px 17px rgba(40, 127, 244, 0.2);
+}
+
+/* 안전 지표 */
+
+.safetyCard {
+  margin-top: 23px;
+
+  border: 1px solid #e8ebef;
+
+  border-radius: 14px;
+
+  overflow: hidden;
+
+  background: white;
+}
+
+.safetyCard h3 {
+  font-size: 16px;
+
+  padding: 16px 18px;
+
+  margin: 0;
+
+  background: #fafbfc;
+}
+
+.safetyRow {
+  display: flex;
+  align-items: center;
+
+  gap: 15px;
+
+  padding: 11px 18px;
+}
+
+.safetyIcon {
+  width: 37px;
+  height: 37px;
+
+  border-radius: 10px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.blueSafety {
+  color: #217dff;
+
+  background: #eaf4ff;
+}
+
+.yellowSafety {
+  color: #efaa16;
+
+  background: #fff7da;
+}
+
+.purpleSafety {
+  color: #7d45f5;
+
+  background: #f1ebff;
+}
+
+.safetyRow strong {
+  font-size: 14px;
+}
+
+.safetyRow p {
+  margin: 3px 0 0;
+
+  color: #939caa;
+
+  font-size: 12px;
+}
+
+/* 하단 카드 */
+
+.communityCard {
+  margin-top: 22px;
+
+  min-height: 108px;
+
+  border-radius: 13px;
+
+  border: 1px solid #ffe0bd;
+
+  background: #fff9f1;
+
+  display: flex;
+  align-items: center;
+
+  padding: 16px;
+
+  gap: 14px;
+}
+
+.peopleIllustration {
+  font-size: 34px;
+}
+
+.communityCard strong {
+  font-size: 17px;
+
+  line-height: 1.35;
+}
+
+.communityCard p {
+  margin: 7px 0 0;
+
+  font-size: 12px;
+
+  color: #9a958e;
+}
+
+/* =========================
+   지도 영역
+========================= */
+
+.mapArea {
+  width: 100%;
+  height: 100%;
+
+  position: relative;
+
+  overflow: hidden;
+
+  background: #f4f6f8;
+}
+
+.kakaoMap {
+  width: 100%;
+  height: 100%;
+
+  position: relative;
+
+  background: linear-gradient(135deg, #f7f8fa, #eef1f4);
+}
+
+/* 카카오맵 연결 전 임시 표시 */
+
+.mapPlaceholder {
+  position: absolute;
+
+  top: 50%;
+  left: 50%;
+
+  transform: translate(-50%, -50%);
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+
+  gap: 12px;
+
+  color: #a0a7b1;
+}
+
+.mapPlaceholder svg {
+  color: #4a91ff;
+}
+
+.mapPlaceholder strong {
+  font-size: 18px;
+
+  color: #657080;
+}
+
+.mapPlaceholder span {
+  font-size: 13px;
+}
+
+/* =========================
+   도움요청
+========================= */
+
+.helpLegend {
+  display: flex;
+
+  gap: 16px;
+
+  padding: 14px;
+
+  background: #f7f8fa;
+
+  border-radius: 12px;
+
+  margin-bottom: 20px;
+}
+
+.helpLegend span {
+  display: flex;
+  align-items: center;
+
+  gap: 6px;
+
+  font-size: 13px;
+}
+
+.helpLegend i {
+  width: 10px;
+  height: 10px;
+
+  border-radius: 50%;
+}
+
+.yellowUrgency {
+  background: #f5ce36;
+}
+
+.orangeUrgency {
+  background: #ff8b38;
+}
+
+.redUrgency {
+  background: #ff4b50;
+}
+
+.requestCard {
+  border-radius: 12px;
+
+  padding: 17px;
+
+  margin-bottom: 14px;
+
+  background: white;
+
+  border: 1px solid #eee;
+
+  border-left-width: 5px;
+}
+
+.yellowBorder {
+  border-left-color: #f3cb34;
+}
+
+.orangeBorder {
+  border-left-color: #ff8b38;
+}
+
+.redBorder {
+  border-left-color: #ff4b50;
+}
+
+.requestHeader {
+  display: flex;
+
+  justify-content: space-between;
+
+  gap: 10px;
+}
+
+.requestHeader strong {
+  font-size: 14px;
+}
+
+.requestHeader span {
+  padding: 4px 7px;
+
+  border-radius: 8px;
+
+  font-size: 11px;
+
+  color: white;
+}
+
+.yellowBadge {
+  background: #e9be1f;
+}
+
+.orangeBadge {
+  background: #ff8433;
+}
+
+.redBadge {
+  background: #f34b52;
+}
+
+.requestCard p {
+  font-size: 13px;
+
+  color: #616977;
+}
+
+.requestInfo {
+  font-size: 11px;
+
+  color: #a0a6ad;
+}
+
+/* =========================
+   공공시설
+========================= */
+
+.facilityButton {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+
+  gap: 16px;
+
+  background: white;
+
+  border: 1px solid #e6e9ed;
+
+  border-radius: 13px;
+
+  padding: 18px;
+
+  margin-bottom: 13px;
+
+  text-align: left;
+
+  transition: 0.2s;
+}
+
+.facilityButton:hover {
+  background: #f5f9ff;
+
+  border-color: #2f85f7;
+}
+
+.facilityButton svg {
+  color: #2b82f6;
+}
+
+.facilityButton div {
+  display: flex;
+  flex-direction: column;
+}
+
+.facilityButton strong {
+  font-size: 15px;
+}
+
+.facilityButton span {
+  font-size: 12px;
+
+  color: #979fab;
+
+  margin-top: 5px;
+}
+
+.logoImage {
+  width: 75px;
+  height: 75px;
+  object-fit: contain;
+  margin-bottom: 8px;
+}
+
+/* 반응형 */
+
+@media (max-width: 1100px) {
+  .app {
+    grid-template-columns:
+      140px
+      340px
+      1fr;
+  }
+}
