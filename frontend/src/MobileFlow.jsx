@@ -22,6 +22,7 @@ import {
   Search,
   Camera,
   Lightbulb,
+  Share,
 } from 'lucide-react';
 import { scoreGrade } from './useIsMobile';
 import { hasKakaoRestKey, searchPlaces } from './kakaoLocal';
@@ -688,7 +689,9 @@ export function SosOverlay({ onClose }) {
         <p>
           {state === 'sent'
             ? '112와 보호자에게 위치가 전송되었습니다'
-            : '3초간 눌러 112와 보호자에게 위치를 전송합니다'}
+            : state === 'pressing'
+              ? `${countdown}초 후 112와 보호자에게\n위치가 전송됩니다`
+              : '3초간 눌러 112와 보호자에게 위치를 전송합니다'}
         </p>
       </div>
 
@@ -718,10 +721,12 @@ export function SosOverlay({ onClose }) {
         <span className="mfGrabHandle" />
 
         <div className="mfGuardianCard">
-          <Users size={18} />
+          <span className="mfGuardianIcon">
+            <Share size={16} />
+          </span>
           <div>
             <strong>보호자 실시간 위치 공유</strong>
-            <span>엄마 · 김서연{sharing ? ' (공유 중)' : ''}</span>
+            <span>엄마 · 김서연{sharing ? ' (30분간 공유 중)' : ''}</span>
           </div>
           <button
             className={sharing ? 'mfSwitch on' : 'mfSwitch'}
@@ -775,16 +780,14 @@ export function CrimeLayerScreen({ onClose }) {
   const [enabled, setEnabled] = useState(true);
   const [opacity, setOpacity] = useState(60);
 
-  return (
-    <div className="mfScreen mfScreenTabbed">
-      <header className="mfHeader">
-        <button className="mfIconBtn" onClick={onClose} aria-label="뒤로">
-          <ChevronLeft size={22} />
-        </button>
-        <h1>범죄주의구간</h1>
-      </header>
+  const toggleLayer = () => {
+    setEnabled(false);
+    onClose();
+  };
 
-      <div className="mfCrimeTopCard">
+  return (
+    <div className="mfRouteScreen">
+      <div className="mfCrimeFloatingCard">
         <div className="mfCrimeTopIcon">
           <TriangleAlert size={18} />
         </div>
@@ -794,46 +797,50 @@ export function CrimeLayerScreen({ onClose }) {
         </div>
         <button
           className={enabled ? 'mfSwitch on' : 'mfSwitch'}
-          onClick={() => setEnabled((v) => !v)}
-          aria-label="레이어 토글"
+          onClick={toggleLayer}
+          aria-label="레이어 끄기"
         >
           <span />
         </button>
       </div>
 
-      <h3 className="mfSectionLabel">10등급 범례</h3>
-      <div className="mfLegend">
-        {CRIME_LEGEND.map((c, i) => (
-          <div key={c} className="mfLegendCell" style={{ background: c }}>
-            {i + 1}
+      <div className="mfRouteSheet">
+        <span className="mfGrabHandle" />
+
+        <h3 className="mfSectionLabel">위험 등급 범례</h3>
+        <div className="mfLegend">
+          {CRIME_LEGEND.map((c, i) => (
+            <div key={c} className="mfLegendCell" style={{ background: c }}>
+              {i + 1}
+            </div>
+          ))}
+        </div>
+        <p className="mfLegendCaption">1등급 안전 · 5·6등급 보통 · 10등급 위험</p>
+
+        <div className="mfCrimeAreaCard">
+          <span className="mfCrimeAreaDot" />
+          <div>
+            <strong>이 지역 8등급 · 주의</strong>
+            <p>
+              서교동 일부 격자는 야간 절도·폭력 신고가 마포구 평균보다 높습니다. 22시 이후
+              어울마당로 대로변 이용을 권장합니다.
+            </p>
           </div>
-        ))}
+        </div>
+
+        <div className="mfSliderHeaderRow">
+          <h3 className="mfSectionLabel">레이어 투명도</h3>
+          <span className="mfSliderValue">{opacity}%</span>
+        </div>
+        <input
+          type="range"
+          min={0}
+          max={100}
+          value={opacity}
+          onChange={(e) => setOpacity(Number(e.target.value))}
+          className="mfSlider mfSliderNeutral"
+        />
       </div>
-      <p className="mfLegendCaption">1등급 안전 · 5·6등급 보통 · 10등급 위험</p>
-
-      <div className="mfCrimeAreaCard">
-        <strong>이 지역 8등급 · 주의</strong>
-        <p>
-          서교동 일부 격자는 야간 절도·폭력 신고가 마포구 평균보다 높습니다. 22시 이후
-          어울마당로 대로변 이용을 권장합니다.
-        </p>
-      </div>
-
-      <h3 className="mfSectionLabel">레이어 투명도</h3>
-      <input
-        type="range"
-        min={0}
-        max={100}
-        value={opacity}
-        onChange={(e) => setOpacity(Number(e.target.value))}
-        className="mfSlider mfSliderNeutral"
-      />
-      <span className="mfSliderValue">{opacity}%</span>
-
-      <p className="mfCrimeNote">
-        ⓘ 실제 경찰청 WMS 타일 연동 전 목업입니다. 데이터 파트 연동 후 지도 위 실시간
-        오버레이로 교체될 예정입니다.
-      </p>
     </div>
   );
 }
