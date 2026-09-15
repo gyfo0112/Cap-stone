@@ -1,0 +1,866 @@
+/* 모바일 전용 화면들 (온보딩 / 경로입력 / 경로결과 / 경로상세 / SOS).
+   isMobile일 때만 마운트되므로 데스크탑/태블릿 스타일과 섞이지 않는다.
+   색상은 App.css에 이미 쓰이던 값을 그대로 재사용. 새로 추가한 건
+   초록(안전·보통 등급용 #22a06b)과 연한 빨강(위험 등급 배경 #fdecec) 둘뿐. */
+
+.mfScreen {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+
+  display: flex;
+  flex-direction: column;
+
+  background: #fff;
+  overflow-y: auto;
+
+  padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
+}
+
+.mfHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.mfHeader h1 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.mfIconBtn {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 10px;
+  background: #f4f7fb;
+  color: #202938;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mfSectionLabel {
+  margin: 18px 0 10px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #8c95a4;
+}
+
+.mfSectionLabelLight {
+  color: #979fab;
+}
+
+.mfPrimaryBtn {
+  width: 100%;
+  height: 56px;
+  border: 0;
+  border-radius: 16px;
+  background: #2c82f6;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  box-shadow: 0 7px 17px rgba(40, 127, 244, 0.2);
+}
+
+.mfMainCta {
+  margin-top: 4px;
+}
+
+.mfTextBtn {
+  width: 100%;
+  height: 44px;
+  border: 0;
+  background: transparent;
+  color: #8c95a4;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mfOutlineBtn {
+  height: 42px;
+  border: 1px solid #e4e7eb;
+  border-radius: 12px;
+  background: #fff;
+  color: #46505f;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.mfOutlineBtn:disabled {
+  opacity: 0.5;
+}
+
+/* ---------- 안전점수 배지 ---------- */
+
+.mfScoreBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.mfScoreBadge strong {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.mfScoreBadge--lg {
+  height: 52px;
+  width: 52px;
+  padding: 0;
+  flex-direction: column;
+  border-radius: 14px;
+  gap: 1px;
+}
+
+.mfScoreBadge--lg strong {
+  font-size: 19px;
+}
+
+.mfScoreBadge--sm {
+  height: 30px;
+  padding: 0 9px;
+  font-size: 10.5px;
+}
+
+.mfScoreBadge--sm strong {
+  font-size: 13px;
+}
+
+/* ---------- 1. 온보딩 ---------- */
+
+.mfOnboarding {
+  padding: 36px 24px 24px;
+  justify-content: flex-start;
+}
+
+.mfOnbIcon {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: #2c82f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 22px;
+}
+
+.mfOnbHeadline {
+  margin: 0 0 12px;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.mfOnbSub {
+  margin: 0 0 26px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #606977;
+}
+
+.mfOnbFeatures {
+  list-style: none;
+  margin: 0 0 24px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mfOnbFeatures li {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.mfOnbFeatureIcon {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: #eaf3ff;
+  color: #2c82f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mfOnbFeatures strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+
+.mfOnbFeatures p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #606977;
+}
+
+.mfOnbPermCard {
+  margin-top: auto;
+  background: #f4f7fb;
+  border: 1px solid #e2e6ea;
+  border-radius: 18px;
+  padding: 18px;
+}
+
+.mfOnbPermCard > strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.mfOnbPermCard > p {
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #606977;
+}
+
+/* ---------- 2. 메인 지도 카드 (하단시트 안에 렌더) ---------- */
+
+.mfMainCard {
+  display: flex;
+  flex-direction: column;
+}
+
+.mfMainCardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.mfCaption {
+  font-size: 12px;
+  font-weight: 800;
+  color: #8c95a4;
+}
+
+.mfLocationTitle {
+  margin: 4px 0 0;
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.mfMainCaption {
+  margin: 0 0 16px;
+  font-size: 12.5px;
+  color: #8c95a4;
+}
+
+.mfQuickRow {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.mfQuickBtn {
+  flex: 1;
+  height: 44px;
+  border: 1px solid #e4e7eb;
+  border-radius: 14px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #46505f;
+}
+
+/* ---------- 3. 경로 입력 ---------- */
+
+.mfOdCard {
+  background: #f4f7fb;
+  border: 1px solid #e2e6ea;
+  border-radius: 18px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.mfOdRow {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #46505f;
+}
+
+.mfOdDivider {
+  height: 1px;
+  background: #e2e6ea;
+  margin-left: 20px;
+}
+
+.mfOdDotOrigin {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 3px solid #2c82f6;
+  flex-shrink: 0;
+}
+
+.mfOdInput {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  flex: 1;
+  font-size: 14px;
+  color: #202938;
+}
+
+.mfOdActions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.mfOdActions .mfOutlineBtn {
+  flex: 1;
+}
+
+.mfRecentList {
+  display: flex;
+  flex-direction: column;
+}
+
+.mfRecentRow {
+  height: 60px;
+  border: 0;
+  border-bottom: 1px solid #eceef1;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  text-align: left;
+}
+
+.mfRecentRow .mfRecentInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mfRecentRow strong {
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mfRecentRow span {
+  font-size: 12px;
+  color: #9da5b2;
+}
+
+/* ---------- 4. 경로 결과 ---------- */
+
+.mfSummaryCard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.mfSummaryCard strong {
+  display: block;
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.mfSummaryCard p {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  color: #8c95a4;
+}
+
+.mfSliderBlock {
+  background: #f4f7fb;
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.mfSliderLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 800;
+  color: #8c95a4;
+  margin-bottom: 10px;
+}
+
+.mfSlider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #2c82f6, #22a06b);
+  margin: 0;
+}
+
+.mfSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #2c82f6;
+  box-shadow: 0 3px 10px rgba(16, 24, 33, 0.18);
+  cursor: pointer;
+}
+
+.mfSlider::-moz-range-thumb {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #2c82f6;
+  box-shadow: 0 3px 10px rgba(16, 24, 33, 0.18);
+  cursor: pointer;
+}
+
+.mfSliderValue {
+  display: block;
+  margin-top: 10px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #46505f;
+}
+
+.mfToggleBg {
+  display: flex;
+  gap: 3px;
+  background: #eef1f4;
+  border-radius: 11px;
+  padding: 3px;
+  margin-bottom: 8px;
+}
+
+.mfToggleItem {
+  flex: 1;
+  height: 32px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #606977;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.mfToggleItem.active {
+  background: #2c82f6;
+  color: #fff;
+}
+
+.mfRouteList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.mfRouteOption {
+  border: 1.5px solid #e4e7eb;
+  border-radius: 14px;
+  background: #fff;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+
+.mfRouteOption > div:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mfRouteOption strong {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.mfRouteOption > div:nth-child(2) span {
+  font-size: 12px;
+  color: #9da5b2;
+}
+
+.mfRouteOption.selected {
+  border-color: #2d89ff;
+  background: #f3f8ff;
+}
+
+.mfRouteMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.mfRouteMeta strong {
+  font-size: 14px;
+}
+
+.mfRouteMeta span {
+  font-size: 11px;
+  color: #9da5b2;
+}
+
+/* ---------- 5. 경로 상세 / 턴바이턴 ---------- */
+
+.mfTurnBanner {
+  background: #2c82f6;
+  border-radius: 18px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: #fff;
+  margin-bottom: 18px;
+}
+
+.mfTurnBanner strong {
+  display: block;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.mfTurnBanner span {
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.mfSegmentList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.mfSegmentRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mfSegmentBar {
+  width: 5px;
+  align-self: stretch;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.mfSegmentIcon {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: #f4f7fb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mfSegmentRow > div:last-child {
+  min-width: 0;
+}
+
+.mfSegmentRow strong {
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.mfSegmentRow p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #8c95a4;
+}
+
+.mfDetailActions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.mfFlex1 {
+  flex: 1;
+  height: 52px;
+}
+
+.mfFlex1_4 {
+  flex: 1.4;
+  height: 52px;
+}
+
+.mfShareBtn {
+  border: 0;
+  border-radius: 12px;
+  background: #eaf3ff;
+  color: #1477f8;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* ---------- 6. SOS ---------- */
+
+.mfSosFab {
+  position: fixed;
+  left: 50%;
+  bottom: 40px;
+  transform: translateX(-50%);
+  z-index: 25;
+
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 4px solid #fffdfa;
+
+  background: linear-gradient(135deg, #ff6969, #ff4646);
+  color: #fff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 16px rgba(255, 74, 74, 0.32);
+}
+
+.mfScrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+
+  background: rgba(233, 237, 242, 0.94);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  padding: 40px 24px calc(24px + env(safe-area-inset-bottom));
+  overflow-y: auto;
+}
+
+.mfSosTop {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.mfSosEyebrow {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+  color: #f34b52;
+  margin-bottom: 6px;
+}
+
+.mfSosTop p {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #202938;
+}
+
+.mfSosCircle {
+  width: 196px;
+  height: 196px;
+  border-radius: 50%;
+  border: 0;
+  background: linear-gradient(135deg, #ff6969, #ff4646);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 28px;
+  touch-action: none;
+  box-shadow: 0 0 0 0 rgba(176, 68, 58, 0.38);
+}
+
+.mfSosCircle.pressing {
+  animation: mfSosPulse 1.6s ease-out infinite;
+}
+
+@keyframes mfSosPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(176, 68, 58, 0.38);
+  }
+  100% {
+    box-shadow: 0 0 0 26px rgba(176, 68, 58, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mfSosCircle.pressing {
+    animation: none;
+  }
+}
+
+.mfSosCountdown {
+  font-size: 56px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.mfSosLabel {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.mfSosHint {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.mfGuardianCard {
+  width: 100%;
+  max-width: 340px;
+  background: #eaf3ff;
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #1477f8;
+  margin-bottom: 18px;
+}
+
+.mfGuardianCard > div {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  color: #202938;
+}
+
+.mfGuardianCard strong {
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.mfGuardianCard span {
+  font-size: 12px;
+  color: #606977;
+}
+
+.mfSwitch {
+  width: 44px;
+  height: 26px;
+  border-radius: 99px;
+  border: 0;
+  background: #dce3ea;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.mfSwitch span {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s;
+}
+
+.mfSwitch.on {
+  background: #2c82f6;
+}
+
+.mfSwitch.on span {
+  transform: translateX(18px);
+}
+
+.mfNearbyList {
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+
+.mfNearbyRow {
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #46505f;
+}
+
+.mfNearbyRow > div {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.mfNearbyRow strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: #202938;
+}
+
+.mfNearbyRow span {
+  font-size: 11.5px;
+  color: #9da5b2;
+}
+
+.mfNearbyDist {
+  font-size: 12px;
+  font-weight: 700;
+  color: #8c95a4;
+  flex-shrink: 0;
+}
+
+.mfCancelBtn {
+  width: 100%;
+  max-width: 340px;
+  height: 52px;
+  background: #fff;
+}

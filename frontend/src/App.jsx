@@ -15,11 +15,51 @@ import {
 import './App.css';
 import logo from './images/logo.png';
 import { useCctvLayer } from './useCctvLayer';
+import { useIsMobile } from './useIsMobile';
+import {
+  Onboarding,
+  MainMapCard,
+  RouteInputScreen,
+  RouteResultScreen,
+  RouteDetailScreen,
+  SosFab,
+  SosOverlay,
+} from './MobileFlow';
 
 function App() {
   const [menu, setMenu] = useState('route');
   const [layers, setLayers] = useState({ cctv: false });
   const toggleLayer = (key) => setLayers((s) => ({ ...s, [key]: !s[key] }));
+
+  const isMobile = useIsMobile();
+  const [onboardingDone, setOnboardingDone] = useState(() => {
+    try {
+      return localStorage.getItem('safemap_onboarded') === '1';
+    } catch {
+      return false;
+    }
+  });
+  const finishOnboarding = () => {
+    try {
+      localStorage.setItem('safemap_onboarded', '1');
+    } catch {
+      /* 저장 실패해도 화면은 넘어가야 함 */
+    }
+    setOnboardingDone(true);
+  };
+
+  // 모바일 전용 화면 흐름: 지도 하단시트 -> 경로입력 -> 경로결과 -> 경로상세
+  const [mobileScreen, setMobileScreen] = useState(null); // null | 'input' | 'result' | 'detail'
+  const [sosOpen, setSosOpen] = useState(false);
+  const [destination, setDestination] = useState('');
+  const [safetyWeight, setSafetyWeight] = useState(62);
+  const [timeMode, setTimeMode] = useState('now');
+  const [selectedRouteId, setSelectedRouteId] = useState('safe');
+
+  const openRouteInput = (prefill) => {
+    setDestination(prefill);
+    setMobileScreen('input');
+  };
 
   return (
     <div className="app">
@@ -76,7 +116,7 @@ function App() {
 
       {/* 가운데 기능 패널 */}
       <section className="controlPanel">
-        {menu === 'route' && <RoutePanel />}
+        {menu === 'route' && (isMobile ? <MainMapCard onOpenInput={openRouteInput} /> : <RoutePanel />)}
         {menu === 'help' && <HelpPanel />}
         {menu === 'facility' && <FacilityPanel layers={layers} onToggle={toggleLayer} />}
       </section>
@@ -85,6 +125,41 @@ function App() {
       <main className="mapArea">
         <MapView layers={layers} />
       </main>
+
+      {/* 모바일 전용: 온보딩 / 경로 흐름 / SOS는 전체화면으로 위에 겹쳐 그림 */}
+      {isMobile && !onboardingDone && <Onboarding onDone={finishOnboarding} />}
+
+      {isMobile && onboardingDone && mobileScreen === 'input' && (
+        <RouteInputScreen
+          initialDestination={destination}
+          onBack={() => setMobileScreen(null)}
+          onSelect={(name) => {
+            setDestination(name);
+            setMobileScreen('result');
+          }}
+        />
+      )}
+
+      {isMobile && onboardingDone && mobileScreen === 'result' && (
+        <RouteResultScreen
+          destination={destination}
+          safetyWeight={safetyWeight}
+          onSafetyWeightChange={setSafetyWeight}
+          timeMode={timeMode}
+          onTimeModeChange={setTimeMode}
+          selectedRouteId={selectedRouteId}
+          onSelectRoute={setSelectedRouteId}
+          onBack={() => setMobileScreen('input')}
+          onStart={() => setMobileScreen('detail')}
+        />
+      )}
+
+      {isMobile && onboardingDone && mobileScreen === 'detail' && (
+        <RouteDetailScreen onEnd={() => setMobileScreen(null)} />
+      )}
+
+      {isMobile && onboardingDone && !sosOpen && <SosFab onOpen={() => setSosOpen(true)} />}
+      {isMobile && sosOpen && <SosOverlay onClose={() => setSosOpen(false)} />}
     </div>
   );
 }
