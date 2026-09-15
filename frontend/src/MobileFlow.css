@@ -76,9 +76,40 @@
   display: block;
   width: 44px;
   height: 4px;
-  margin: 0 auto 16px;
+  margin: 0 auto;
   border-radius: 99px;
   background: #dfe3e8;
+}
+
+/* 그랩핸들의 실제 탭/드래그 히트 영역 — 시각 바(4px)보다 훨씬 크게 잡는다 */
+.mfGrabHandleZone {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 8px 0 16px;
+  touch-action: none;
+  cursor: grab;
+}
+
+.mfGrabHandleZone:active {
+  cursor: grabbing;
+}
+
+/* 하단시트 접기/펼치기 — grid-template-rows 트릭으로 높이를 애니메이션 */
+.mfCollapsible {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 0.25s ease;
+}
+
+.mfCollapsible.collapsed {
+  grid-template-rows: 0fr;
+}
+
+.mfCollapsibleInner {
+  overflow: hidden;
+  min-height: 0;
 }
 
 .mfHeader {
@@ -777,7 +808,7 @@
 .mfSosFab {
   position: fixed;
   left: 50%;
-  bottom: 8px;
+  bottom: 30px;
   transform: translateX(-50%);
   z-index: 25;
 
@@ -795,9 +826,12 @@
   box-shadow: 0 6px 16px rgba(255, 74, 74, 0.32);
 }
 
-.mfScrim {
+.mfSosScreen {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 64px; /* 하단 탭바는 계속 보이게 */
   z-index: 60;
 
   background: rgba(233, 237, 242, 0.94);
@@ -806,8 +840,8 @@
   flex-direction: column;
   align-items: center;
 
-  padding: 40px 24px calc(24px + env(safe-area-inset-bottom));
-  overflow-y: auto;
+  padding: 36px 24px 0;
+  overflow: hidden;
 }
 
 .mfSosTop {
@@ -886,14 +920,13 @@
 
 .mfGuardianCard {
   width: 100%;
-  max-width: 340px;
-  background: #eaf3ff;
+  background: #eaf1fb;
   border-radius: 14px;
   padding: 12px 14px;
   display: flex;
   align-items: center;
   gap: 12px;
-  color: #1477f8;
+  color: #1e4fa0;
   margin-bottom: 18px;
 }
 
@@ -937,7 +970,7 @@
 }
 
 .mfSwitch.on {
-  background: #2c82f6;
+  background: #1e4fa0;
 }
 
 .mfSwitch.on span {
@@ -946,11 +979,10 @@
 
 .mfNearbyList {
   width: 100%;
-  max-width: 340px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-bottom: 22px;
+  margin-bottom: 4px;
 }
 
 .mfNearbyRow {
@@ -990,8 +1022,8 @@
 
 .mfCancelBtn {
   width: 100%;
-  max-width: 340px;
   height: 52px;
+  margin-top: 16px;
   background: #fff;
 }
 

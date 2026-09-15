@@ -42,6 +42,45 @@ function ScoreBadge({ score, size = 'md' }) {
   );
 }
 
+// 하단시트 그랩핸들을 탭하거나 위/아래로 드래그해서 접고 펼치는 훅.
+// 드래그로 이미 토글됐으면 뒤이어 발생하는 click은 무시해서 두 번 안 토글되게 한다.
+function useSheetToggle(initial = true) {
+  const [expanded, setExpanded] = useState(initial);
+  const dragStartY = useRef(null);
+  const draggedRef = useRef(false);
+
+  const onPointerDown = (e) => {
+    dragStartY.current = e.clientY;
+    draggedRef.current = false;
+  };
+  const onPointerMove = (e) => {
+    if (dragStartY.current == null || draggedRef.current) return;
+    const delta = e.clientY - dragStartY.current;
+    if (delta < -30) {
+      setExpanded(true);
+      draggedRef.current = true;
+    } else if (delta > 30) {
+      setExpanded(false);
+      draggedRef.current = true;
+    }
+  };
+  const endDrag = () => {
+    dragStartY.current = null;
+  };
+  const onClick = () => {
+    if (draggedRef.current) {
+      draggedRef.current = false;
+      return;
+    }
+    setExpanded((v) => !v);
+  };
+
+  return [
+    expanded,
+    { onPointerDown, onPointerMove, onPointerUp: endDrag, onPointerCancel: endDrag, onClick },
+  ];
+}
+
 // 하단 탭바 (지도 / 경로 / [SOS 자리] / 도움요청 / 설정)
 const TABS = [
   { key: 'map', label: '지도', icon: MapPin },
@@ -387,6 +426,8 @@ function RouteResultBody({
     return () => clearTimeout(timer);
   }, []);
 
+  const [expanded, sheetHandlers] = useSheetToggle(true);
+
   const header = (
     <div className="mfFloatingHeader">
       <button className="mfIconBtn" onClick={onBack} aria-label="뒤로">
@@ -420,7 +461,14 @@ function RouteResultBody({
       {header}
 
       <div className="mfRouteSheet">
-        <span className="mfGrabHandle" />
+        <button
+          className="mfGrabHandleZone"
+          aria-label={expanded ? '시트 접기' : '시트 펼치기'}
+          aria-expanded={expanded}
+          {...sheetHandlers}
+        >
+          <span className="mfGrabHandle" />
+        </button>
 
         <div className="mfSummaryCard">
           <ScoreBadge score={selected.score} size="lg" />
@@ -432,62 +480,66 @@ function RouteResultBody({
           </div>
         </div>
 
-        <div className="mfSliderBlock">
-          <div className="mfSliderLabels">
-            <span>거리 최우선</span>
-            <span>안전 최우선</span>
-          </div>
-          <input
-            type="range"
-            min={0}
-            max={100}
-            value={safetyWeight}
-            onChange={(e) => onSafetyWeightChange(Number(e.target.value))}
-            className="mfSlider"
-          />
-          <div className="mfSliderFooter">
-            <span className="mfSliderValue">안전 우선 {safetyWeight}%</span>
-            <div className="mfToggleBg mfToggleBgCompact">
-              <button
-                className={timeMode === 'now' ? 'mfToggleItem active' : 'mfToggleItem'}
-                onClick={() => onTimeModeChange('now')}
-              >
-                <Sun size={12} /> 지금
-              </button>
-              <button
-                className={timeMode === 'night' ? 'mfToggleItem active' : 'mfToggleItem'}
-                onClick={() => onTimeModeChange('night')}
-              >
-                <Moon size={12} /> 야간
-              </button>
+        <div className={expanded ? 'mfCollapsible' : 'mfCollapsible collapsed'}>
+          <div className="mfCollapsibleInner">
+            <div className="mfSliderBlock">
+              <div className="mfSliderLabels">
+                <span>거리 최우선</span>
+                <span>안전 최우선</span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={safetyWeight}
+                onChange={(e) => onSafetyWeightChange(Number(e.target.value))}
+                className="mfSlider"
+              />
+              <div className="mfSliderFooter">
+                <span className="mfSliderValue">안전 우선 {safetyWeight}%</span>
+                <div className="mfToggleBg mfToggleBgCompact">
+                  <button
+                    className={timeMode === 'now' ? 'mfToggleItem active' : 'mfToggleItem'}
+                    onClick={() => onTimeModeChange('now')}
+                  >
+                    <Sun size={12} /> 지금
+                  </button>
+                  <button
+                    className={timeMode === 'night' ? 'mfToggleItem active' : 'mfToggleItem'}
+                    onClick={() => onTimeModeChange('night')}
+                  >
+                    <Moon size={12} /> 야간
+                  </button>
+                </div>
+              </div>
             </div>
+
+            <h3 className="mfSectionLabel">대안 경로</h3>
+            <div className="mfRouteList">
+              {ROUTE_OPTIONS.map((r) => (
+                <button
+                  key={r.id}
+                  className={r.id === selectedRouteId ? 'mfRouteOption selected' : 'mfRouteOption'}
+                  onClick={() => onSelectRoute(r.id)}
+                >
+                  <ScoreBadge score={r.score} size="sm" />
+                  <div>
+                    <strong>{r.name}</strong>
+                    <span>{r.note}</span>
+                  </div>
+                  <div className="mfRouteMeta">
+                    <strong>{r.duration}분</strong>
+                    <span>{r.distance}km</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <button className="mfPrimaryBtn mfMainCta" onClick={onStart}>
+              안내 시작
+            </button>
           </div>
         </div>
-
-        <h3 className="mfSectionLabel">대안 경로</h3>
-        <div className="mfRouteList">
-          {ROUTE_OPTIONS.map((r) => (
-            <button
-              key={r.id}
-              className={r.id === selectedRouteId ? 'mfRouteOption selected' : 'mfRouteOption'}
-              onClick={() => onSelectRoute(r.id)}
-            >
-              <ScoreBadge score={r.score} size="sm" />
-              <div>
-                <strong>{r.name}</strong>
-                <span>{r.note}</span>
-              </div>
-              <div className="mfRouteMeta">
-                <strong>{r.duration}분</strong>
-                <span>{r.distance}km</span>
-              </div>
-            </button>
-          ))}
-        </div>
-
-        <button className="mfPrimaryBtn mfMainCta" onClick={onStart}>
-          안내 시작
-        </button>
       </div>
     </div>
   );
@@ -507,6 +559,7 @@ const GRADE_SOFT = { 안전: '#e3f5ec', 보통: '#fff7da', 주의: '#ffe9d6', �
 
 export function RouteDetailScreen({ onEnd }) {
   const [sharing, setSharing] = useState(false);
+  const [expanded, sheetHandlers] = useSheetToggle(true);
 
   return (
     <div className="mfRouteScreen">
@@ -519,7 +572,14 @@ export function RouteDetailScreen({ onEnd }) {
       </div>
 
       <div className="mfRouteSheet">
-        <span className="mfGrabHandle" />
+        <button
+          className="mfGrabHandleZone"
+          aria-label={expanded ? '시트 접기' : '시트 펼치기'}
+          aria-expanded={expanded}
+          {...sheetHandlers}
+        >
+          <span className="mfGrabHandle" />
+        </button>
 
         <div className="mfSegmentHeader">
           <h3 className="mfSectionLabel" style={{ margin: 0 }}>
@@ -528,41 +588,45 @@ export function RouteDetailScreen({ onEnd }) {
           <span className="mfSegmentSummary">총 {SEGMENTS.length}구간 · 1.8km</span>
         </div>
 
-        <div className="mfSegmentList">
-          {SEGMENTS.map((s) => (
-            <div className="mfSegmentRow" key={s.name}>
-              <span className="mfSegmentBar" style={{ background: GRADE_COLOR[s.grade] }} />
-              <div
-                className="mfSegmentIcon"
-                style={{ color: GRADE_COLOR[s.grade], background: GRADE_SOFT[s.grade] }}
-              >
-                {s.grade === '안전' ? <CircleCheck size={16} /> : <TriangleAlert size={16} />}
-              </div>
-              <div className="mfSegmentBody">
-                <div className="mfSegmentTitleRow">
-                  <strong>
-                    {s.name} · {s.meters}m
-                  </strong>
-                  <span
-                    className="mfSegmentGradeTag"
+        <div className={expanded ? 'mfCollapsible' : 'mfCollapsible collapsed'}>
+          <div className="mfCollapsibleInner">
+            <div className="mfSegmentList">
+              {SEGMENTS.map((s) => (
+                <div className="mfSegmentRow" key={s.name}>
+                  <span className="mfSegmentBar" style={{ background: GRADE_COLOR[s.grade] }} />
+                  <div
+                    className="mfSegmentIcon"
                     style={{ color: GRADE_COLOR[s.grade], background: GRADE_SOFT[s.grade] }}
                   >
-                    {s.grade}
-                  </span>
+                    {s.grade === '안전' ? <CircleCheck size={16} /> : <TriangleAlert size={16} />}
+                  </div>
+                  <div className="mfSegmentBody">
+                    <div className="mfSegmentTitleRow">
+                      <strong>
+                        {s.name} · {s.meters}m
+                      </strong>
+                      <span
+                        className="mfSegmentGradeTag"
+                        style={{ color: GRADE_COLOR[s.grade], background: GRADE_SOFT[s.grade] }}
+                      >
+                        {s.grade}
+                      </span>
+                    </div>
+                    <p>{s.note}</p>
+                  </div>
                 </div>
-                <p>{s.note}</p>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
 
-        <div className="mfDetailActions">
-          <button className="mfOutlineBtn mfFlex1" onClick={onEnd}>
-            안내 종료
-          </button>
-          <button className="mfShareBtn mfFlex1_4" onClick={() => setSharing((v) => !v)}>
-            <Users size={16} /> {sharing ? '공유 중' : '보호자 공유'}
-          </button>
+            <div className="mfDetailActions">
+              <button className="mfOutlineBtn mfFlex1" onClick={onEnd}>
+                안내 종료
+              </button>
+              <button className="mfShareBtn mfFlex1_4" onClick={() => setSharing((v) => !v)}>
+                <Users size={16} /> {sharing ? '공유 중' : '보호자 공유'}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -618,7 +682,7 @@ export function SosOverlay({ onClose }) {
   };
 
   return (
-    <div className="mfScrim">
+    <div className="mfSosScreen">
       <div className="mfSosTop">
         <span className="mfSosEyebrow">긴급 도움요청</span>
         <p>
@@ -650,38 +714,42 @@ export function SosOverlay({ onClose }) {
         )}
       </button>
 
-      <div className="mfGuardianCard">
-        <Users size={18} />
-        <div>
-          <strong>보호자 실시간 위치 공유</strong>
-          <span>엄마 · 김서연{sharing ? ' (공유 중)' : ''}</span>
+      <div className="mfRouteSheet">
+        <span className="mfGrabHandle" />
+
+        <div className="mfGuardianCard">
+          <Users size={18} />
+          <div>
+            <strong>보호자 실시간 위치 공유</strong>
+            <span>엄마 · 김서연{sharing ? ' (공유 중)' : ''}</span>
+          </div>
+          <button
+            className={sharing ? 'mfSwitch on' : 'mfSwitch'}
+            onClick={() => setSharing((v) => !v)}
+            aria-label="보호자 공유 토글"
+          >
+            <span />
+          </button>
         </div>
-        <button
-          className={sharing ? 'mfSwitch on' : 'mfSwitch'}
-          onClick={() => setSharing((v) => !v)}
-          aria-label="보호자 공유 토글"
-        >
-          <span />
+
+        <h3 className="mfSectionLabel">주변 안전시설</h3>
+        <div className="mfNearbyList">
+          {NEARBY.map((n) => (
+            <div className="mfNearbyRow" key={n.name}>
+              <n.icon size={16} />
+              <div>
+                <strong>{n.name}</strong>
+                <span>{n.sub}</span>
+              </div>
+              <span className="mfNearbyDist">{n.dist}</span>
+            </div>
+          ))}
+        </div>
+
+        <button className="mfOutlineBtn mfCancelBtn" onClick={onClose}>
+          취소
         </button>
       </div>
-
-      <h3 className="mfSectionLabel mfSectionLabelLight">주변 안전시설</h3>
-      <div className="mfNearbyList">
-        {NEARBY.map((n) => (
-          <div className="mfNearbyRow" key={n.name}>
-            <n.icon size={16} />
-            <div>
-              <strong>{n.name}</strong>
-              <span>{n.sub}</span>
-            </div>
-            <span className="mfNearbyDist">{n.dist}</span>
-          </div>
-        ))}
-      </div>
-
-      <button className="mfOutlineBtn mfCancelBtn" onClick={onClose}>
-        취소
-      </button>
     </div>
   );
 }
