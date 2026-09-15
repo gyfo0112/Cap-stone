@@ -33,6 +33,7 @@ Table favorite {
   idx integer [primary key, increment]
   user_uuid varchar(36) [not null]
   marker_uuid varchar(36) [not null]
+  fav_name varchar(50)
 
   indexes {
     (user_uuid, marker_uuid) [unique]
@@ -49,6 +50,19 @@ Table post_request {
   }
 }
 
+Table user_tel {
+  idx integer [primary key, increment]
+  user_uuid varchar(36) [not null]
+  tel_uuid varchar(36) [not null]
+  tel_num varchar(20) [unique]
+  tel_name varchar(50) [not null]
+  tel_type varchar(20) [default: '구분없음']
+
+  indexes {
+    (user_uuid, tel_uuid) [unique]
+  }
+}
+
 Ref posts_user: posts.user_uuid > users.user_uuid
 
 Ref favorite_user: favorite.user_uuid > users.user_uuid
@@ -56,3 +70,5 @@ Ref favorite_marker: favorite.marker_uuid > marker.marker_uuid
 
 Ref post_request_user: post_request.user_uuid > users.user_uuid
 Ref post_request_post: post_request.post_uuid > posts.post_uuid
+
+Ref user_tel_user: user_tel.user_uuid > users.user_uuid
