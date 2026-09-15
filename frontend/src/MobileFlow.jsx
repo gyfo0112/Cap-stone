@@ -176,6 +176,13 @@ export function Onboarding({ onDone }) {
 
 /* ---------- 2. 메인 지도 (하단시트 카드) ---------- */
 
+// 실제 시각 기준으로 "주간/야간" 문구만 맞춤 — 안전점수 자체는 아직 mock.
+function timeOfDayLabel() {
+  const hour = new Date().getHours();
+  const isNight = hour >= 19 || hour < 6;
+  return `${isNight ? '야간' : '주간'}(${hour}시) 기준`;
+}
+
 export function MainMapCard({ onOpenInput }) {
   return (
     <div className="mfMainCard">
@@ -187,7 +194,7 @@ export function MainMapCard({ onOpenInput }) {
         <ScoreBadge score={68} />
       </div>
 
-      <p className="mfMainCaption">야간(21시) 기준 · 반경 500m 내 CCTV 41대, 보안등 128개</p>
+      <p className="mfMainCaption">{timeOfDayLabel()} · 반경 500m 내 CCTV 41대, 보안등 128개</p>
 
       <div className="mfQuickRow">
         <button className="mfQuickBtn" onClick={() => onOpenInput('망원동 396-12 (집)')}>
@@ -216,6 +223,8 @@ const RECENTS = [
 
 export function RouteInputScreen({ initialDestination, onBack, onSelect }) {
   const [destination, setDestination] = useState(initialDestination || '');
+  const query = destination.trim();
+  const filtered = query ? RECENTS.filter((r) => r.name.includes(query)) : RECENTS;
 
   return (
     <div className="mfScreen">
@@ -253,9 +262,9 @@ export function RouteInputScreen({ initialDestination, onBack, onSelect }) {
         </button>
       </div>
 
-      <h3 className="mfSectionLabel">최근 검색</h3>
+      <h3 className="mfSectionLabel">{query ? '검색 결과' : '최근 검색'}</h3>
       <div className="mfRecentList">
-        {RECENTS.map((r) => (
+        {filtered.map((r) => (
           <button key={r.name} className="mfRecentRow" onClick={() => onSelect(r.name)}>
             <div className="mfRecentInfo">
               <strong>{r.name}</strong>
@@ -264,6 +273,9 @@ export function RouteInputScreen({ initialDestination, onBack, onSelect }) {
             <ScoreBadge score={r.score} size="sm" />
           </button>
         ))}
+        {filtered.length === 0 && (
+          <p className="mfEmptyHint">일치하는 검색 결과가 없어요. Enter를 누르면 입력한 위치로 길찾기를 시작합니다.</p>
+        )}
       </div>
     </div>
   );
@@ -277,7 +289,14 @@ const ROUTE_OPTIONS = [
   { id: 'shortest', name: '최단 거리', score: 58, note: '어두운 골목 320m · 야간 신고 4건', duration: 18, distance: 1.4 },
 ];
 
-export function RouteResultScreen({
+// 목적지가 바뀔 때마다 이 컴포넌트 자체를 새로 마운트해서(key=destination)
+// "계산 중" 스켈레톤을 다시 보여준다 — 아직 실제 경로 API가 없어서 결과는
+// mock이지만, 붙일 때를 위해 로딩 자리는 미리 만들어 둔다.
+export function RouteResultScreen(props) {
+  return <RouteResultBody key={props.destination} {...props} />;
+}
+
+function RouteResultBody({
   destination,
   safetyWeight,
   onSafetyWeightChange,
@@ -290,15 +309,40 @@ export function RouteResultScreen({
 }) {
   const selected = ROUTE_OPTIONS.find((r) => r.id === selectedRouteId) ?? ROUTE_OPTIONS[0];
   const shortest = ROUTE_OPTIONS[ROUTE_OPTIONS.length - 1];
+  const timeDiff = selected.duration - shortest.duration;
+
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setReady(true), 550);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const header = (
+    <header className="mfHeader">
+      <button className="mfIconBtn" onClick={onBack} aria-label="뒤로">
+        <ChevronLeft size={22} />
+      </button>
+      <h1>홍대입구역 2번출구 → {destination || '목적지'}</h1>
+    </header>
+  );
+
+  if (!ready) {
+    return (
+      <div className="mfScreen">
+        {header}
+        <div className="mfSkeleton mfSkeletonCard" />
+        <div className="mfSkeleton mfSkeletonBlock" />
+        <div className="mfSkeleton" style={{ height: 40, marginBottom: 18 }} />
+        <div className="mfSkeleton mfSkeletonRow" />
+        <div className="mfSkeleton mfSkeletonRow" />
+        <div className="mfSkeleton mfSkeletonRow" />
+      </div>
+    );
+  }
 
   return (
     <div className="mfScreen">
-      <header className="mfHeader">
-        <button className="mfIconBtn" onClick={onBack} aria-label="뒤로">
-          <ChevronLeft size={22} />
-        </button>
-        <h1>홍대입구역 2번출구 → {destination || '목적지'}</h1>
-      </header>
+      {header}
 
       <div className="mfSummaryCard">
         <ScoreBadge score={selected.score} size="lg" />
@@ -306,7 +350,7 @@ export function RouteResultScreen({
           <strong>
             {selected.distance}km · 도보 {selected.duration}분
           </strong>
-          <p>최단 대비 +{selected.duration - shortest.duration}분 · 어두운 구간 80m 회피</p>
+          <p>{timeDiff === 0 ? '가장 빠른 경로예요' : `최단 대비 +${timeDiff}분`} · 어두운 구간 80m 회피</p>
         </div>
       </div>
 

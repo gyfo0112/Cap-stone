@@ -60,7 +60,11 @@ function App() {
   const [crimeLayerOpen, setCrimeLayerOpen] = useState(false);
   const [destination, setDestination] = useState('');
   const [safetyWeight, setSafetyWeight] = useState(62);
-  const [timeMode, setTimeMode] = useState('now');
+  // 일몰 이후 진입하면 기본값을 '야간'으로 시작 (README 스펙)
+  const [timeMode, setTimeMode] = useState(() => {
+    const hour = new Date().getHours();
+    return hour >= 19 || hour < 6 ? 'night' : 'now';
+  });
   const [selectedRouteId, setSelectedRouteId] = useState('safe');
 
   const openRouteInput = (prefill) => {
