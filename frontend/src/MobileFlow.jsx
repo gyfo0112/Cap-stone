@@ -27,15 +27,17 @@ import { scoreGrade } from './useIsMobile';
 import { hasKakaoRestKey, searchPlaces } from './kakaoLocal';
 import './MobileFlow.css';
 
-// 안전점수 배지 — 화면 여러 곳(메인카드/최근검색/대안경로)에서 재사용
+// 안전점수 배지 — 화면 여러 곳(메인카드/최근검색/대안경로)에서 재사용.
+// md(메인카드) = 아이콘+숫자+등급명, lg(경로결과 요약) = 숫자+등급명,
+// sm(리스트용) = 숫자만 — 리스트에서 여러 개 나열될 때 안 복잡하게.
 function ScoreBadge({ score, size = 'md' }) {
   const grade = scoreGrade(score);
   const Icon = score >= 80 ? CircleCheck : TriangleAlert;
   return (
     <div className={`mfScoreBadge mfScoreBadge--${size}`} style={{ background: grade.soft, color: grade.color }}>
-      <Icon size={size === 'lg' ? 18 : 14} />
+      {size === 'md' && <Icon size={14} />}
       <strong>{score}</strong>
-      <span>{grade.label}</span>
+      {size !== 'sm' && <span>{grade.label}</span>}
     </div>
   );
 }
@@ -386,99 +388,107 @@ function RouteResultBody({
   }, []);
 
   const header = (
-    <header className="mfHeader">
+    <div className="mfFloatingHeader">
       <button className="mfIconBtn" onClick={onBack} aria-label="뒤로">
         <ChevronLeft size={22} />
       </button>
       <h1>
         {originLabel || '홍대입구역 2번출구'} → {destination || '목적지'}
       </h1>
-    </header>
+    </div>
   );
 
   if (!ready) {
     return (
-      <div className="mfScreen">
+      <div className="mfRouteScreen">
         {header}
-        <div className="mfSkeleton mfSkeletonCard" />
-        <div className="mfSkeleton mfSkeletonBlock" />
-        <div className="mfSkeleton" style={{ height: 40, marginBottom: 18 }} />
-        <div className="mfSkeleton mfSkeletonRow" />
-        <div className="mfSkeleton mfSkeletonRow" />
-        <div className="mfSkeleton mfSkeletonRow" />
+        <div className="mfRouteSheet">
+          <span className="mfGrabHandle" />
+          <div className="mfSkeleton mfSkeletonCard" />
+          <div className="mfSkeleton mfSkeletonBlock" />
+          <div className="mfSkeleton" style={{ height: 40, marginBottom: 18 }} />
+          <div className="mfSkeleton mfSkeletonRow" />
+          <div className="mfSkeleton mfSkeletonRow" />
+          <div className="mfSkeleton mfSkeletonRow" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="mfScreen">
+    <div className="mfRouteScreen">
       {header}
 
-      <div className="mfSummaryCard">
-        <ScoreBadge score={selected.score} size="lg" />
-        <div>
-          <strong>
-            {selected.distance}km · 도보 {selected.duration}분
-          </strong>
-          <p>{timeDiff === 0 ? '가장 빠른 경로예요' : `최단 대비 +${timeDiff}분`} · 어두운 구간 80m 회피</p>
+      <div className="mfRouteSheet">
+        <span className="mfGrabHandle" />
+
+        <div className="mfSummaryCard">
+          <ScoreBadge score={selected.score} size="lg" />
+          <div>
+            <strong>
+              {selected.distance}km · 도보 {selected.duration}분
+            </strong>
+            <p>{timeDiff === 0 ? '가장 빠른 경로예요' : `최단 대비 +${timeDiff}분`} · 어두운 구간 80m 회피</p>
+          </div>
         </div>
-      </div>
 
-      <div className="mfSliderBlock">
-        <div className="mfSliderLabels">
-          <span>거리 최우선</span>
-          <span>안전 최우선</span>
+        <div className="mfSliderBlock">
+          <div className="mfSliderLabels">
+            <span>거리 최우선</span>
+            <span>안전 최우선</span>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={safetyWeight}
+            onChange={(e) => onSafetyWeightChange(Number(e.target.value))}
+            className="mfSlider"
+          />
+          <div className="mfSliderFooter">
+            <span className="mfSliderValue">안전 우선 {safetyWeight}%</span>
+            <div className="mfToggleBg mfToggleBgCompact">
+              <button
+                className={timeMode === 'now' ? 'mfToggleItem active' : 'mfToggleItem'}
+                onClick={() => onTimeModeChange('now')}
+              >
+                <Sun size={12} /> 지금
+              </button>
+              <button
+                className={timeMode === 'night' ? 'mfToggleItem active' : 'mfToggleItem'}
+                onClick={() => onTimeModeChange('night')}
+              >
+                <Moon size={12} /> 야간
+              </button>
+            </div>
+          </div>
         </div>
-        <input
-          type="range"
-          min={0}
-          max={100}
-          value={safetyWeight}
-          onChange={(e) => onSafetyWeightChange(Number(e.target.value))}
-          className="mfSlider"
-        />
-        <span className="mfSliderValue">안전 우선 {safetyWeight}%</span>
-      </div>
 
-      <div className="mfToggleBg">
-        <button
-          className={timeMode === 'now' ? 'mfToggleItem active' : 'mfToggleItem'}
-          onClick={() => onTimeModeChange('now')}
-        >
-          <Sun size={14} /> 지금
+        <h3 className="mfSectionLabel">대안 경로</h3>
+        <div className="mfRouteList">
+          {ROUTE_OPTIONS.map((r) => (
+            <button
+              key={r.id}
+              className={r.id === selectedRouteId ? 'mfRouteOption selected' : 'mfRouteOption'}
+              onClick={() => onSelectRoute(r.id)}
+            >
+              <ScoreBadge score={r.score} size="sm" />
+              <div>
+                <strong>{r.name}</strong>
+                <span>{r.note}</span>
+              </div>
+              <div className="mfRouteMeta">
+                <strong>{r.duration}분</strong>
+                <span>{r.distance}km</span>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        <button className="mfPrimaryBtn mfMainCta" onClick={onStart}>
+          안내 시작
         </button>
-        <button
-          className={timeMode === 'night' ? 'mfToggleItem active' : 'mfToggleItem'}
-          onClick={() => onTimeModeChange('night')}
-        >
-          <Moon size={14} /> 야간
-        </button>
       </div>
-
-      <h3 className="mfSectionLabel">대안 경로</h3>
-      <div className="mfRouteList">
-        {ROUTE_OPTIONS.map((r) => (
-          <button
-            key={r.id}
-            className={r.id === selectedRouteId ? 'mfRouteOption selected' : 'mfRouteOption'}
-            onClick={() => onSelectRoute(r.id)}
-          >
-            <ScoreBadge score={r.score} size="sm" />
-            <div>
-              <strong>{r.name}</strong>
-              <span>{r.note}</span>
-            </div>
-            <div className="mfRouteMeta">
-              <strong>{r.duration}분</strong>
-              <span>{r.distance}km</span>
-            </div>
-          </button>
-        ))}
-      </div>
-
-      <button className="mfPrimaryBtn mfMainCta" onClick={onStart}>
-        안내 시작
-      </button>
     </div>
   );
 }
