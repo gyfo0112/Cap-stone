@@ -1,5 +1,7 @@
 CREATE DATABASE my_safe;
 
+DROP DATABASE my_safe;
+
 USE my_safe;
 
 CREATE TABLE marker (
@@ -28,7 +30,29 @@ CREATE TABLE posts (
     post_title VARCHAR(50) NOT NULL, 
     body TEXT, 
     user_uuid VARCHAR(36) NOT NULL, 
+    post_type VARCHAR(20) NOT NULL, 
+    post_status VARCHAR(20) NOT NULL, 
     created_at date, 
     CONSTRAINT posts_pk PRIMARY KEY(idx), 
     CONSTRAINT posts_user_fk FOREIGN KEY (user_uuid) REFERENCES users(user_uuid)
+);
+
+CREATE TABLE favorite (
+	idx INT NOT NULL AUTO_INCREMENT, 
+    user_uuid VARCHAR(36) NOT NULL, 
+    marker_uuid VARCHAR(36) NOT NULL, 
+    CONSTRAINT fav_pk PRIMARY KEY(idx), 
+    CONSTRAINT fav_user_marker_uk UNIQUE (user_uuid, marker_uuid),
+    CONSTRAINT fav_user_fk FOREIGN KEY (user_uuid) REFERENCES users(user_uuid), 
+    CONSTRAINT fav_marker_fk FOREIGN KEY (marker_uuid) REFERENCES marker(marker_uuid)
+);
+
+CREATE TABLE post_request ( 
+	idx INT NOT NULL AUTO_INCREMENT, 
+    user_uuid VARCHAR(36) NOT NULL, 
+    post_uuid VARCHAR(36) NOT NULL, 
+    CONSTRAINT req_pk PRIMARY KEY(idx), 
+    CONSTRAINT req_user_post_uk UNIQUE (user_uuid, post_uuid),
+    CONSTRAINT req_user_fk FOREIGN KEY (user_uuid) REFERENCES users(user_uuid), 
+    CONSTRAINT req_post_fk FOREIGN KEY (post_uuid) REFERENCES posts(post_uuid)
 );
