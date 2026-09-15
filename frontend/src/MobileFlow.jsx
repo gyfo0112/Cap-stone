@@ -496,19 +496,20 @@ function RouteResultBody({
 /* ---------- 5. 경로 상세 / 턴바이턴 ---------- */
 
 const SEGMENTS = [
-  { name: '어울마당로 · 260m', grade: '안전', note: 'CCTV 3대, 보안등 8개 · 유동인구 많음' },
-  { name: '서교로 골목 · 180m', grade: '보통', note: '보안등 2개 · 야간 조도 낮음, 안심벨 40m' },
-  { name: '동교로 뒷길 · 200m', grade: '주의', note: '어두운 구간 · 최근 6개월 야간 신고 4건' },
-  { name: '연남로 · 340m', grade: '안전', note: '안심벨 1개, CCTV 5대 · 상가 밀집' },
+  { name: '어울마당로', meters: 260, grade: '안전', note: 'CCTV 3대, 보안등 8개 · 유동인구 많음' },
+  { name: '서교로 골목', meters: 180, grade: '보통', note: '보안등 2개 · 야간 조도 낮음, 안심벨 40m' },
+  { name: '동교로 뒷길', meters: 200, grade: '주의', note: '어두운 구간 · 최근 6개월 야간 신고 4건' },
+  { name: '연남로', meters: 340, grade: '안전', note: '안심벨 1개, CCTV 5대 · 상가 밀집' },
 ];
 
 const GRADE_COLOR = { 안전: '#22a06b', 보통: '#9a6910', 주의: '#c1631a', 위험: '#f34b52' };
+const GRADE_SOFT = { 안전: '#e3f5ec', 보통: '#fff7da', 주의: '#ffe9d6', 위험: '#fdecec' };
 
 export function RouteDetailScreen({ onEnd }) {
   const [sharing, setSharing] = useState(false);
 
   return (
-    <div className="mfScreen">
+    <div className="mfRouteScreen">
       <div className="mfTurnBanner">
         <ArrowUp size={26} />
         <div>
@@ -517,31 +518,52 @@ export function RouteDetailScreen({ onEnd }) {
         </div>
       </div>
 
-      <h3 className="mfSectionLabel">구간별 안전 요인</h3>
-      <div className="mfSegmentList">
-        {SEGMENTS.map((s) => (
-          <div className="mfSegmentRow" key={s.name}>
-            <span className="mfSegmentBar" style={{ background: GRADE_COLOR[s.grade] }} />
-            <div className="mfSegmentIcon" style={{ color: GRADE_COLOR[s.grade] }}>
-              {s.grade === '안전' ? <CircleCheck size={16} /> : <TriangleAlert size={16} />}
-            </div>
-            <div>
-              <strong>
-                {s.name} · <span style={{ color: GRADE_COLOR[s.grade] }}>{s.grade}</span>
-              </strong>
-              <p>{s.note}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+      <div className="mfRouteSheet">
+        <span className="mfGrabHandle" />
 
-      <div className="mfDetailActions">
-        <button className="mfOutlineBtn mfFlex1" onClick={onEnd}>
-          안내 종료
-        </button>
-        <button className="mfShareBtn mfFlex1_4" onClick={() => setSharing((v) => !v)}>
-          <Users size={16} /> {sharing ? '공유 중' : '보호자 공유'}
-        </button>
+        <div className="mfSegmentHeader">
+          <h3 className="mfSectionLabel" style={{ margin: 0 }}>
+            구간별 안전 요인
+          </h3>
+          <span className="mfSegmentSummary">총 {SEGMENTS.length}구간 · 1.8km</span>
+        </div>
+
+        <div className="mfSegmentList">
+          {SEGMENTS.map((s) => (
+            <div className="mfSegmentRow" key={s.name}>
+              <span className="mfSegmentBar" style={{ background: GRADE_COLOR[s.grade] }} />
+              <div
+                className="mfSegmentIcon"
+                style={{ color: GRADE_COLOR[s.grade], background: GRADE_SOFT[s.grade] }}
+              >
+                {s.grade === '안전' ? <CircleCheck size={16} /> : <TriangleAlert size={16} />}
+              </div>
+              <div className="mfSegmentBody">
+                <div className="mfSegmentTitleRow">
+                  <strong>
+                    {s.name} · {s.meters}m
+                  </strong>
+                  <span
+                    className="mfSegmentGradeTag"
+                    style={{ color: GRADE_COLOR[s.grade], background: GRADE_SOFT[s.grade] }}
+                  >
+                    {s.grade}
+                  </span>
+                </div>
+                <p>{s.note}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mfDetailActions">
+          <button className="mfOutlineBtn mfFlex1" onClick={onEnd}>
+            안내 종료
+          </button>
+          <button className="mfShareBtn mfFlex1_4" onClick={() => setSharing((v) => !v)}>
+            <Users size={16} /> {sharing ? '공유 중' : '보호자 공유'}
+          </button>
+        </div>
       </div>
     </div>
   );

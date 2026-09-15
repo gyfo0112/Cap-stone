@@ -21,7 +21,10 @@
    위에는 떠 있는 헤더, 아래는 하단시트만 배경을 채운다. */
 .mfRouteScreen {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 64px; /* 하단 탭바(SOS 포함) 위는 계속 보이게 비워둠 */
   z-index: 50;
 
   display: flex;
@@ -642,14 +645,18 @@
 /* ---------- 5. 경로 상세 / 턴바이턴 ---------- */
 
 .mfTurnBanner {
-  background: #2c82f6;
+  pointer-events: auto;
+
+  margin: calc(12px + env(safe-area-inset-top)) 14px 0;
+  background: #1e4fa0;
   border-radius: 18px;
   padding: 14px 16px;
+  box-shadow: 0 10px 28px rgba(16, 24, 33, 0.18);
+
   display: flex;
   align-items: center;
   gap: 14px;
   color: #fff;
-  margin-bottom: 18px;
 }
 
 .mfTurnBanner strong {
@@ -663,16 +670,29 @@
   opacity: 0.85;
 }
 
+.mfSegmentHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mfSegmentSummary {
+  font-size: 12px;
+  font-weight: 700;
+  color: #9da5b2;
+}
+
 .mfSegmentList {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
   flex: 1;
 }
 
 .mfSegmentRow {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
 }
 
@@ -686,25 +706,39 @@
 .mfSegmentIcon {
   width: 30px;
   height: 30px;
-  border-radius: 10px;
-  background: #f4f7fb;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  margin-top: 1px;
 }
 
-.mfSegmentRow > div:last-child {
+.mfSegmentBody {
   min-width: 0;
 }
 
-.mfSegmentRow strong {
+.mfSegmentTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mfSegmentTitleRow strong {
   font-size: 13.5px;
   font-weight: 700;
 }
 
+.mfSegmentGradeTag {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
 .mfSegmentRow p {
-  margin: 2px 0 0;
+  margin: 3px 0 0;
   font-size: 12px;
   color: #8c95a4;
 }
@@ -728,8 +762,8 @@
 .mfShareBtn {
   border: 0;
   border-radius: 12px;
-  background: #eaf3ff;
-  color: #1477f8;
+  background: #eaf1fb;
+  color: #1e4fa0;
   font-size: 13px;
   font-weight: 700;
   display: flex;
