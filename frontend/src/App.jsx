@@ -92,6 +92,22 @@ function App() {
     setMobileScreen(null); // 다른 탭으로 이동하면 진행 중이던 경로 흐름은 닫음
   };
 
+  // 하단시트(controlPanel)가 화면에서 실제로 시작하는 y좌표를 재서
+  // "현재 위치로 이동" 버튼을 그 바로 위에 붙인다. 시트는 하단탭바(64px)
+  // 위에 떠 있어서 시트 height만으로는 못 구하고, 화면 top 기준으로 직접 계산.
+  const controlPanelRef = useRef(null);
+  const [sheetTopGap, setSheetTopGap] = useState(0);
+  useEffect(() => {
+    if (!isMobile || !controlPanelRef.current) return undefined;
+    const el = controlPanelRef.current;
+    const observer = new ResizeObserver(() => {
+      const top = el.getBoundingClientRect().top;
+      setSheetTopGap(window.innerHeight - top);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [isMobile]);
+
   return (
     <div className="app">
       {/* 왼쪽 메뉴 */}
@@ -150,7 +166,7 @@ function App() {
       </aside>
 
       {/* 가운데 기능 패널 */}
-      <section className="controlPanel">
+      <section className="controlPanel" ref={controlPanelRef}>
         {isMobile ? (
           <>
             {mobileTab === 'map' && (
@@ -181,7 +197,7 @@ function App() {
             onOpenCrime={() => setCrimeLayerOpen(true)}
             onOpenInput={openRouteInput}
           />
-          <MapControls onLocate={myLocation.refresh} />
+          <MapControls onLocate={myLocation.refresh} bottomOffset={sheetTopGap ? sheetTopGap + 14 : undefined} />
         </>
       )}
 
