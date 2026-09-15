@@ -816,25 +816,8 @@ button {
     display: none;
   }
 
-  /* ponytail: SOS 플로팅 버튼·로그인은 모바일 탭바 자리 확보 전이라 우선 숨김.
-     SOS 화면을 만들 때 탭바 중앙 FAB로 재배치. */
+  /* 로그인 버튼은 모바일 탭바에 자리가 없어 숨김. SOS는 MobileTabBar 옆 mfSosFab로 대체. */
   .sidebarBottom {
     display: none;
-  }
-
-  .menu {
-    flex: 1;
-    flex-direction: row;
-    justify-content: space-around;
-    gap: 0;
-  }
-
-  .menuItem {
-    flex-direction: column;
-    justify-content: center;
-    gap: 2px;
-    padding: 6px 8px;
-    font-size: 11px;
-    border-radius: 12px;
   }
 }

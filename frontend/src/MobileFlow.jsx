@@ -15,6 +15,13 @@ import {
   ShieldCheck,
   Siren,
   MapPin,
+  Bell,
+  Route,
+  Settings,
+  UserPlus,
+  Search,
+  Camera,
+  Lightbulb,
 } from 'lucide-react';
 import { scoreGrade } from './useIsMobile';
 import './MobileFlow.css';
@@ -28,6 +35,83 @@ function ScoreBadge({ score, size = 'md' }) {
       <Icon size={size === 'lg' ? 18 : 14} />
       <strong>{score}</strong>
       <span>{grade.label}</span>
+    </div>
+  );
+}
+
+// 하단 탭바 (지도 / 경로 / [SOS 자리] / 도움요청 / 설정)
+const TABS = [
+  { key: 'map', label: '지도', icon: MapPin },
+  { key: 'route', label: '경로', icon: Route },
+  { key: 'sos', label: '', icon: null },
+  { key: 'help', label: '도움요청', icon: Bell },
+  { key: 'settings', label: '설정', icon: Settings },
+];
+
+export function MobileTabBar({ active, onSelect }) {
+  return (
+    <nav className="mfTabBar">
+      {TABS.map((t) =>
+        t.key === 'sos' ? (
+          <span key="sos" className="mfTabSpacer" aria-hidden="true" />
+        ) : (
+          <button
+            key={t.key}
+            className={active === t.key ? 'mfTabItem active' : 'mfTabItem'}
+            onClick={() => onSelect(t.key)}
+          >
+            <t.icon size={20} />
+            <span>{t.label}</span>
+          </button>
+        ),
+      )}
+    </nav>
+  );
+}
+
+// 지도 위 검색바 + 안전시설 오버레이 칩 (메인 지도 탭에서만 표시)
+const OVERLAY_CHIPS = [
+  { key: 'cctv', label: 'CCTV', icon: Camera },
+  { key: 'streetlight', label: '보안등', icon: Lightbulb },
+  { key: 'safetyBell', label: '안심벨', icon: Bell },
+  { key: 'crimeZone', label: '범죄주의구간', icon: TriangleAlert },
+];
+
+export function MapSearchOverlay({ cctvOn, onToggleCctv, onOpenCrime, onOpenInput, onOpenSettings }) {
+  const handleChip = (key) => {
+    if (key === 'cctv') onToggleCctv();
+    if (key === 'crimeZone') onOpenCrime();
+    // 보안등·안심벨 데이터는 아직 없어서 비활성
+  };
+
+  return (
+    <div className="mfMapOverlay">
+      <div className="mfSearchBar">
+        <button className="mfSearchField" onClick={() => onOpenInput('')}>
+          <Search size={18} />
+          <span>어디로 갈까요?</span>
+        </button>
+        <button className="mfSearchGear" onClick={onOpenSettings} aria-label="설정">
+          <Settings size={18} />
+        </button>
+      </div>
+
+      <div className="mfChipRow">
+        {OVERLAY_CHIPS.map((c) => {
+          const disabled = c.key === 'streetlight' || c.key === 'safetyBell';
+          const active = c.key === 'cctv' && cctvOn;
+          return (
+            <button
+              key={c.key}
+              className={active ? 'mfChip active' : 'mfChip'}
+              disabled={disabled}
+              onClick={() => handleChip(c.key)}
+            >
+              <c.icon size={15} /> {c.label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -452,6 +536,197 @@ export function SosOverlay({ onClose }) {
       <button className="mfOutlineBtn mfCancelBtn" onClick={onClose}>
         취소
       </button>
+    </div>
+  );
+}
+
+/* ---------- 7. 범죄주의구간 레이어 ---------- */
+
+// 등급 10칸 색상은 기존 팔레트의 안전(초록)-주의(옐로우)-위험(레드) 세 축 사이를
+// 손으로 보간한 값 — 디자인 원본 팔레트를 그대로 쓰지 않고 우리 색으로 재구성.
+const CRIME_LEGEND = [
+  '#22a06b',
+  '#3aa966',
+  '#55b25c',
+  '#7ab84c',
+  '#a3b93c',
+  '#c9b02e',
+  '#dda32a',
+  '#e69126',
+  '#ec7a2a',
+  '#f34b52',
+];
+
+export function CrimeLayerScreen({ onClose }) {
+  const [enabled, setEnabled] = useState(true);
+  const [opacity, setOpacity] = useState(60);
+
+  return (
+    <div className="mfScreen">
+      <header className="mfHeader">
+        <button className="mfIconBtn" onClick={onClose} aria-label="뒤로">
+          <ChevronLeft size={22} />
+        </button>
+        <h1>범죄주의구간</h1>
+      </header>
+
+      <div className="mfCrimeTopCard">
+        <div className="mfCrimeTopIcon">
+          <TriangleAlert size={18} />
+        </div>
+        <div className="mfCrimeTopText">
+          <strong>범죄주의구간</strong>
+          <span>경찰청 격자 WMS · 2026.08 기준</span>
+        </div>
+        <button
+          className={enabled ? 'mfSwitch on' : 'mfSwitch'}
+          onClick={() => setEnabled((v) => !v)}
+          aria-label="레이어 토글"
+        >
+          <span />
+        </button>
+      </div>
+
+      <h3 className="mfSectionLabel">10등급 범례</h3>
+      <div className="mfLegend">
+        {CRIME_LEGEND.map((c, i) => (
+          <div key={c} className="mfLegendCell" style={{ background: c }}>
+            {i + 1}
+          </div>
+        ))}
+      </div>
+      <p className="mfLegendCaption">1등급 안전 · 5·6등급 보통 · 10등급 위험</p>
+
+      <div className="mfCrimeAreaCard">
+        <strong>이 지역 8등급 · 주의</strong>
+        <p>
+          서교동 일부 격자는 야간 절도·폭력 신고가 마포구 평균보다 높습니다. 22시 이후
+          어울마당로 대로변 이용을 권장합니다.
+        </p>
+      </div>
+
+      <h3 className="mfSectionLabel">레이어 투명도</h3>
+      <input
+        type="range"
+        min={0}
+        max={100}
+        value={opacity}
+        onChange={(e) => setOpacity(Number(e.target.value))}
+        className="mfSlider mfSliderNeutral"
+      />
+      <span className="mfSliderValue">{opacity}%</span>
+
+      <p className="mfCrimeNote">
+        ⓘ 실제 경찰청 WMS 타일 연동 전 목업입니다. 데이터 파트 연동 후 지도 위 실시간
+        오버레이로 교체될 예정입니다.
+      </p>
+    </div>
+  );
+}
+
+/* ---------- 8. 설정 ---------- */
+
+const GUARDIANS = [
+  { name: '엄마 김서연', phone: '010-2841-XXXX', tag: '기본' },
+  { name: '친구 이지훈', phone: '010-7745-XXXX', tag: '보조' },
+];
+
+const THEME_OPTIONS = [
+  { key: 'light', label: '라이트' },
+  { key: 'dark', label: '다크' },
+  { key: 'system', label: '시스템' },
+];
+
+const NOTIF_ITEMS = [
+  { key: 'zoneEntry', title: '위험 구간 진입 알림', desc: '주의구간 100m 이내 진입 시 진동' },
+  { key: 'nightRecalc', title: '야간 경로 재계산 알림', desc: '일몰 후 저장 경로 안전도 변동 시' },
+  { key: 'arrival', title: '보호자 도착 알림', desc: '목적지 도착 시 보호자에게 자동 전송' },
+];
+
+export function SettingsScreen({ safetyWeight, onSafetyWeightChange, onClose }) {
+  const [theme, setTheme] = useState('light');
+  const [notif, setNotif] = useState({ zoneEntry: true, nightRecalc: true, arrival: false });
+
+  const toggleNotif = (key) => setNotif((n) => ({ ...n, [key]: !n[key] }));
+
+  return (
+    <div className="mfScreen">
+      <header className="mfHeader">
+        <button className="mfIconBtn" onClick={onClose} aria-label="뒤로">
+          <ChevronLeft size={22} />
+        </button>
+        <h1>설정</h1>
+      </header>
+
+      <div className="mfSettingsCard">
+        <strong>기본 안전 우선도</strong>
+        <p>경로 계산의 기본값으로 사용됩니다.</p>
+        <input
+          type="range"
+          min={0}
+          max={100}
+          value={safetyWeight}
+          onChange={(e) => onSafetyWeightChange(Number(e.target.value))}
+          className="mfSlider"
+        />
+        <div className="mfSliderLabels">
+          <span>거리 최우선</span>
+          <span>안전 최우선</span>
+        </div>
+      </div>
+
+      <div className="mfSettingsCard">
+        <strong>보호자 연락처</strong>
+        <p>SOS 전송 시 이 목록으로 위치가 공유됩니다.</p>
+        {GUARDIANS.map((g) => (
+          <div className="mfContactRow" key={g.name}>
+            <div className="mfContactInfo">
+              <strong>{g.name}</strong>
+              <span>{g.phone}</span>
+            </div>
+            <span className="mfContactTag">{g.tag}</span>
+          </div>
+        ))}
+        <button className="mfTextBtn mfAddContact" disabled>
+          <UserPlus size={15} /> 연락처 추가
+        </button>
+      </div>
+
+      <div className="mfSettingsCard">
+        <strong>테마</strong>
+        <p>다크 모드는 준비 중입니다.</p>
+        <div className="mfSegment">
+          {THEME_OPTIONS.map((t) => (
+            <button
+              key={t.key}
+              className={theme === t.key ? 'mfSegmentItem active' : 'mfSegmentItem'}
+              onClick={() => setTheme(t.key)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mfSettingsCard">
+        <strong>알림</strong>
+        <p>기기 알림 권한이 있어야 실제로 발송됩니다.</p>
+        {NOTIF_ITEMS.map((n) => (
+          <div className="mfNotifRow" key={n.key}>
+            <div className="mfNotifInfo">
+              <strong>{n.title}</strong>
+              <span>{n.desc}</span>
+            </div>
+            <button
+              className={notif[n.key] ? 'mfSwitch on' : 'mfSwitch'}
+              onClick={() => toggleNotif(n.key)}
+              aria-label={n.title}
+            >
+              <span />
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

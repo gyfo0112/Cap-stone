@@ -19,9 +19,13 @@ import { useIsMobile } from './useIsMobile';
 import {
   Onboarding,
   MainMapCard,
+  MapSearchOverlay,
+  MobileTabBar,
   RouteInputScreen,
   RouteResultScreen,
   RouteDetailScreen,
+  CrimeLayerScreen,
+  SettingsScreen,
   SosFab,
   SosOverlay,
 } from './MobileFlow';
@@ -48,9 +52,12 @@ function App() {
     setOnboardingDone(true);
   };
 
-  // 모바일 전용 화면 흐름: 지도 하단시트 -> 경로입력 -> 경로결과 -> 경로상세
+  // 모바일 하단 탭: 지도 / 경로 / 도움요청 / 설정 (SOS는 탭이 아니라 중앙 FAB)
+  const [mobileTab, setMobileTab] = useState('map');
+  // 경로 탭 안에서의 하위 흐름: 지도 하단시트 -> 경로입력 -> 경로결과 -> 경로상세
   const [mobileScreen, setMobileScreen] = useState(null); // null | 'input' | 'result' | 'detail'
   const [sosOpen, setSosOpen] = useState(false);
+  const [crimeLayerOpen, setCrimeLayerOpen] = useState(false);
   const [destination, setDestination] = useState('');
   const [safetyWeight, setSafetyWeight] = useState(62);
   const [timeMode, setTimeMode] = useState('now');
@@ -58,7 +65,22 @@ function App() {
 
   const openRouteInput = (prefill) => {
     setDestination(prefill);
+    setMobileTab('route');
     setMobileScreen('input');
+  };
+
+  const closeRouteFlow = () => {
+    setMobileScreen(null);
+    setMobileTab('map');
+  };
+
+  const selectMobileTab = (key) => {
+    if (key === 'route') {
+      openRouteInput('');
+      return;
+    }
+    setMobileTab(key);
+    setMobileScreen(null); // 다른 탭으로 이동하면 진행 중이던 경로 흐름은 닫음
   };
 
   return (
@@ -74,31 +96,35 @@ function App() {
             </div>
           </div>
 
-          <nav className="menu">
-            <button
-              className={menu === 'route' ? 'menuItem active' : 'menuItem'}
-              onClick={() => setMenu('route')}
-            >
-              <MapPin size={22} />
-              <span>안전 귀갓길 찾기</span>
-            </button>
+          {isMobile ? (
+            <MobileTabBar active={mobileTab} onSelect={selectMobileTab} />
+          ) : (
+            <nav className="menu">
+              <button
+                className={menu === 'route' ? 'menuItem active' : 'menuItem'}
+                onClick={() => setMenu('route')}
+              >
+                <MapPin size={22} />
+                <span>안전 귀갓길 찾기</span>
+              </button>
 
-            <button
-              className={menu === 'help' ? 'menuItem active' : 'menuItem'}
-              onClick={() => setMenu('help')}
-            >
-              <Bell size={22} />
-              <span>도움요청</span>
-            </button>
+              <button
+                className={menu === 'help' ? 'menuItem active' : 'menuItem'}
+                onClick={() => setMenu('help')}
+              >
+                <Bell size={22} />
+                <span>도움요청</span>
+              </button>
 
-            <button
-              className={menu === 'facility' ? 'menuItem active' : 'menuItem'}
-              onClick={() => setMenu('facility')}
-            >
-              <ShieldCheck size={22} />
-              <span>공공시설 확인</span>
-            </button>
-          </nav>
+              <button
+                className={menu === 'facility' ? 'menuItem active' : 'menuItem'}
+                onClick={() => setMenu('facility')}
+              >
+                <ShieldCheck size={22} />
+                <span>공공시설 확인</span>
+              </button>
+            </nav>
+          )}
         </div>
 
         <div className="sidebarBottom">
@@ -116,9 +142,18 @@ function App() {
 
       {/* 가운데 기능 패널 */}
       <section className="controlPanel">
-        {menu === 'route' && (isMobile ? <MainMapCard onOpenInput={openRouteInput} /> : <RoutePanel />)}
-        {menu === 'help' && <HelpPanel />}
-        {menu === 'facility' && <FacilityPanel layers={layers} onToggle={toggleLayer} />}
+        {isMobile ? (
+          <>
+            {mobileTab === 'map' && <MainMapCard onOpenInput={openRouteInput} />}
+            {mobileTab === 'help' && <HelpPanel />}
+          </>
+        ) : (
+          <>
+            {menu === 'route' && <RoutePanel />}
+            {menu === 'help' && <HelpPanel />}
+            {menu === 'facility' && <FacilityPanel layers={layers} onToggle={toggleLayer} />}
+          </>
+        )}
       </section>
 
       {/* 오른쪽 지도 영역 */}
@@ -126,13 +161,23 @@ function App() {
         <MapView layers={layers} />
       </main>
 
-      {/* 모바일 전용: 온보딩 / 경로 흐름 / SOS는 전체화면으로 위에 겹쳐 그림 */}
+      {/* 모바일 전용: 지도 위 검색바+오버레이 칩 / 온보딩 / 경로 흐름 / SOS / 범죄레이어 / 설정 */}
+      {isMobile && onboardingDone && mobileTab === 'map' && mobileScreen === null && (
+        <MapSearchOverlay
+          cctvOn={layers.cctv}
+          onToggleCctv={() => toggleLayer('cctv')}
+          onOpenCrime={() => setCrimeLayerOpen(true)}
+          onOpenInput={openRouteInput}
+          onOpenSettings={() => setMobileTab('settings')}
+        />
+      )}
+
       {isMobile && !onboardingDone && <Onboarding onDone={finishOnboarding} />}
 
       {isMobile && onboardingDone && mobileScreen === 'input' && (
         <RouteInputScreen
           initialDestination={destination}
-          onBack={() => setMobileScreen(null)}
+          onBack={closeRouteFlow}
           onSelect={(name) => {
             setDestination(name);
             setMobileScreen('result');
@@ -155,8 +200,18 @@ function App() {
       )}
 
       {isMobile && onboardingDone && mobileScreen === 'detail' && (
-        <RouteDetailScreen onEnd={() => setMobileScreen(null)} />
+        <RouteDetailScreen onEnd={closeRouteFlow} />
       )}
+
+      {isMobile && onboardingDone && mobileTab === 'settings' && (
+        <SettingsScreen
+          safetyWeight={safetyWeight}
+          onSafetyWeightChange={setSafetyWeight}
+          onClose={() => setMobileTab('map')}
+        />
+      )}
+
+      {isMobile && crimeLayerOpen && <CrimeLayerScreen onClose={() => setCrimeLayerOpen(false)} />}
 
       {isMobile && onboardingDone && !sosOpen && <SosFab onOpen={() => setSosOpen(true)} />}
       {isMobile && sosOpen && <SosOverlay onClose={() => setSosOpen(false)} />}

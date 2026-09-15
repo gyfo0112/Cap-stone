@@ -864,3 +864,333 @@
   height: 52px;
   background: #fff;
 }
+
+/* ---------- 하단 탭바 (지도/경로/SOS자리/도움요청/설정) ---------- */
+
+.mfTabBar {
+  display: flex;
+  width: 100%;
+  align-items: stretch;
+}
+
+.mfTabItem {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 2px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #8c95a4;
+}
+
+.mfTabItem.active {
+  color: #1477f8;
+}
+
+.mfTabSpacer {
+  flex: 1;
+}
+
+/* ---------- 지도 위 검색바 + 오버레이 칩 ---------- */
+
+.mfMapOverlay {
+  position: fixed;
+  left: 14px;
+  right: 14px;
+  top: calc(12px + env(safe-area-inset-top));
+  z-index: 12;
+}
+
+.mfSearchBar {
+  height: 52px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 10px 28px rgba(16, 24, 33, 0.12);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px 0 4px;
+  margin-bottom: 10px;
+}
+
+.mfSearchField {
+  flex: 1;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: 14px;
+  color: #9da5b2;
+}
+
+.mfSearchField span {
+  font-size: 15px;
+  color: #9da5b2;
+}
+
+.mfSearchGear {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 0;
+  background: #f4f7fb;
+  color: #606977;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mfChipRow {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.mfChip {
+  flex-shrink: 0;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 13px;
+  border: 1.5px solid #e4e7eb;
+  background: #fff;
+  color: #46505f;
+  font-size: 14px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  box-shadow: 0 3px 10px rgba(16, 24, 33, 0.08);
+}
+
+.mfChip:disabled {
+  opacity: 0.5;
+}
+
+.mfChip.active {
+  background: #1477f8;
+  border-color: #1477f8;
+  color: #fff;
+}
+
+/* ---------- 범죄주의구간 ---------- */
+
+.mfCrimeTopCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f4f7fb;
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 6px;
+}
+
+.mfCrimeTopIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #fdecec;
+  color: #f34b52;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mfCrimeTopText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.mfCrimeTopText strong {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.mfCrimeTopText span {
+  font-size: 12px;
+  color: #8c95a4;
+}
+
+.mfLegend {
+  display: flex;
+  gap: 3px;
+}
+
+.mfLegendCell {
+  flex: 1;
+  height: 26px;
+  border-radius: 5px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mfLegendCaption {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #8c95a4;
+}
+
+.mfCrimeAreaCard {
+  margin-top: 18px;
+  background: #fdecec;
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.mfCrimeAreaCard strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+  color: #f34b52;
+  margin-bottom: 6px;
+}
+
+.mfCrimeAreaCard p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #606977;
+}
+
+.mfSliderNeutral {
+  background: #dce3ea;
+}
+
+.mfCrimeNote {
+  margin-top: auto;
+  padding-top: 20px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #9da5b2;
+}
+
+/* ---------- 설정 ---------- */
+
+.mfSettingsCard {
+  background: #fff;
+  border: 1px solid #e6e9ed;
+  border-radius: 18px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.mfSettingsCard > strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.mfSettingsCard > p {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: #8c95a4;
+}
+
+.mfContactRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #eceef1;
+}
+
+.mfContactInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mfContactInfo strong {
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.mfContactInfo span {
+  font-size: 12px;
+  color: #9da5b2;
+}
+
+.mfContactTag {
+  font-size: 11px;
+  font-weight: 700;
+  color: #8c95a4;
+  background: #f4f7fb;
+  padding: 3px 8px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.mfAddContact {
+  height: 40px;
+  justify-content: flex-start;
+  gap: 6px;
+  color: #2c82f6;
+  font-weight: 700;
+}
+
+.mfSegment {
+  display: flex;
+  gap: 6px;
+  background: #f4f7fb;
+  border-radius: 12px;
+  padding: 4px;
+}
+
+.mfSegmentItem {
+  flex: 1;
+  height: 36px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #606977;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.mfSegmentItem.active {
+  background: #fff;
+  color: #202938;
+  box-shadow: 0 2px 6px rgba(16, 24, 33, 0.12);
+}
+
+.mfNotifRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.mfNotifInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mfNotifInfo strong {
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.mfNotifInfo span {
+  font-size: 11.5px;
+  color: #9da5b2;
+}
