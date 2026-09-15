@@ -194,7 +194,8 @@ function App() {
           <MapSearchOverlay
             cctvOn={layers.cctv}
             onToggleCctv={() => toggleLayer('cctv')}
-            onOpenCrime={() => setCrimeLayerOpen(true)}
+            crimeOn={crimeLayerOpen}
+            onOpenCrime={() => setCrimeLayerOpen((v) => !v)}
             onOpenInput={openRouteInput}
           />
           <MapControls onLocate={myLocation.refresh} bottomOffset={sheetTopGap ? sheetTopGap + 14 : undefined} />
@@ -238,7 +239,7 @@ function App() {
         <SettingsScreen safetyWeight={safetyWeight} onSafetyWeightChange={setSafetyWeight} />
       )}
 
-      {isMobile && crimeLayerOpen && <CrimeLayerScreen onClose={() => setCrimeLayerOpen(false)} />}
+      {isMobile && crimeLayerOpen && <CrimeLayerScreen />}
 
       {isMobile && onboardingDone && !sosOpen && <SosFab onOpen={() => setSosOpen(true)} />}
       {isMobile && sosOpen && <SosOverlay onClose={() => setSosOpen(false)} />}

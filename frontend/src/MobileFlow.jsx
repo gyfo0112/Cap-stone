@@ -120,7 +120,7 @@ const OVERLAY_CHIPS = [
   { key: 'crimeZone', label: '범죄주의구간', icon: TriangleAlert },
 ];
 
-export function MapSearchOverlay({ cctvOn, onToggleCctv, onOpenCrime, onOpenInput }) {
+export function MapSearchOverlay({ cctvOn, onToggleCctv, crimeOn, onOpenCrime, onOpenInput }) {
   const handleChip = (key) => {
     if (key === 'cctv') onToggleCctv();
     if (key === 'crimeZone') onOpenCrime();
@@ -137,7 +137,7 @@ export function MapSearchOverlay({ cctvOn, onToggleCctv, onOpenCrime, onOpenInpu
       <div className="mfChipRow">
         {OVERLAY_CHIPS.map((c) => {
           const disabled = c.key === 'streetlight' || c.key === 'safetyBell';
-          const active = c.key === 'cctv' && cctvOn;
+          const active = (c.key === 'cctv' && cctvOn) || (c.key === 'crimeZone' && crimeOn);
           return (
             <button
               key={c.key}
@@ -776,70 +776,68 @@ const CRIME_LEGEND = [
   '#f34b52',
 ];
 
-export function CrimeLayerScreen({ onClose }) {
+export function CrimeLayerScreen() {
   const [enabled, setEnabled] = useState(true);
   const [opacity, setOpacity] = useState(60);
 
-  const toggleLayer = () => {
-    setEnabled(false);
-    onClose();
-  };
-
   return (
     <div className="mfRouteScreen">
-      <div className="mfCrimeFloatingCard">
-        <div className="mfCrimeTopIcon">
-          <TriangleAlert size={18} />
-        </div>
-        <div className="mfCrimeTopText">
-          <strong>범죄주의구간</strong>
-          <span>경찰청 격자 WMS · 2026.08 기준</span>
-        </div>
-        <button
-          className={enabled ? 'mfSwitch on' : 'mfSwitch'}
-          onClick={toggleLayer}
-          aria-label="레이어 끄기"
-        >
-          <span />
-        </button>
-      </div>
-
       <div className="mfRouteSheet">
         <span className="mfGrabHandle" />
 
-        <h3 className="mfSectionLabel">위험 등급 범례</h3>
-        <div className="mfLegend">
-          {CRIME_LEGEND.map((c, i) => (
-            <div key={c} className="mfLegendCell" style={{ background: c }}>
-              {i + 1}
-            </div>
-          ))}
-        </div>
-        <p className="mfLegendCaption">1등급 안전 · 5·6등급 보통 · 10등급 위험</p>
-
-        <div className="mfCrimeAreaCard">
-          <span className="mfCrimeAreaDot" />
-          <div>
-            <strong>이 지역 8등급 · 주의</strong>
-            <p>
-              서교동 일부 격자는 야간 절도·폭력 신고가 마포구 평균보다 높습니다. 22시 이후
-              어울마당로 대로변 이용을 권장합니다.
-            </p>
+        <div className="mfCrimeHeaderRow">
+          <div className="mfCrimeTopIcon">
+            <TriangleAlert size={18} />
           </div>
+          <div className="mfCrimeTopText">
+            <strong>범죄주의구간</strong>
+            <span>경찰청 격자 WMS · 2026.08 기준</span>
+          </div>
+          <button
+            className={enabled ? 'mfSwitch on' : 'mfSwitch'}
+            onClick={() => setEnabled((v) => !v)}
+            aria-label="범죄주의구간 표시 토글"
+          >
+            <span />
+          </button>
         </div>
 
-        <div className="mfSliderHeaderRow">
-          <h3 className="mfSectionLabel">레이어 투명도</h3>
-          <span className="mfSliderValue">{opacity}%</span>
+        <div className={enabled ? 'mfCrimeBody' : 'mfCrimeBody mfCrimeBody--off'}>
+          <h3 className="mfSectionLabel">위험 등급 범례</h3>
+          <div className="mfLegend">
+            {CRIME_LEGEND.map((c, i) => (
+              <div key={c} className="mfLegendCell" style={{ background: c }}>
+                {i + 1}
+              </div>
+            ))}
+          </div>
+          <p className="mfLegendCaption">1등급 안전 · 5·6등급 보통 · 10등급 위험</p>
+
+          <div className="mfCrimeAreaCard">
+            <span className="mfCrimeAreaDot" />
+            <div>
+              <strong>이 지역 8등급 · 주의</strong>
+              <p>
+                서교동 일부 격자는 야간 절도·폭력 신고가 마포구 평균보다 높습니다. 22시 이후
+                어울마당로 대로변 이용을 권장합니다.
+              </p>
+            </div>
+          </div>
+
+          <div className="mfSliderHeaderRow">
+            <h3 className="mfSectionLabel">레이어 투명도</h3>
+            <span className="mfSliderValue">{opacity}%</span>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={opacity}
+            onChange={(e) => setOpacity(Number(e.target.value))}
+            className="mfSlider mfSliderNeutral"
+            disabled={!enabled}
+          />
         </div>
-        <input
-          type="range"
-          min={0}
-          max={100}
-          value={opacity}
-          onChange={(e) => setOpacity(Number(e.target.value))}
-          className="mfSlider mfSliderNeutral"
-        />
       </div>
     </div>
   );
