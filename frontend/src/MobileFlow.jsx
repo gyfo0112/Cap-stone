@@ -30,7 +30,7 @@ import './MobileFlow.css';
 // 안전점수 배지 — 화면 여러 곳(메인카드/최근검색/대안경로)에서 재사용
 function ScoreBadge({ score, size = 'md' }) {
   const grade = scoreGrade(score);
-  const Icon = score >= 60 ? CircleCheck : TriangleAlert;
+  const Icon = score >= 80 ? CircleCheck : TriangleAlert;
   return (
     <div className={`mfScoreBadge mfScoreBadge--${size}`} style={{ background: grade.soft, color: grade.color }}>
       <Icon size={size === 'lg' ? 18 : 14} />
@@ -78,7 +78,7 @@ const OVERLAY_CHIPS = [
   { key: 'crimeZone', label: '범죄주의구간', icon: TriangleAlert },
 ];
 
-export function MapSearchOverlay({ cctvOn, onToggleCctv, onOpenCrime, onOpenInput, onOpenSettings }) {
+export function MapSearchOverlay({ cctvOn, onToggleCctv, onOpenCrime, onOpenInput }) {
   const handleChip = (key) => {
     if (key === 'cctv') onToggleCctv();
     if (key === 'crimeZone') onOpenCrime();
@@ -87,15 +87,10 @@ export function MapSearchOverlay({ cctvOn, onToggleCctv, onOpenCrime, onOpenInpu
 
   return (
     <div className="mfMapOverlay">
-      <div className="mfSearchBar">
-        <button className="mfSearchField" onClick={() => onOpenInput('')}>
-          <Search size={18} />
-          <span>어디로 갈까요?</span>
-        </button>
-        <button className="mfSearchGear" onClick={onOpenSettings} aria-label="설정">
-          <Settings size={18} />
-        </button>
-      </div>
+      <button className="mfSearchBar" onClick={() => onOpenInput('')}>
+        <Search size={18} />
+        <span>어디로 갈까요?</span>
+      </button>
 
       <div className="mfChipRow">
         {OVERLAY_CHIPS.map((c) => {
@@ -113,6 +108,17 @@ export function MapSearchOverlay({ cctvOn, onToggleCctv, onOpenCrime, onOpenInpu
           );
         })}
       </div>
+    </div>
+  );
+}
+
+// 지도 우측 컨트롤 — 지금은 "현재 위치로 이동" 하나. 레이어 버튼 등은 필요해지면 추가.
+export function MapControls({ onLocate }) {
+  return (
+    <div className="mfMapControls">
+      <button className="mfMapControlBtn" onClick={onLocate} aria-label="현재 위치로 이동">
+        <Crosshair size={20} />
+      </button>
     </div>
   );
 }
@@ -485,7 +491,7 @@ const SEGMENTS = [
   { name: '연남로 · 340m', grade: '안전', note: '안심벨 1개, CCTV 5대 · 상가 밀집' },
 ];
 
-const GRADE_COLOR = { 안전: '#22a06b', 보통: '#22a06b', 주의: '#efaa16', 위험: '#f34b52' };
+const GRADE_COLOR = { 안전: '#22a06b', 보통: '#9a6910', 주의: '#c1631a', 위험: '#f34b52' };
 
 export function RouteDetailScreen({ onEnd }) {
   const [sharing, setSharing] = useState(false);
@@ -506,7 +512,7 @@ export function RouteDetailScreen({ onEnd }) {
           <div className="mfSegmentRow" key={s.name}>
             <span className="mfSegmentBar" style={{ background: GRADE_COLOR[s.grade] }} />
             <div className="mfSegmentIcon" style={{ color: GRADE_COLOR[s.grade] }}>
-              {s.grade === '주의' ? <TriangleAlert size={16} /> : <CircleCheck size={16} />}
+              {s.grade === '안전' ? <CircleCheck size={16} /> : <TriangleAlert size={16} />}
             </div>
             <div>
               <strong>

@@ -907,45 +907,46 @@
 }
 
 .mfSearchBar {
+  width: 100%;
   height: 52px;
+  border: 0;
   border-radius: 16px;
   background: #fff;
   box-shadow: 0 10px 28px rgba(16, 24, 33, 0.12);
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 0 8px 0 4px;
-  margin-bottom: 10px;
-}
-
-.mfSearchField {
-  flex: 1;
-  height: 100%;
-  border: 0;
-  background: transparent;
-  display: flex;
-  align-items: center;
   gap: 10px;
-  padding-left: 14px;
+  padding: 0 16px;
+  margin-bottom: 10px;
   color: #9da5b2;
 }
 
-.mfSearchField span {
+.mfSearchBar span {
   font-size: 15px;
   color: #9da5b2;
 }
 
-.mfSearchGear {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+.mfMapControls {
+  position: fixed;
+  right: 14px;
+  bottom: calc(55vh + 14px);
+  z-index: 12;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mfMapControlBtn {
+  width: 46px;
+  height: 46px;
   border: 0;
-  background: #f4f7fb;
-  color: #606977;
+  border-radius: 14px;
+  background: #fff;
+  color: #1477f8;
+  box-shadow: 0 10px 28px rgba(16, 24, 33, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
 }
 
 .mfChipRow {

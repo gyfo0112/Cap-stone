@@ -15,11 +15,12 @@ export function useIsMobile() {
   return isMobile;
 }
 
-// 안전점수 0~100 -> 등급/색상. 색상은 앱 기존 팔레트 재사용
-// (안전·보통은 새로 추가한 초록 하나로 통일, 주의=기존 옐로우, 위험=기존 레드).
+// 안전점수 0~100 -> 등급/색상. 안전만 초록(check), 나머지는 경고 계열(triangle) —
+// 보통은 기존 가로등 아이콘 배경(#fff7da)을 재사용하고 대비용으로 텍스트만 어둡게,
+// 주의는 기존 주의색(#ff8b38) 계열에서 파생. 위험은 기존 레드 그대로.
 export function scoreGrade(score) {
   if (score >= 80) return { label: '안전', color: '#22a06b', soft: '#e3f5ec' };
-  if (score >= 60) return { label: '보통', color: '#22a06b', soft: '#e3f5ec' };
-  if (score >= 35) return { label: '주의', color: '#efaa16', soft: '#fff7da' };
+  if (score >= 60) return { label: '보통', color: '#9a6910', soft: '#fff7da' };
+  if (score >= 35) return { label: '주의', color: '#c1631a', soft: '#ffe9d6' };
   return { label: '위험', color: '#f34b52', soft: '#fdecec' };
 }

@@ -21,6 +21,7 @@ import {
   Onboarding,
   MainMapCard,
   MapSearchOverlay,
+  MapControls,
   MobileTabBar,
   RouteInputScreen,
   RouteResultScreen,
@@ -171,15 +172,17 @@ function App() {
         <MapView layers={layers} location={isMobile ? myLocation : null} />
       </main>
 
-      {/* 모바일 전용: 지도 위 검색바+오버레이 칩 / 온보딩 / 경로 흐름 / SOS / 범죄레이어 / 설정 */}
+      {/* 모바일 전용: 지도 위 검색바+오버레이 칩+컨트롤 / 온보딩 / 경로 흐름 / SOS / 범죄레이어 / 설정 */}
       {isMobile && onboardingDone && mobileTab === 'map' && mobileScreen === null && (
-        <MapSearchOverlay
-          cctvOn={layers.cctv}
-          onToggleCctv={() => toggleLayer('cctv')}
-          onOpenCrime={() => setCrimeLayerOpen(true)}
-          onOpenInput={openRouteInput}
-          onOpenSettings={() => setMobileTab('settings')}
-        />
+        <>
+          <MapSearchOverlay
+            cctvOn={layers.cctv}
+            onToggleCctv={() => toggleLayer('cctv')}
+            onOpenCrime={() => setCrimeLayerOpen(true)}
+            onOpenInput={openRouteInput}
+          />
+          <MapControls onLocate={myLocation.refresh} />
+        </>
       )}
 
       {isMobile && !onboardingDone && <Onboarding onDone={finishOnboarding} />}
