@@ -1,0 +1,58 @@
+dbdiagram.io 에서 확인 가능
+
+Table marker {
+  idx integer [primary key, increment]
+  marker_uuid varchar(36) [unique]
+  marker_name varchar(50) [not null]
+  marker_type varchar(20) [not null]
+  latitude double [not null]
+  longitude double [not null]
+}
+
+Table users {
+  idx integer [primary key, increment]
+  user_uuid varchar(36) [unique]
+  user_name varchar(50) [not null]
+  user_id varchar(30) [unique]
+  user_pw varchar(30) [not null]
+  info text
+}
+
+Table posts {
+  idx integer [primary key, increment]
+  post_uuid varchar(36) [unique]
+  post_title varchar(50) [not null]
+  body text
+  user_uuid varchar(36) [not null]
+  post_type varchar(20) [not null]
+  post_status varchar(20) [not null]
+  created_at date
+}
+
+Table favorite {
+  idx integer [primary key, increment]
+  user_uuid varchar(36) [not null]
+  marker_uuid varchar(36) [not null]
+
+  indexes {
+    (user_uuid, marker_uuid) [unique]
+  }
+}
+
+Table post_request {
+  idx integer [primary key, increment]
+  user_uuid varchar(36) [not null]
+  post_uuid varchar(36) [not null]
+
+  indexes {
+    (user_uuid, post_uuid) [unique]
+  }
+}
+
+Ref posts_user: posts.user_uuid > users.user_uuid
+
+Ref favorite_user: favorite.user_uuid > users.user_uuid
+Ref favorite_marker: favorite.marker_uuid > marker.marker_uuid
+
+Ref post_request_user: post_request.user_uuid > users.user_uuid
+Ref post_request_post: post_request.post_uuid > posts.post_uuid
