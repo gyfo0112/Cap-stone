@@ -864,7 +864,7 @@ export function SettingsScreen({ safetyWeight, onSafetyWeightChange }) {
   const toggleNotif = (key) => setNotif((n) => ({ ...n, [key]: !n[key] }));
 
   return (
-    <div className="mfScreen">
+    <div className="mfScreen mfScreenTabbed">
       <h1 className="mfPageTitle">설정</h1>
 
       <div className="mfSettingsCard">

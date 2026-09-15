@@ -17,6 +17,11 @@
   padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
 }
 
+/* 설정처럼 뒤로가기 없이 탭바로만 이동하는 화면 — 하단 탭바(64px)는 가리지 않는다. */
+.mfScreenTabbed {
+  inset: 0 0 64px 0;
+}
+
 /* 경로결과/경로상세 전용 — 지도가 계속 보이도록 화면을 투명하게 두고
    위에는 떠 있는 헤더, 아래는 하단시트만 배경을 채운다. */
 .mfRouteScreen {
@@ -810,7 +815,7 @@
   left: 50%;
   bottom: 30px;
   transform: translateX(-50%);
-  z-index: 25;
+  z-index: 52; /* .mfRouteScreen/.mfSosScreen(50)보다 위에서 항상 보이도록 */
 
   width: 68px;
   height: 68px;
