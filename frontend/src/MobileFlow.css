@@ -813,7 +813,7 @@
 .mfSosFab {
   position: fixed;
   left: 50%;
-  bottom: 30px;
+  bottom: 4px; /* 탭바 아이콘/글씨 높이와 맞춤 */
   transform: translateX(-50%);
   z-index: 52; /* .mfRouteScreen/.mfSosScreen(50)보다 위에서 항상 보이도록 */
 

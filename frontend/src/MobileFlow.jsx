@@ -308,7 +308,7 @@ export function RouteInputScreen({ initialDestination, originLabel, onBack, onSe
   const resultsReady = showingSearch && !searching && placesQuery === query;
 
   return (
-    <div className="mfScreen">
+    <div className="mfScreen mfScreenTabbed">
       <header className="mfHeader">
         <button className="mfIconBtn" onClick={onBack} aria-label="뒤로">
           <ChevronLeft size={22} />
@@ -776,7 +776,7 @@ export function CrimeLayerScreen({ onClose }) {
   const [opacity, setOpacity] = useState(60);
 
   return (
-    <div className="mfScreen">
+    <div className="mfScreen mfScreenTabbed">
       <header className="mfHeader">
         <button className="mfIconBtn" onClick={onClose} aria-label="뒤로">
           <ChevronLeft size={22} />
