@@ -517,6 +517,18 @@ button {
   background: linear-gradient(135deg, #f7f8fa, #eef1f4);
 }
 
+/* 실제 GPS 위치 표시 점 (카카오맵 CustomOverlay 콘텐츠) */
+.kakaoMeDot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #2c82f6;
+  border: 3px solid #fff;
+  box-shadow:
+    0 1px 4px rgba(16, 24, 33, 0.3),
+    0 0 0 8px rgba(44, 130, 246, 0.18);
+}
+
 /* 카카오맵 연결 전 임시 표시 */
 
 .mapPlaceholder {

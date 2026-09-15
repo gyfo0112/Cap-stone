@@ -16,6 +16,7 @@ import './App.css';
 import logo from './images/logo.png';
 import { useCctvLayer } from './useCctvLayer';
 import { useIsMobile } from './useIsMobile';
+import { useCurrentLocation } from './useCurrentLocation';
 import {
   Onboarding,
   MainMapCard,
@@ -36,6 +37,9 @@ function App() {
   const toggleLayer = (key) => setLayers((s) => ({ ...s, [key]: !s[key] }));
 
   const isMobile = useIsMobile();
+  // 실제 GPS 위치 + (REST 키 있으면) 주소. 실패해도 각 화면이 알아서 mock으로 대체.
+  const myLocation = useCurrentLocation();
+
   const [onboardingDone, setOnboardingDone] = useState(() => {
     try {
       return localStorage.getItem('safemap_onboarded') === '1';
@@ -148,7 +152,9 @@ function App() {
       <section className="controlPanel">
         {isMobile ? (
           <>
-            {mobileTab === 'map' && <MainMapCard onOpenInput={openRouteInput} />}
+            {mobileTab === 'map' && (
+              <MainMapCard onOpenInput={openRouteInput} locationLabel={myLocation.address} />
+            )}
             {mobileTab === 'help' && <HelpPanel />}
           </>
         ) : (
@@ -162,7 +168,7 @@ function App() {
 
       {/* 오른쪽 지도 영역 */}
       <main className="mapArea">
-        <MapView layers={layers} />
+        <MapView layers={layers} location={isMobile ? myLocation : null} />
       </main>
 
       {/* 모바일 전용: 지도 위 검색바+오버레이 칩 / 온보딩 / 경로 흐름 / SOS / 범죄레이어 / 설정 */}
@@ -181,6 +187,7 @@ function App() {
       {isMobile && onboardingDone && mobileScreen === 'input' && (
         <RouteInputScreen
           initialDestination={destination}
+          originLabel={myLocation.address}
           onBack={closeRouteFlow}
           onSelect={(name) => {
             setDestination(name);
@@ -192,6 +199,7 @@ function App() {
       {isMobile && onboardingDone && mobileScreen === 'result' && (
         <RouteResultScreen
           destination={destination}
+          originLabel={myLocation.address}
           safetyWeight={safetyWeight}
           onSafetyWeightChange={setSafetyWeight}
           timeMode={timeMode}
@@ -235,20 +243,38 @@ function MapPlaceholder({ text }) {
   );
 }
 
-function MapView({ layers }) {
+function MapView({ layers, location }) {
   const apiKey = import.meta.env.VITE_KAKAO_MAP_KEY;
   if (!apiKey) {
     return <MapPlaceholder text=".env.local 파일에 VITE_KAKAO_MAP_KEY를 설정하세요." />;
   }
-  return <KakaoMap apiKey={apiKey} layers={layers} />;
+  return <KakaoMap apiKey={apiKey} layers={layers} location={location} />;
 }
 
-function KakaoMap({ apiKey, layers }) {
+function KakaoMap({ apiKey, layers, location }) {
   const boxRef = useRef(null);
   const [error, setError] = useState('');
   const [map, setMap] = useState(null);
+  const meOverlayRef = useRef(null);
 
   useCctvLayer(map, layers.cctv);
+
+  // 실제 GPS 좌표가 들어오면 지도를 그쪽으로 이동하고 "내 위치" 점을 찍는다.
+  useEffect(() => {
+    if (!map || location?.lat == null) return;
+    const { kakao } = window;
+    const pos = new kakao.maps.LatLng(location.lat, location.lng);
+    map.panTo(pos);
+
+    if (!meOverlayRef.current) {
+      const content = document.createElement('div');
+      content.className = 'kakaoMeDot';
+      meOverlayRef.current = new kakao.maps.CustomOverlay({ position: pos, content, zIndex: 10 });
+      meOverlayRef.current.setMap(map);
+    } else {
+      meOverlayRef.current.setPosition(pos);
+    }
+  }, [map, location]);
 
   useEffect(() => {
     let cancelled = false;

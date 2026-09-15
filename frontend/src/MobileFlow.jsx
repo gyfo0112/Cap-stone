@@ -24,6 +24,7 @@ import {
   Lightbulb,
 } from 'lucide-react';
 import { scoreGrade } from './useIsMobile';
+import { hasKakaoRestKey, searchPlaces } from './kakaoLocal';
 import './MobileFlow.css';
 
 // 안전점수 배지 — 화면 여러 곳(메인카드/최근검색/대안경로)에서 재사용
@@ -183,13 +184,13 @@ function timeOfDayLabel() {
   return `${isNight ? '야간' : '주간'}(${hour}시) 기준`;
 }
 
-export function MainMapCard({ onOpenInput }) {
+export function MainMapCard({ onOpenInput, locationLabel }) {
   return (
     <div className="mfMainCard">
       <div className="mfMainCardTop">
         <div>
           <span className="mfCaption">현재 위치</span>
-          <h2 className="mfLocationTitle">서울 마포구 서교동</h2>
+          <h2 className="mfLocationTitle">{locationLabel || '서울 마포구 서교동'}</h2>
         </div>
         <ScoreBadge score={68} />
       </div>
@@ -221,10 +222,42 @@ const RECENTS = [
   { name: '상수동 골목시장', sub: '서울 마포구 와우산로 · 3일 전', score: 58 },
 ];
 
-export function RouteInputScreen({ initialDestination, onBack, onSelect }) {
+export function RouteInputScreen({ initialDestination, originLabel, onBack, onSelect }) {
   const [destination, setDestination] = useState(initialDestination || '');
+  const [places, setPlaces] = useState(null); // 마지막으로 완료된 검색 결과
+  const [placesQuery, setPlacesQuery] = useState(''); // places가 어떤 검색어의 결과인지
+  const [searching, setSearching] = useState(false);
   const query = destination.trim();
+  const canSearch = hasKakaoRestKey();
+  const showingSearch = Boolean(query) && canSearch;
+
+  // 카카오 REST 키가 있으면 실제 장소 검색(디바운스), 없으면 mock 최근검색만 필터링.
+  useEffect(() => {
+    if (!query || !canSearch) return undefined;
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      setSearching(true);
+      searchPlaces(query)
+        .then((r) => {
+          if (cancelled) return;
+          setPlaces(r);
+          setPlacesQuery(query);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          setPlaces([]);
+          setPlacesQuery(query);
+        })
+        .finally(() => !cancelled && setSearching(false));
+    }, 350);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [query, canSearch]);
+
   const filtered = query ? RECENTS.filter((r) => r.name.includes(query)) : RECENTS;
+  const resultsReady = showingSearch && !searching && placesQuery === query;
 
   return (
     <div className="mfScreen">
@@ -238,7 +271,7 @@ export function RouteInputScreen({ initialDestination, onBack, onSelect }) {
       <div className="mfOdCard">
         <div className="mfOdRow">
           <span className="mfOdDotOrigin" />
-          <span>현재 위치 · 홍대입구역 2번출구</span>
+          <span>현재 위치 · {originLabel || '홍대입구역 2번출구'}</span>
         </div>
         <div className="mfOdDivider" />
         <div className="mfOdRow">
@@ -248,7 +281,7 @@ export function RouteInputScreen({ initialDestination, onBack, onSelect }) {
             placeholder="어디로 갈까요?"
             value={destination}
             onChange={(e) => setDestination(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && destination && onSelect(destination, null)}
+            onKeyDown={(e) => e.key === 'Enter' && destination && onSelect(destination)}
           />
         </div>
       </div>
@@ -262,21 +295,48 @@ export function RouteInputScreen({ initialDestination, onBack, onSelect }) {
         </button>
       </div>
 
-      <h3 className="mfSectionLabel">{query ? '검색 결과' : '최근 검색'}</h3>
-      <div className="mfRecentList">
-        {filtered.map((r) => (
-          <button key={r.name} className="mfRecentRow" onClick={() => onSelect(r.name)}>
-            <div className="mfRecentInfo">
-              <strong>{r.name}</strong>
-              <span>{r.sub}</span>
-            </div>
-            <ScoreBadge score={r.score} size="sm" />
-          </button>
-        ))}
-        {filtered.length === 0 && (
-          <p className="mfEmptyHint">일치하는 검색 결과가 없어요. Enter를 누르면 입력한 위치로 길찾기를 시작합니다.</p>
-        )}
-      </div>
+      {showingSearch ? (
+        <>
+          <h3 className="mfSectionLabel">검색 결과</h3>
+          <div className="mfRecentList">
+            {!resultsReady && <p className="mfEmptyHint">검색 중…</p>}
+            {resultsReady &&
+              places.map((p) => (
+                <button key={p.id} className="mfRecentRow" onClick={() => onSelect(p.name)}>
+                  <div className="mfRecentInfo">
+                    <strong>{p.name}</strong>
+                    <span>{p.address}</span>
+                  </div>
+                </button>
+              ))}
+            {resultsReady && places.length === 0 && (
+              <p className="mfEmptyHint">
+                일치하는 장소가 없어요. Enter를 누르면 입력한 위치로 길찾기를 시작합니다.
+              </p>
+            )}
+          </div>
+        </>
+      ) : (
+        <>
+          <h3 className="mfSectionLabel">{query ? '검색 결과' : '최근 검색'}</h3>
+          <div className="mfRecentList">
+            {filtered.map((r) => (
+              <button key={r.name} className="mfRecentRow" onClick={() => onSelect(r.name)}>
+                <div className="mfRecentInfo">
+                  <strong>{r.name}</strong>
+                  <span>{r.sub}</span>
+                </div>
+                <ScoreBadge score={r.score} size="sm" />
+              </button>
+            ))}
+            {filtered.length === 0 && (
+              <p className="mfEmptyHint">
+                일치하는 검색 결과가 없어요. Enter를 누르면 입력한 위치로 길찾기를 시작합니다.
+              </p>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -298,6 +358,7 @@ export function RouteResultScreen(props) {
 
 function RouteResultBody({
   destination,
+  originLabel,
   safetyWeight,
   onSafetyWeightChange,
   timeMode,
@@ -322,7 +383,9 @@ function RouteResultBody({
       <button className="mfIconBtn" onClick={onBack} aria-label="뒤로">
         <ChevronLeft size={22} />
       </button>
-      <h1>홍대입구역 2번출구 → {destination || '목적지'}</h1>
+      <h1>
+        {originLabel || '홍대입구역 2번출구'} → {destination || '목적지'}
+      </h1>
     </header>
   );
 
@@ -474,7 +537,7 @@ const HOLD_MS = 3000;
 export function SosFab({ onOpen }) {
   return (
     <button className="mfSosFab" onClick={onOpen} aria-label="긴급 도움요청">
-      <Siren size={22} />
+      <Siren size={26} />
     </button>
   );
 }
