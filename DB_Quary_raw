@@ -41,6 +41,7 @@ CREATE TABLE favorite (
 	idx INT NOT NULL AUTO_INCREMENT, 
     user_uuid VARCHAR(36) NOT NULL, 
     marker_uuid VARCHAR(36) NOT NULL, 
+    fav_name VARCHAR(50), 
     CONSTRAINT fav_pk PRIMARY KEY(idx), 
     CONSTRAINT fav_user_marker_uk UNIQUE (user_uuid, marker_uuid),
     CONSTRAINT fav_user_fk FOREIGN KEY (user_uuid) REFERENCES users(user_uuid), 
@@ -55,4 +56,16 @@ CREATE TABLE post_request (
     CONSTRAINT req_user_post_uk UNIQUE (user_uuid, post_uuid),
     CONSTRAINT req_user_fk FOREIGN KEY (user_uuid) REFERENCES users(user_uuid), 
     CONSTRAINT req_post_fk FOREIGN KEY (post_uuid) REFERENCES posts(post_uuid)
+);
+
+CREATE TABLE user_tel ( 
+	idx INT NOT NULL AUTO_INCREMENT, 
+    user_uuid VARCHAR(36) NOT NULL, 
+    tel_uuid VARCHAR(36) NOT NULL, 
+    tel_num VARCHAR(20) UNIQUE, 
+    tel_name VARCHAR(50) NOT NULL, 
+    tel_type VARCHAR(20) DEFAULT "구분없음", 
+    CONSTRAINT tel_pk PRIMARY KEY(idx), 
+    CONSTRAINT tel_user_tel_uk UNIQUE (user_uuid, tel_uuid),
+    CONSTRAINT tel_user_fk FOREIGN KEY (user_uuid) REFERENCES users(user_uuid)
 );
