@@ -235,11 +235,7 @@ function App() {
       )}
 
       {isMobile && onboardingDone && mobileTab === 'settings' && (
-        <SettingsScreen
-          safetyWeight={safetyWeight}
-          onSafetyWeightChange={setSafetyWeight}
-          onClose={() => setMobileTab('map')}
-        />
+        <SettingsScreen safetyWeight={safetyWeight} onSafetyWeightChange={setSafetyWeight} />
       )}
 
       {isMobile && crimeLayerOpen && <CrimeLayerScreen onClose={() => setCrimeLayerOpen(false)} />}

@@ -841,8 +841,8 @@ export function CrimeLayerScreen({ onClose }) {
 /* ---------- 8. 설정 ---------- */
 
 const GUARDIANS = [
-  { name: '엄마 김서연', phone: '010-2841-XXXX', tag: '기본' },
-  { name: '친구 이지훈', phone: '010-7745-XXXX', tag: '보조' },
+  { relation: '엄마', name: '김서연', phone: '010-2841-XXXX', tag: '기본' },
+  { relation: '친구', name: '이지훈', phone: '010-7745-XXXX', tag: '보조' },
 ];
 
 const THEME_OPTIONS = [
@@ -857,7 +857,7 @@ const NOTIF_ITEMS = [
   { key: 'arrival', title: '보호자 도착 알림', desc: '목적지 도착 시 보호자에게 자동 전송' },
 ];
 
-export function SettingsScreen({ safetyWeight, onSafetyWeightChange, onClose }) {
+export function SettingsScreen({ safetyWeight, onSafetyWeightChange }) {
   const [theme, setTheme] = useState('light');
   const [notif, setNotif] = useState({ zoneEntry: true, nightRecalc: true, arrival: false });
 
@@ -865,16 +865,11 @@ export function SettingsScreen({ safetyWeight, onSafetyWeightChange, onClose }) 
 
   return (
     <div className="mfScreen">
-      <header className="mfHeader">
-        <button className="mfIconBtn" onClick={onClose} aria-label="뒤로">
-          <ChevronLeft size={22} />
-        </button>
-        <h1>설정</h1>
-      </header>
+      <h1 className="mfPageTitle">설정</h1>
 
       <div className="mfSettingsCard">
         <strong>기본 안전 우선도</strong>
-        <p>경로 계산의 기본값으로 사용됩니다.</p>
+        <p>모든 경로 계산의 기본값으로 사용됩니다.</p>
         <input
           type="range"
           min={0}
@@ -885,15 +880,16 @@ export function SettingsScreen({ safetyWeight, onSafetyWeightChange, onClose }) 
         />
         <div className="mfSliderLabels">
           <span>거리 최우선</span>
+          <span>균형 (기본)</span>
           <span>안전 최우선</span>
         </div>
       </div>
 
       <div className="mfSettingsCard">
         <strong>보호자 연락처</strong>
-        <p>SOS 전송 시 이 목록으로 위치가 공유됩니다.</p>
         {GUARDIANS.map((g) => (
           <div className="mfContactRow" key={g.name}>
+            <span className="mfContactAvatar">{g.relation}</span>
             <div className="mfContactInfo">
               <strong>{g.name}</strong>
               <span>{g.phone}</span>
@@ -908,7 +904,6 @@ export function SettingsScreen({ safetyWeight, onSafetyWeightChange, onClose }) 
 
       <div className="mfSettingsCard">
         <strong>테마</strong>
-        <p>다크 모드는 준비 중입니다.</p>
         <div className="mfSegment">
           {THEME_OPTIONS.map((t) => (
             <button
@@ -924,7 +919,6 @@ export function SettingsScreen({ safetyWeight, onSafetyWeightChange, onClose }) 
 
       <div className="mfSettingsCard">
         <strong>알림</strong>
-        <p>기기 알림 권한이 있어야 실제로 발송됩니다.</p>
         {NOTIF_ITEMS.map((n) => (
           <div className="mfNotifRow" key={n.key}>
             <div className="mfNotifInfo">
