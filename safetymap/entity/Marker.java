@@ -2,6 +2,7 @@ package com.safetymap.safetymap.entity;
 
 import jakarta.persistence.*;
 
+
 @Entity
 @Table(name = "marker")
 public class Marker {
@@ -74,3 +75,4 @@ public class Marker {
         this.longitude = longitude;
     }
 }
+
