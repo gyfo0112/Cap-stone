@@ -17,6 +17,7 @@ import logo from './images/logo.png';
 import { useCctvLayer } from './useCctvLayer';
 import { useIsMobile } from './useIsMobile';
 import { useCurrentLocation } from './useCurrentLocation';
+import { useTheme } from './useTheme';
 import {
   Onboarding,
   MainMapCard,
@@ -33,6 +34,7 @@ import {
 } from './MobileFlow';
 
 function App() {
+  const [theme, setTheme] = useTheme();
   const [menu, setMenu] = useState('route');
   const [layers, setLayers] = useState({ cctv: false });
   const toggleLayer = (key) => setLayers((s) => ({ ...s, [key]: !s[key] }));
@@ -236,7 +238,12 @@ function App() {
       )}
 
       {isMobile && onboardingDone && mobileTab === 'settings' && (
-        <SettingsScreen safetyWeight={safetyWeight} onSafetyWeightChange={setSafetyWeight} />
+        <SettingsScreen
+          safetyWeight={safetyWeight}
+          onSafetyWeightChange={setSafetyWeight}
+          theme={theme}
+          onThemeChange={setTheme}
+        />
       )}
 
       {isMobile && crimeLayerOpen && <CrimeLayerScreen />}

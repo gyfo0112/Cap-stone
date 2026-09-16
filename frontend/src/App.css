@@ -25,6 +25,7 @@ body {
 button,
 input {
   font-family: inherit;
+  color: inherit;
 }
 
 button {
@@ -831,5 +832,15 @@ button {
   /* 로그인 버튼은 모바일 탭바에 자리가 없어 숨김. SOS는 MobileTabBar 옆 mfSosFab로 대체. */
   .sidebarBottom {
     display: none;
+  }
+
+  /* 다크모드 — 데스크탑 폭에서는 이 미디어쿼리 자체가 안 걸리므로 안전하게 모바일에만 적용 */
+  [data-theme='dark'] .controlPanel {
+    background: var(--mf-surface, #1c2027);
+  }
+
+  [data-theme='dark'] .sidebar {
+    background: var(--mf-surface, #1c2027);
+    border-top-color: var(--mf-border-soft, #2a2f38);
   }
 }

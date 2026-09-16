@@ -862,8 +862,7 @@ const NOTIF_ITEMS = [
   { key: 'arrival', title: '보호자 도착 알림', desc: '목적지 도착 시 보호자에게 자동 전송' },
 ];
 
-export function SettingsScreen({ safetyWeight, onSafetyWeightChange }) {
-  const [theme, setTheme] = useState('light');
+export function SettingsScreen({ safetyWeight, onSafetyWeightChange, theme, onThemeChange }) {
   const [notif, setNotif] = useState({ zoneEntry: true, nightRecalc: true, arrival: false });
 
   const toggleNotif = (key) => setNotif((n) => ({ ...n, [key]: !n[key] }));
@@ -914,7 +913,7 @@ export function SettingsScreen({ safetyWeight, onSafetyWeightChange }) {
             <button
               key={t.key}
               className={theme === t.key ? 'mfSegmentItem active' : 'mfSegmentItem'}
-              onClick={() => setTheme(t.key)}
+              onClick={() => onThemeChange(t.key)}
             >
               {t.label}
             </button>

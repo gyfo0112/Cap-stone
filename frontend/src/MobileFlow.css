@@ -3,6 +3,33 @@
    색상은 App.css에 이미 쓰이던 값을 그대로 재사용. 새로 추가한 건
    초록(안전·보통 등급용 #22a06b)과 연한 빨강(위험 등급 배경 #fdecec) 둘뿐. */
 
+/* 다크모드 토큰 — 표면/텍스트/보더만 변수화. 브랜드색(#1e4fa0)과 등급색은
+   라이트/다크 공통이라 그대로 둔다. 설정 화면에서 document.documentElement에
+   data-theme을 얹는 방식(useTheme.js)이라 :root 스코프면 충분하다. */
+:root {
+  --mf-surface: #fff;
+  --mf-surface-soft: #f4f7fb;
+  --mf-scrim: rgba(233, 237, 242, 0.94);
+  --mf-text-primary: #202938;
+  --mf-text-secondary: #46505f;
+  --mf-text-tertiary: #8c95a4;
+  --mf-text-muted: #9da5b2;
+  --mf-border: #e4e7eb;
+  --mf-border-soft: #eef0f2;
+}
+
+:root[data-theme='dark'] {
+  --mf-surface: #1c2027;
+  --mf-surface-soft: #262b33;
+  --mf-scrim: rgba(18, 20, 24, 0.92);
+  --mf-text-primary: #eef1f5;
+  --mf-text-secondary: #b7bfca;
+  --mf-text-tertiary: #8791a0;
+  --mf-text-muted: #6b7480;
+  --mf-border: #383f4a;
+  --mf-border-soft: #2a2f38;
+}
+
 .mfScreen {
   position: fixed;
   inset: 0;
@@ -11,7 +38,8 @@
   display: flex;
   flex-direction: column;
 
-  background: #fff;
+  background: var(--mf-surface);
+  color: var(--mf-text-primary);
   overflow-y: auto;
 
   padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
@@ -45,7 +73,8 @@
   height: 52px;
   padding: 0 8px 0 4px;
 
-  background: #fff;
+  background: var(--mf-surface);
+  color: var(--mf-text-primary);
   border-radius: 16px;
   box-shadow: 0 10px 28px rgba(16, 24, 33, 0.12);
 
@@ -72,7 +101,8 @@
   max-height: 78vh;
   overflow-y: auto;
 
-  background: #fff;
+  background: var(--mf-surface);
+  color: var(--mf-text-primary);
   border-radius: 22px 22px 0 0;
   box-shadow: 0 -12px 30px rgba(16, 24, 33, 0.14);
 
@@ -137,8 +167,8 @@
   height: 40px;
   border: 0;
   border-radius: 10px;
-  background: #f4f7fb;
-  color: #202938;
+  background: var(--mf-surface-soft);
+  color: var(--mf-text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -149,7 +179,7 @@
   margin: 18px 0 10px;
   font-size: 12px;
   font-weight: 800;
-  color: #8c95a4;
+  color: var(--mf-text-tertiary);
 }
 
 .mfSectionLabelLight {
@@ -177,17 +207,17 @@
   height: 44px;
   border: 0;
   background: transparent;
-  color: #8c95a4;
+  color: var(--mf-text-tertiary);
   font-size: 13px;
   font-weight: 600;
 }
 
 .mfOutlineBtn {
   height: 42px;
-  border: 1px solid #e4e7eb;
+  border: 1px solid var(--mf-border);
   border-radius: 12px;
-  background: #fff;
-  color: #46505f;
+  background: var(--mf-surface);
+  color: var(--mf-text-secondary);
   font-size: 13px;
   font-weight: 700;
   display: flex;
@@ -281,7 +311,7 @@
   margin: 0 0 26px;
   font-size: 15px;
   line-height: 1.6;
-  color: #606977;
+  color: var(--mf-text-secondary);
 }
 
 .mfOnbFeatures {
@@ -322,12 +352,12 @@
   margin: 0;
   font-size: 13px;
   line-height: 1.5;
-  color: #606977;
+  color: var(--mf-text-secondary);
 }
 
 .mfOnbPermCard {
   margin-top: auto;
-  background: #f4f7fb;
+  background: var(--mf-surface-soft);
   border: 1px solid #e2e6ea;
   border-radius: 18px;
   padding: 18px;
@@ -344,7 +374,7 @@
   margin: 0 0 14px;
   font-size: 13px;
   line-height: 1.6;
-  color: #606977;
+  color: var(--mf-text-secondary);
 }
 
 /* ---------- 2. 메인 지도 카드 (하단시트 안에 렌더) ---------- */
@@ -365,7 +395,7 @@
 .mfCaption {
   font-size: 12px;
   font-weight: 800;
-  color: #8c95a4;
+  color: var(--mf-text-tertiary);
 }
 
 .mfLocationTitle {
@@ -377,7 +407,7 @@
 .mfMainCaption {
   margin: 0 0 16px;
   font-size: 12.5px;
-  color: #8c95a4;
+  color: var(--mf-text-tertiary);
 }
 
 .mfQuickRow {
@@ -389,22 +419,22 @@
 .mfQuickBtn {
   flex: 1;
   height: 44px;
-  border: 1px solid #e4e7eb;
+  border: 1px solid var(--mf-border);
   border-radius: 14px;
-  background: #fff;
+  background: var(--mf-surface);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   font-size: 14px;
   font-weight: 700;
-  color: #46505f;
+  color: var(--mf-text-secondary);
 }
 
 /* ---------- 3. 경로 입력 ---------- */
 
 .mfOdCard {
-  background: #f4f7fb;
+  background: var(--mf-surface-soft);
   border: 1px solid #e2e6ea;
   border-radius: 18px;
   padding: 14px;
@@ -417,7 +447,7 @@
   align-items: center;
   gap: 10px;
   font-size: 14px;
-  color: #46505f;
+  color: var(--mf-text-secondary);
 }
 
 .mfOdDivider {
@@ -440,7 +470,7 @@
   background: transparent;
   flex: 1;
   font-size: 14px;
-  color: #202938;
+  color: var(--mf-text-primary);
 }
 
 .mfOdActions {
@@ -487,7 +517,7 @@
 
 .mfRecentRow span {
   font-size: 12px;
-  color: #9da5b2;
+  color: var(--mf-text-muted);
 }
 
 /* ---------- 4. 경로 결과 ---------- */
@@ -508,11 +538,11 @@
 .mfSummaryCard p {
   margin: 3px 0 0;
   font-size: 12.5px;
-  color: #8c95a4;
+  color: var(--mf-text-tertiary);
 }
 
 .mfSliderBlock {
-  background: #f4f7fb;
+  background: var(--mf-surface-soft);
   border-radius: 16px;
   padding: 14px;
   margin-bottom: 14px;
@@ -523,7 +553,7 @@
   justify-content: space-between;
   font-size: 12px;
   font-weight: 800;
-  color: #8c95a4;
+  color: var(--mf-text-tertiary);
   margin-bottom: 10px;
 }
 
@@ -543,7 +573,7 @@
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--mf-surface);
   border: 3px solid #1e4fa0;
   box-shadow: 0 3px 10px rgba(16, 24, 33, 0.18);
   cursor: pointer;
@@ -553,7 +583,7 @@
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--mf-surface);
   border: 3px solid #1e4fa0;
   box-shadow: 0 3px 10px rgba(16, 24, 33, 0.18);
   cursor: pointer;
@@ -564,7 +594,7 @@
   margin-top: 10px;
   font-size: 12.5px;
   font-weight: 700;
-  color: #46505f;
+  color: var(--mf-text-secondary);
 }
 
 /* 경로결과: 시간대 토글을 슬라이더 값 옆에 작게 붙이기 위한 레이아웃 */
@@ -608,7 +638,7 @@
   border: 0;
   border-radius: 9px;
   background: transparent;
-  color: #606977;
+  color: var(--mf-text-secondary);
   font-size: 13px;
   font-weight: 700;
   display: flex;
@@ -630,9 +660,9 @@
 }
 
 .mfRouteOption {
-  border: 1.5px solid #e4e7eb;
+  border: 1.5px solid var(--mf-border);
   border-radius: 14px;
-  background: #fff;
+  background: var(--mf-surface);
   padding: 12px;
   display: flex;
   align-items: center;
@@ -655,12 +685,18 @@
 
 .mfRouteOption > div:nth-child(2) span {
   font-size: 12px;
-  color: #9da5b2;
+  color: var(--mf-text-muted);
 }
 
 .mfRouteOption.selected {
   border-color: #1e4fa0;
   background: #eef3fa;
+  /* 선택 강조색은 테마 무관 고정 배경이라 글자색도 여기서 고정해준다 */
+  color: #16294f;
+}
+
+.mfRouteOption.selected > div:nth-child(2) span {
+  color: #5b7ba8;
 }
 
 .mfRouteMeta {
@@ -677,7 +713,7 @@
 
 .mfRouteMeta span {
   font-size: 11px;
-  color: #9da5b2;
+  color: var(--mf-text-muted);
 }
 
 /* ---------- 5. 경로 상세 / 턴바이턴 ---------- */
@@ -718,7 +754,7 @@
 .mfSegmentSummary {
   font-size: 12px;
   font-weight: 700;
-  color: #9da5b2;
+  color: var(--mf-text-muted);
 }
 
 .mfSegmentList {
@@ -778,7 +814,7 @@
 .mfSegmentRow p {
   margin: 3px 0 0;
   font-size: 12px;
-  color: #8c95a4;
+  color: var(--mf-text-tertiary);
 }
 
 .mfDetailActions {
@@ -841,7 +877,8 @@
   bottom: 64px; /* 하단 탭바는 계속 보이게 */
   z-index: 60;
 
-  background: rgba(233, 237, 242, 0.94);
+  background: var(--mf-scrim);
+  color: var(--mf-text-primary);
 
   display: flex;
   flex-direction: column;
@@ -868,7 +905,7 @@
   margin: 0;
   font-size: 15px;
   font-weight: 700;
-  color: #202938;
+  color: var(--mf-text-primary);
   white-space: pre-line;
 }
 
@@ -929,7 +966,7 @@
 .mfGuardianCard {
   width: 100%;
   padding: 4px 0 18px;
-  border-bottom: 1px solid #eef0f2;
+  border-bottom: 1px solid var(--mf-border-soft);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -953,7 +990,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  color: #202938;
+  color: var(--mf-text-primary);
 }
 
 .mfGuardianCard strong {
@@ -963,7 +1000,7 @@
 
 .mfGuardianCard span {
   font-size: 12px;
-  color: #606977;
+  color: var(--mf-text-secondary);
 }
 
 .mfSwitch {
@@ -983,7 +1020,7 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--mf-surface);
   transition: transform 0.15s;
 }
 
@@ -1004,13 +1041,13 @@
 }
 
 .mfNearbyRow {
-  background: #fff;
+  background: var(--mf-surface);
   border-radius: 12px;
   padding: 10px 12px;
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #46505f;
+  color: var(--mf-text-secondary);
 }
 
 .mfNearbyRow > div {
@@ -1023,18 +1060,18 @@
 .mfNearbyRow strong {
   font-size: 13px;
   font-weight: 700;
-  color: #202938;
+  color: var(--mf-text-primary);
 }
 
 .mfNearbyRow span {
   font-size: 11.5px;
-  color: #9da5b2;
+  color: var(--mf-text-muted);
 }
 
 .mfNearbyDist {
   font-size: 12px;
   font-weight: 700;
-  color: #8c95a4;
+  color: var(--mf-text-tertiary);
   flex-shrink: 0;
 }
 
@@ -1042,7 +1079,7 @@
   width: 100%;
   height: 52px;
   margin-top: 16px;
-  background: #fff;
+  background: var(--mf-surface);
 }
 
 /* ---------- 하단 탭바 (지도/경로/SOS자리/도움요청/설정) ---------- */
@@ -1065,7 +1102,7 @@
   padding: 6px 2px;
   font-size: 10.5px;
   font-weight: 700;
-  color: #8c95a4;
+  color: var(--mf-text-tertiary);
 }
 
 .mfTabItem.active {
@@ -1091,19 +1128,19 @@
   height: 52px;
   border: 0;
   border-radius: 16px;
-  background: #fff;
+  background: var(--mf-surface);
   box-shadow: 0 10px 28px rgba(16, 24, 33, 0.12);
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 0 16px;
   margin-bottom: 10px;
-  color: #9da5b2;
+  color: var(--mf-text-muted);
 }
 
 .mfSearchBar span {
   font-size: 15px;
-  color: #9da5b2;
+  color: var(--mf-text-muted);
 }
 
 .mfMapControls {
@@ -1122,7 +1159,7 @@
   height: 46px;
   border: 0;
   border-radius: 14px;
-  background: #fff;
+  background: var(--mf-surface);
   color: #1477f8;
   box-shadow: 0 10px 28px rgba(16, 24, 33, 0.12);
   display: flex;
@@ -1141,9 +1178,9 @@
   height: 44px;
   padding: 0 14px;
   border-radius: 13px;
-  border: 1.5px solid #e4e7eb;
-  background: #fff;
-  color: #46505f;
+  border: 1.5px solid var(--mf-border);
+  background: var(--mf-surface);
+  color: var(--mf-text-secondary);
   font-size: 14px;
   font-weight: 700;
   display: inline-flex;
@@ -1171,7 +1208,7 @@
   gap: 12px;
   padding-bottom: 16px;
   margin-bottom: 4px;
-  border-bottom: 1px solid #eef0f2;
+  border-bottom: 1px solid var(--mf-border-soft);
 }
 
 .mfCrimeBody--off {
@@ -1205,7 +1242,7 @@
 
 .mfCrimeTopText span {
   font-size: 12px;
-  color: #8c95a4;
+  color: var(--mf-text-tertiary);
 }
 
 .mfLegend {
@@ -1228,7 +1265,7 @@
 .mfLegendCaption {
   margin: 8px 0 0;
   font-size: 12px;
-  color: #8c95a4;
+  color: var(--mf-text-tertiary);
 }
 
 .mfCrimeAreaCard {
@@ -1261,7 +1298,8 @@
   margin: 0;
   font-size: 12.5px;
   line-height: 1.5;
-  color: #606977;
+  /* 배경(#fdecec)이 테마 무관 고정색이라 글자색도 고정 */
+  color: #8a5b5b;
 }
 
 .mfSliderNeutral {
@@ -1291,7 +1329,7 @@
 }
 
 .mfSettingsCard {
-  background: #fff;
+  background: var(--mf-surface);
   border: 1px solid #e6e9ed;
   border-radius: 18px;
   padding: 16px;
@@ -1342,14 +1380,14 @@
 
 .mfContactInfo span {
   font-size: 12px;
-  color: #9da5b2;
+  color: var(--mf-text-muted);
 }
 
 .mfContactTag {
   font-size: 11px;
   font-weight: 700;
-  color: #8c95a4;
-  background: #f4f7fb;
+  color: var(--mf-text-tertiary);
+  background: var(--mf-surface-soft);
   padding: 3px 8px;
   border-radius: 8px;
   flex-shrink: 0;
@@ -1375,7 +1413,7 @@
   border: 0;
   border-radius: 999px;
   background: transparent;
-  color: #8c95a4;
+  color: var(--mf-text-tertiary);
   font-size: 13px;
   font-weight: 700;
 }
@@ -1407,7 +1445,7 @@
 
 .mfNotifInfo span {
   font-size: 11.5px;
-  color: #9da5b2;
+  color: var(--mf-text-muted);
 }
 
 /* ---------- 검색 결과 없음 / 로딩 스켈레톤 ---------- */
@@ -1416,7 +1454,7 @@
   margin: 18px 4px;
   font-size: 13px;
   line-height: 1.6;
-  color: #9da5b2;
+  color: var(--mf-text-muted);
 }
 
 .mfSkeleton {
