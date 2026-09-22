@@ -74,7 +74,14 @@ function App() {
   });
   const [selectedRouteId, setSelectedRouteId] = useState('safe');
 
+  // 범죄주의구간/SOS 오버레이는 탭·화면 상태와 별개라, 화면을 옮길 때 같이 닫아준다
+  const closeOverlays = () => {
+    setCrimeLayerOpen(false);
+    setSosOpen(false);
+  };
+
   const openRouteInput = (prefill) => {
+    closeOverlays();
     setDestination(prefill);
     setMobileTab('route');
     setMobileScreen('input');
@@ -90,6 +97,7 @@ function App() {
       openRouteInput('');
       return;
     }
+    closeOverlays();
     setMobileTab(key);
     setMobileScreen(null); // 다른 탭으로 이동하면 진행 중이던 경로 흐름은 닫음
   };
