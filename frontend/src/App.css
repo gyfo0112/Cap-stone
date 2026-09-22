@@ -837,6 +837,250 @@ button {
 }
 
 /* =========================
+   설정 패널
+========================= */
+
+.settingsCard {
+  background: white;
+  border: 1px solid #e8ebef;
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.settingsCard h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+
+.settingsDescription {
+  margin: 0 0 14px;
+  font-size: 12.5px;
+  color: #8c95a4;
+}
+
+.safetyRange {
+  width: 100%;
+  height: 6px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #1e4fa0, #22a06b);
+  appearance: none;
+  margin: 4px 0 10px;
+}
+
+.safetyRange::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #1e4fa0;
+  box-shadow: 0 2px 6px rgba(16, 24, 33, 0.2);
+  cursor: pointer;
+}
+
+.rangeLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: #9da5b2;
+}
+
+.guardianItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.guardianDivider {
+  height: 1px;
+  background: #eceef1;
+}
+
+.guardianAvatar {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #eaf1fb;
+  color: #1e4fa0;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.guardianInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.guardianInfo strong {
+  font-size: 14px;
+}
+
+.guardianInfo span {
+  font-size: 12px;
+  color: #9da5b2;
+}
+
+.guardianBadge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #687383;
+  background: #f4f7fb;
+  padding: 3px 9px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.guardianRemoveButton {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #9da5b2;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.addGuardianButton {
+  width: 100%;
+  height: 42px;
+  margin-top: 6px;
+  border: 0;
+  background: transparent;
+  color: #1e4fa0;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.addContactForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+}
+
+.addContactInput {
+  height: 42px;
+  border: 1px solid #e2e6ea;
+  border-radius: 10px;
+  padding: 0 14px;
+  font-size: 14px;
+}
+
+.addContactActions {
+  display: flex;
+  gap: 8px;
+}
+
+.addContactCancel,
+.addContactSubmit {
+  flex: 1;
+  height: 40px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.addContactCancel {
+  border: 1px solid #e2e6ea;
+  background: white;
+  color: #46505f;
+}
+
+.addContactSubmit {
+  border: 0;
+  background: #1e4fa0;
+  color: white;
+}
+
+.addContactSubmit:disabled {
+  opacity: 0.5;
+}
+
+.themeButtons {
+  display: flex;
+  gap: 8px;
+}
+
+.themeButton {
+  flex: 1;
+  height: 40px;
+  border: 1px solid #e2e6ea;
+  border-radius: 10px;
+  background: white;
+  color: #46505f;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.themeButton.selected {
+  background: #1e4fa0;
+  border-color: #1e4fa0;
+  color: white;
+}
+
+.settingToggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.settingToggleRow strong {
+  display: block;
+  font-size: 13.5px;
+}
+
+.settingToggleRow span {
+  font-size: 12px;
+  color: #9da5b2;
+}
+
+.toggleSwitch {
+  flex-shrink: 0;
+  width: 44px;
+  height: 26px;
+  border-radius: 99px;
+  border: 0;
+  background: #dce3ea;
+  position: relative;
+}
+
+.toggleSwitch span {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  transition: transform 0.15s;
+}
+
+.toggleSwitch.on {
+  background: #1e4fa0;
+}
+
+.toggleSwitch.on span {
+  transform: translateX(18px);
+}
+
+/* =========================
    반응형
    - ≥1280px  데스크탑: 기본 그리드(위) 그대로
    - 768~1279px 태블릿: 사이드바/패널 축소

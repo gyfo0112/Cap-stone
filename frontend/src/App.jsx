@@ -13,6 +13,8 @@ import {
   Siren,
   CircleCheck,
   TriangleAlert,
+  Settings,
+  UserPlus,
 } from 'lucide-react';
 import './App.css';
 import logo from './images/logo.png';
@@ -20,6 +22,7 @@ import LoginPage from './LoginPage';
 import SosPage from './SosPage';
 import { MapView } from './KakaoMapView';
 import { hasKakaoRestKey, searchPlaces } from './kakaoLocal';
+import { getContacts, addContact, removeContact } from './contacts';
 import { useIsMobile, scoreGrade } from './useIsMobile';
 import { useCurrentLocation } from './useCurrentLocation';
 import { useTheme } from './useTheme';
@@ -186,6 +189,14 @@ function App() {
                 <ShieldCheck size={22} />
                 <span>공공시설 확인</span>
               </button>
+
+              <button
+                className={menu === 'settings' ? 'menuItem active' : 'menuItem'}
+                onClick={() => setMenu('settings')}
+              >
+                <Settings size={22} />
+                <span>설정</span>
+              </button>
             </nav>
           )}
         </div>
@@ -217,6 +228,14 @@ function App() {
             {menu === 'route' && <RoutePanel originLabel={myLocation.address} />}
             {menu === 'help' && <HelpPanel />}
             {menu === 'facility' && <FacilityPanel layers={layers} onToggle={toggleLayer} />}
+            {menu === 'settings' && (
+              <SettingsPanel
+                safetyWeight={safetyWeight}
+                onSafetyWeightChange={setSafetyWeight}
+                theme={theme}
+                onThemeChange={setTheme}
+              />
+            )}
           </>
         )}
       </section>
@@ -666,6 +685,193 @@ function FacilityPanel({ layers, onToggle }) {
           <span>준비 중</span>
         </div>
       </button>
+    </div>
+  );
+}
+
+const THEME_OPTIONS = [
+  { key: 'light', label: '라이트' },
+  { key: 'dark', label: '다크' },
+  { key: 'system', label: '시스템' },
+];
+
+const NOTIF_ITEMS = [
+  { key: 'zoneEntry', title: '위험 구간 진입 알림', desc: '주의구간 100m 이내 진입 시 진동' },
+  { key: 'nightRecalc', title: '야간 경로 재계산 알림', desc: '일몰 후 저장 경로 안전도 변동 시' },
+  { key: 'arrival', title: '보호자 도착 알림', desc: '목적지 도착 시 보호자에게 자동 전송' },
+];
+
+// 모바일 설정 화면과 내용은 같되, controlPanel 안에 들어가는 데스크탑 전용 레이아웃.
+// 보호자 연락처는 모바일과 완전히 같은 저장소(contacts.js/localStorage)를 그대로 쓴다.
+function SettingsPanel({ safetyWeight, onSafetyWeightChange, theme, onThemeChange }) {
+  const [notif, setNotif] = useState({ zoneEntry: true, nightRecalc: true, arrival: false });
+  const [contacts, setContacts] = useState(getContacts);
+  const [addingContact, setAddingContact] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newPhone, setNewPhone] = useState('');
+  const [newType, setNewType] = useState('보조');
+
+  const toggleNotif = (key) => setNotif((n) => ({ ...n, [key]: !n[key] }));
+
+  const submitContact = () => {
+    const tel_name = newName.trim();
+    const tel_num = newPhone.trim();
+    if (!tel_name || !tel_num) return;
+    setContacts(addContact({ tel_name, tel_num, tel_type: newType }));
+    setNewName('');
+    setNewPhone('');
+    setNewType('보조');
+    setAddingContact(false);
+  };
+
+  return (
+    <div className="panelContent">
+      <h1>설정</h1>
+
+      <p className="subtitle">친절한 이웃의 설정을 변경할 수 있습니다.</p>
+
+      <div className="settingsCard">
+        <h3>기본 안전 우선도</h3>
+        <p className="settingsDescription">모든 경로 계산의 기본값으로 사용됩니다.</p>
+        <input
+          type="range"
+          min={0}
+          max={100}
+          value={safetyWeight}
+          onChange={(e) => onSafetyWeightChange(Number(e.target.value))}
+          className="safetyRange"
+        />
+        <div className="rangeLabels">
+          <span>거리 최우선</span>
+          <span>균형 (기본)</span>
+          <span>안전 최우선</span>
+        </div>
+      </div>
+
+      <div className="settingsCard">
+        <h3>보호자 연락처</h3>
+
+        <div className="guardianItem">
+          <div className="guardianAvatar">엄마</div>
+          <div className="guardianInfo">
+            <strong>김서연</strong>
+            <span>010-2841-XXXX</span>
+          </div>
+          <span className="guardianBadge">기본</span>
+        </div>
+        <div className="guardianDivider" />
+        <div className="guardianItem">
+          <div className="guardianAvatar">친구</div>
+          <div className="guardianInfo">
+            <strong>이지훈</strong>
+            <span>010-7745-XXXX</span>
+          </div>
+          <span className="guardianBadge">보조</span>
+        </div>
+
+        {contacts.map((c) => (
+          <div key={c.tel_uuid}>
+            <div className="guardianDivider" />
+            <div className="guardianItem">
+              <div className="guardianAvatar">{c.tel_name[0]}</div>
+              <div className="guardianInfo">
+                <strong>{c.tel_name}</strong>
+                <span>{c.tel_num}</span>
+              </div>
+              <span className="guardianBadge">{c.tel_type}</span>
+              <button
+                className="guardianRemoveButton"
+                onClick={() => setContacts(removeContact(c.tel_uuid))}
+                aria-label={`${c.tel_name} 연락처 삭제`}
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        ))}
+
+        {addingContact ? (
+          <div className="addContactForm">
+            <input
+              className="addContactInput"
+              placeholder="이름"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+            />
+            <input
+              className="addContactInput"
+              placeholder="전화번호"
+              value={newPhone}
+              onChange={(e) => setNewPhone(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && submitContact()}
+            />
+            <div className="themeButtons">
+              {['기본', '보조'].map((t) => (
+                <button
+                  key={t}
+                  className={newType === t ? 'themeButton selected' : 'themeButton'}
+                  onClick={() => setNewType(t)}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+            <div className="addContactActions">
+              <button className="addContactCancel" onClick={() => setAddingContact(false)}>
+                취소
+              </button>
+              <button
+                className="addContactSubmit"
+                disabled={!newName.trim() || !newPhone.trim()}
+                onClick={submitContact}
+              >
+                추가
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button className="addGuardianButton" onClick={() => setAddingContact(true)}>
+            <UserPlus size={18} />
+            연락처 추가
+          </button>
+        )}
+      </div>
+
+      <div className="settingsCard">
+        <h3>테마</h3>
+        <div className="themeButtons">
+          {THEME_OPTIONS.map((t) => (
+            <button
+              key={t.key}
+              className={theme === t.key ? 'themeButton selected' : 'themeButton'}
+              onClick={() => onThemeChange(t.key)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="settingsCard">
+        <h3>알림</h3>
+        {NOTIF_ITEMS.map((n) => (
+          <div className="settingToggleRow" key={n.key}>
+            <div>
+              <strong>{n.title}</strong>
+              <span>{n.desc}</span>
+            </div>
+            <button
+              role="switch"
+              aria-checked={notif[n.key]}
+              aria-label={n.title}
+              className={notif[n.key] ? 'toggleSwitch on' : 'toggleSwitch'}
+              onClick={() => toggleNotif(n.key)}
+            >
+              <span />
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
