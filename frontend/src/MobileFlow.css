@@ -258,6 +258,12 @@
   opacity: 0.5;
 }
 
+.mfOutlineBtn.active {
+  border-color: #1e4fa0;
+  background: #eaf1fb;
+  color: #1e4fa0;
+}
+
 /* ---------- 안전점수 배지 ---------- */
 
 .mfScoreBadge {
@@ -534,6 +540,36 @@
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+}
+
+/* 즐겨찾기 별표가 붙는 행 — 이동 버튼과 별표 버튼을 형제로 분리해서
+   button 안에 button이 중첩되지 않게 한다. */
+.mfRecentRowMain {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  display: flex;
+  align-items: center;
+}
+
+.mfFavoriteToggle {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--mf-text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mfFavoriteToggle.active {
+  color: #f5a623;
 }
 
 .mfRecentRow strong {

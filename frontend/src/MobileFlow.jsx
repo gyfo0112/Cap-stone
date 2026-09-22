@@ -29,6 +29,7 @@ import { scoreGrade } from './useIsMobile';
 import { coordToAddress, hasKakaoRestKey, searchPlaces } from './kakaoLocal';
 import { ROUTE_OPTIONS, SEGMENTS, GRADE_COLOR, GRADE_SOFT } from './routeData';
 import { getContacts, addContact, removeContact } from './contacts';
+import { getFavorites, addFavorite, removeFavoriteByName } from './favorites';
 import './MobileFlow.css';
 
 // 안전점수 배지 — 화면 여러 곳(메인카드/최근검색/대안경로)에서 재사용.
@@ -279,9 +280,20 @@ export function RouteInputScreen({ initialDestination, originLabel, onBack, onPi
   const [places, setPlaces] = useState(null); // 마지막으로 완료된 검색 결과
   const [placesQuery, setPlacesQuery] = useState(''); // places가 어떤 검색어의 결과인지
   const [searching, setSearching] = useState(false);
+  const [favorites, setFavorites] = useState(getFavorites);
+  const [showFavorites, setShowFavorites] = useState(false);
   const query = destination.trim();
   const canSearch = hasKakaoRestKey();
   const showingSearch = Boolean(query) && canSearch;
+
+  const isFavorite = (name) => favorites.some((f) => f.marker_name === name);
+  const toggleFavorite = (place) => {
+    setFavorites(
+      isFavorite(place.name)
+        ? removeFavoriteByName(place.name)
+        : addFavorite({ marker_name: place.name, latitude: place.lat, longitude: place.lng }),
+    );
+  };
 
   // 카카오 REST 키가 있으면 실제 장소 검색(디바운스), 없으면 mock 최근검색만 필터링.
   useEffect(() => {
@@ -342,7 +354,10 @@ export function RouteInputScreen({ initialDestination, originLabel, onBack, onPi
         <button className="mfOutlineBtn" onClick={onPickOnMap}>
           <Crosshair size={16} /> 지도에서 찍기
         </button>
-        <button className="mfOutlineBtn" disabled>
+        <button
+          className={showFavorites ? 'mfOutlineBtn active' : 'mfOutlineBtn'}
+          onClick={() => setShowFavorites((v) => !v)}
+        >
           <Star size={16} /> 즐겨찾기
         </button>
       </div>
@@ -353,19 +368,56 @@ export function RouteInputScreen({ initialDestination, originLabel, onBack, onPi
           <div className="mfRecentList">
             {!resultsReady && <p className="mfEmptyHint">검색 중…</p>}
             {resultsReady &&
-              places.map((p) => (
-                <button key={p.id} className="mfRecentRow" onClick={() => onSelect(p.name)}>
-                  <div className="mfRecentInfo">
-                    <strong>{p.name}</strong>
-                    <span>{p.address}</span>
+              places.map((p) => {
+                const fav = isFavorite(p.name);
+                return (
+                  <div className="mfRecentRow" key={p.id}>
+                    <button className="mfRecentRowMain" onClick={() => onSelect(p.name)}>
+                      <div className="mfRecentInfo">
+                        <strong>{p.name}</strong>
+                        <span>{p.address}</span>
+                      </div>
+                    </button>
+                    <button
+                      className={fav ? 'mfFavoriteToggle active' : 'mfFavoriteToggle'}
+                      onClick={() => toggleFavorite(p)}
+                      aria-label={fav ? '즐겨찾기 해제' : '즐겨찾기 추가'}
+                    >
+                      <Star size={16} fill={fav ? 'currentColor' : 'none'} />
+                    </button>
                   </div>
-                </button>
-              ))}
+                );
+              })}
             {resultsReady && places.length === 0 && (
               <p className="mfEmptyHint">
                 일치하는 장소가 없어요. Enter를 누르면 입력한 위치로 길찾기를 시작합니다.
               </p>
             )}
+          </div>
+        </>
+      ) : showFavorites ? (
+        <>
+          <h3 className="mfSectionLabel">즐겨찾기</h3>
+          <div className="mfRecentList">
+            {favorites.length === 0 && (
+              <p className="mfEmptyHint">즐겨찾기한 장소가 없어요. 검색 결과에서 별표를 눌러 추가하세요.</p>
+            )}
+            {favorites.map((f) => (
+              <div className="mfRecentRow" key={f.marker_uuid}>
+                <button className="mfRecentRowMain" onClick={() => onSelect(f.marker_name)}>
+                  <div className="mfRecentInfo">
+                    <strong>{f.marker_name}</strong>
+                  </div>
+                </button>
+                <button
+                  className="mfFavoriteToggle active"
+                  onClick={() => setFavorites(removeFavoriteByName(f.marker_name))}
+                  aria-label="즐겨찾기 해제"
+                >
+                  <Star size={16} fill="currentColor" />
+                </button>
+              </div>
+            ))}
           </div>
         </>
       ) : (
