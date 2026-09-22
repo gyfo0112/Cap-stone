@@ -23,10 +23,12 @@ import {
   Camera,
   Lightbulb,
   Share,
+  X,
 } from 'lucide-react';
 import { scoreGrade } from './useIsMobile';
 import { coordToAddress, hasKakaoRestKey, searchPlaces } from './kakaoLocal';
 import { ROUTE_OPTIONS, SEGMENTS, GRADE_COLOR, GRADE_SOFT } from './routeData';
+import { getContacts, addContact, removeContact } from './contacts';
 import './MobileFlow.css';
 
 // 안전점수 배지 — 화면 여러 곳(메인카드/최근검색/대안경로)에서 재사용.
@@ -925,8 +927,26 @@ const NOTIF_ITEMS = [
 
 export function SettingsScreen({ safetyWeight, onSafetyWeightChange, theme, onThemeChange }) {
   const [notif, setNotif] = useState({ zoneEntry: true, nightRecalc: true, arrival: false });
+  const [contacts, setContacts] = useState(getContacts);
+  const [addingContact, setAddingContact] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newPhone, setNewPhone] = useState('');
+  const [newType, setNewType] = useState('보조');
 
   const toggleNotif = (key) => setNotif((n) => ({ ...n, [key]: !n[key] }));
+
+  const submitContact = () => {
+    const tel_name = newName.trim();
+    const tel_num = newPhone.trim();
+    if (!tel_name || !tel_num) return;
+    setContacts(addContact({ tel_name, tel_num, tel_type: newType }));
+    setNewName('');
+    setNewPhone('');
+    setNewType('보조');
+    setAddingContact(false);
+  };
+
+  const deleteContact = (tel_uuid) => setContacts(removeContact(tel_uuid));
 
   return (
     <div className="mfScreen mfScreenTabbed">
@@ -962,9 +982,68 @@ export function SettingsScreen({ safetyWeight, onSafetyWeightChange, theme, onTh
             <span className="mfContactTag">{g.tag}</span>
           </div>
         ))}
-        <button className="mfTextBtn mfAddContact" disabled>
-          <UserPlus size={15} /> 연락처 추가
-        </button>
+        {contacts.map((c) => (
+          <div className="mfContactRow" key={c.tel_uuid}>
+            <span className="mfContactAvatar">{c.tel_name[0]}</span>
+            <div className="mfContactInfo">
+              <strong>{c.tel_name}</strong>
+              <span>{c.tel_num}</span>
+            </div>
+            <span className="mfContactTag">{c.tel_type}</span>
+            <button
+              className="mfContactRemove"
+              onClick={() => deleteContact(c.tel_uuid)}
+              aria-label={`${c.tel_name} 연락처 삭제`}
+            >
+              <X size={14} />
+            </button>
+          </div>
+        ))}
+
+        {addingContact ? (
+          <div className="mfAddContactForm">
+            <input
+              className="mfAddContactInput"
+              placeholder="이름"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+            />
+            <input
+              className="mfAddContactInput"
+              placeholder="전화번호"
+              value={newPhone}
+              onChange={(e) => setNewPhone(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && submitContact()}
+            />
+            <div className="mfSegment">
+              {['기본', '보조'].map((t) => (
+                <button
+                  key={t}
+                  className={newType === t ? 'mfSegmentItem active' : 'mfSegmentItem'}
+                  onClick={() => setNewType(t)}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+            <div className="mfAddContactActions">
+              <button className="mfOutlineBtn mfFlex1" onClick={() => setAddingContact(false)}>
+                취소
+              </button>
+              <button
+                className="mfPrimaryBtn mfFlex1"
+                disabled={!newName.trim() || !newPhone.trim()}
+                onClick={submitContact}
+              >
+                추가
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button className="mfTextBtn mfAddContact" onClick={() => setAddingContact(true)}>
+            <UserPlus size={15} /> 연락처 추가
+          </button>
+        )}
       </div>
 
       <div className="mfSettingsCard">

@@ -1431,6 +1431,42 @@
   font-weight: 700;
 }
 
+.mfContactRemove {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--mf-text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mfAddContactForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+}
+
+.mfAddContactInput {
+  height: 44px;
+  border: 1px solid var(--mf-border);
+  border-radius: 10px;
+  background: var(--mf-surface);
+  color: var(--mf-text-primary);
+  padding: 0 14px;
+  font-size: 14px;
+}
+
+.mfAddContactActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+}
+
 .mfSegment {
   display: flex;
   align-items: center;
