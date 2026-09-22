@@ -1,0 +1,756 @@
+/* =========================================================
+   경로 설정 페이지
+========================================================= */
+
+.routePage {
+  width: 100%;
+
+  padding-bottom: 30px;
+
+  color: #202938;
+}
+
+/* =========================================================
+   상단 제목
+========================================================= */
+
+.routePageHeader {
+  display: flex;
+  align-items: center;
+
+  gap: 13px;
+
+  margin-bottom: 24px;
+}
+
+.routePageHeader h1 {
+  margin: 0;
+
+  font-size: 25px;
+  font-weight: 800;
+
+  letter-spacing: -0.8px;
+}
+
+.routeBackButton {
+  width: 42px;
+  height: 42px;
+
+  border: none;
+  border-radius: 11px;
+
+  background: #f6f7f9;
+
+  color: #293341;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: 0.2s;
+}
+
+.routeBackButton:hover {
+  background: #eceff3;
+}
+
+/* =========================================================
+   출발지 / 목적지 박스
+========================================================= */
+
+.routeSearchBox {
+  width: 100%;
+
+  padding: 11px 18px;
+
+  border: 1px solid #e0e4ea;
+  border-radius: 16px;
+
+  background: #f8f9fc;
+
+  margin-bottom: 16px;
+}
+
+.routeSearchRow {
+  min-height: 58px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 13px;
+}
+
+/* 현재 위치 파란 점 */
+
+.routeLocationDot {
+  width: 11px;
+  height: 11px;
+
+  border-radius: 50%;
+
+  flex-shrink: 0;
+}
+
+.routeLocationDot.current {
+  background: #4489f5;
+
+  border: 3px solid #dceaff;
+}
+
+/* 현재 위치 텍스트 */
+
+.routeLocationText {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+
+  gap: 5px;
+
+  font-size: 13px;
+}
+
+.routeLocationLabel {
+  color: #596474;
+
+  flex-shrink: 0;
+}
+
+.routeLocationDivider {
+  color: #9aa2ae;
+}
+
+.routeLocationText strong {
+  color: #424c5a;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 가운데 선 */
+
+.routeSearchDivider {
+  height: 1px;
+
+  margin-left: 25px;
+
+  background: #e1e5ea;
+}
+
+/* 목적지 아이콘 */
+
+.destinationIcon {
+  color: #ff6369;
+
+  flex-shrink: 0;
+}
+
+/* 목적지 입력 */
+
+.routeSearchRow input {
+  width: 100%;
+
+  border: none;
+  outline: none;
+
+  background: transparent;
+
+  color: #303947;
+
+  font-size: 14px;
+}
+
+.routeSearchRow input::placeholder {
+  color: #8f98a5;
+}
+
+/* =========================================================
+   지도에서 찍기 / 즐겨찾기
+========================================================= */
+
+.routeQuickButtons {
+  display: grid;
+
+  grid-template-columns: repeat(2, 1fr);
+
+  gap: 10px;
+
+  margin-bottom: 30px;
+}
+
+.routeQuickButton {
+  height: 52px;
+
+  border: 1px solid #e2e5e9;
+  border-radius: 12px;
+
+  background: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  color: #9aa2ad;
+
+  font-size: 13px;
+  font-weight: 650;
+
+  transition: 0.2s;
+}
+
+.routeQuickButton:hover {
+  color: #357cf0;
+
+  border-color: #8ab6ff;
+
+  background: #f6f9ff;
+}
+
+/* =========================================================
+   최근 검색
+========================================================= */
+
+.recentSearchSection {
+  width: 100%;
+}
+
+.recentSearchSection h2 {
+  margin: 0 0 13px;
+
+  color: #8c95a3;
+
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* 최근 검색 리스트 */
+
+.recentSearchList {
+  width: 100%;
+}
+
+/* 각각의 검색 기록 */
+
+.recentPlaceItem {
+  width: 100%;
+
+  min-height: 76px;
+
+  padding: 13px 8px;
+
+  border: none;
+  border-bottom: 1px solid #e9ebee;
+
+  background: transparent;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 15px;
+
+  text-align: left;
+
+  transition: 0.2s;
+}
+
+.recentPlaceItem:hover {
+  background: #f8faff;
+}
+
+/* 장소 정보 */
+
+.recentPlaceInfo {
+  min-width: 0;
+
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 5px;
+}
+
+.recentPlaceInfo strong {
+  color: #273140;
+
+  font-size: 15px;
+  font-weight: 750;
+}
+
+.recentPlaceInfo span {
+  color: #969eaa;
+
+  font-size: 12px;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* =========================================================
+   안전 점수
+========================================================= */
+
+.routeScore {
+  width: 48px;
+  height: 48px;
+
+  flex-shrink: 0;
+
+  border-radius: 14px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 17px;
+  font-weight: 800;
+}
+
+/* 80점 이상 */
+
+.routeScore.safe {
+  color: #31795b;
+
+  background: #e8f5ed;
+}
+
+/* 70 ~ 79 */
+
+.routeScore.normal {
+  color: #9a7217;
+
+  background: #fff5d9;
+}
+
+/* 69 이하 */
+
+.routeScore.warning {
+  color: #a55d26;
+
+  background: #ffead7;
+}
+
+/* =========================================================
+   클릭 효과
+========================================================= */
+
+.routeBackButton:active,
+.routeQuickButton:active,
+.recentPlaceItem:active {
+  transform: scale(0.98);
+}
+
+/* =========================================================
+   좁은 화면
+========================================================= */
+
+@media (max-width: 1100px) {
+  .routePageHeader h1 {
+    font-size: 23px;
+  }
+
+  .routeLocationText {
+    font-size: 12px;
+  }
+
+  .routeLocationText strong {
+    font-size: 12px;
+  }
+
+  .routeQuickButton {
+    font-size: 12px;
+  }
+
+  .recentPlaceInfo strong {
+    font-size: 14px;
+  }
+}
+
+/* =========================================================
+   경로 결과 화면
+========================================================= */
+
+.routeResultPage {
+  padding-bottom: 25px;
+}
+
+/* 상단 출발지 → 목적지 */
+
+.routeResultHeader {
+  width: 100%;
+
+  min-height: 58px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 11px;
+
+  padding: 7px;
+
+  margin-bottom: 22px;
+
+  border: 1px solid #e5e8ec;
+  border-radius: 14px;
+
+  background: white;
+}
+
+.routeResultHeader .routeBackButton {
+  width: 43px;
+  height: 43px;
+
+  flex-shrink: 0;
+}
+
+.routeResultTitle {
+  min-width: 0;
+
+  color: #202938;
+
+  font-size: 13px;
+  font-weight: 750;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.routeResultTitle span {
+  color: #737d8a;
+}
+
+/* =========================================================
+   선택 경로 요약
+========================================================= */
+
+.routeSummary {
+  display: flex;
+  align-items: center;
+
+  gap: 15px;
+
+  margin-bottom: 20px;
+}
+
+.routeSummaryScore {
+  width: 68px;
+  height: 68px;
+
+  flex-shrink: 0;
+
+  border-radius: 15px;
+
+  background: #e8f5ed;
+
+  color: #31795b;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.routeSummaryScore strong {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.routeSummaryScore span {
+  margin-top: 5px;
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.routeSummaryInfo {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 6px;
+}
+
+.routeSummaryInfo strong {
+  color: #202938;
+
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.routeSummaryInfo span {
+  color: #929aa7;
+
+  font-size: 11px;
+}
+
+/* =========================================================
+   안전 우선도
+========================================================= */
+
+.routeSafetyControl {
+  padding: 17px;
+
+  margin-bottom: 24px;
+
+  border-radius: 15px;
+
+  background: #f6f7fa;
+}
+
+.routeSafetyLabels {
+  display: flex;
+  justify-content: space-between;
+
+  margin-bottom: 11px;
+
+  color: #8a93a1;
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.routeSafetySlider {
+  width: 100%;
+
+  cursor: pointer;
+
+  accent-color: #315ba7;
+}
+
+.routeSafetyBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  margin-top: 10px;
+}
+
+.routeSafetyBottom > strong {
+  color: #3e4857;
+
+  font-size: 13px;
+}
+
+/* 지금 / 야간 */
+
+.timeModeButtons {
+  display: flex;
+
+  gap: 3px;
+}
+
+.timeModeButton {
+  border: none;
+
+  padding: 7px 9px;
+
+  border-radius: 8px;
+
+  background: transparent;
+
+  color: #606a78;
+
+  display: flex;
+  align-items: center;
+
+  gap: 4px;
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.timeModeButton.active {
+  background: #315ba7;
+
+  color: white;
+}
+
+/* =========================================================
+   대안 경로
+========================================================= */
+
+.alternativeRouteSection h2 {
+  margin: 0 0 12px;
+
+  color: #8c95a3;
+
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.alternativeRouteList {
+  display: flex;
+  flex-direction: column;
+
+  gap: 10px;
+}
+
+/* 각각의 경로 */
+
+.alternativeRouteCard {
+  width: 100%;
+
+  min-height: 76px;
+
+  padding: 12px;
+
+  border: 1px solid #e1e4e8;
+  border-radius: 13px;
+
+  background: white;
+
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  text-align: left;
+
+  transition: 0.2s;
+}
+
+.alternativeRouteCard:hover {
+  background: #f8faff;
+}
+
+.alternativeRouteCard.selected {
+  border: 2px solid #315ba7;
+
+  background: #f5f8fd;
+}
+
+/* 점수 */
+
+.alternativeScore {
+  width: 47px;
+  height: 47px;
+
+  flex-shrink: 0;
+
+  border-radius: 12px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.alternativeScore.safe {
+  background: #e8f5ed;
+
+  color: #31795b;
+}
+
+.alternativeScore.normal {
+  background: #fff5d9;
+
+  color: #9a7217;
+}
+
+.alternativeScore.warning {
+  background: #ffead7;
+
+  color: #a55d26;
+}
+
+/* 경로 설명 */
+
+.alternativeRouteInfo {
+  min-width: 0;
+
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 5px;
+}
+
+.alternativeRouteInfo strong {
+  color: #273140;
+
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.alternativeRouteInfo span {
+  color: #929aa7;
+
+  font-size: 10.5px;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 시간 / 거리 */
+
+.alternativeRouteTime {
+  flex-shrink: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: flex-end;
+
+  gap: 4px;
+}
+
+.alternativeRouteTime strong {
+  color: #202938;
+
+  font-size: 15px;
+}
+
+.alternativeRouteTime span {
+  color: #919aa7;
+
+  font-size: 11px;
+}
+
+/* =========================================================
+   안내 시작
+========================================================= */
+
+.startNavigationButton {
+  width: 100%;
+  height: 55px;
+
+  margin-top: 22px;
+
+  border: none;
+  border-radius: 12px;
+
+  background: #315ba7;
+
+  color: white;
+
+  font-size: 16px;
+  font-weight: 800;
+
+  box-shadow: 0 7px 18px rgba(49, 91, 167, 0.2);
+
+  transition: 0.2s;
+}
+
+.startNavigationButton:hover {
+  background: #284f98;
+}
+
+.startNavigationButton:active {
+  transform: scale(0.98);
+}

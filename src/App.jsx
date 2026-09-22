@@ -1,213 +1,273 @@
 import { useState } from 'react';
+
 import {
   MapPin,
   Bell,
   ShieldCheck,
   UserRound,
   Search,
-  ArrowUpDown,
-  Clock3,
-  PersonStanding,
   Camera,
   Lightbulb,
   Siren,
+  Settings,
+  UserPlus,
+  Route,
+  TriangleAlert,
 } from 'lucide-react';
+
 import './App.css';
+import './NavigationPage.css';
+
 import logo from './images/logo.png';
+
 import SosPage from './SosPage';
 import LoginPage from './LoginPage';
+import RoutePage from './RoutePage';
+import NavigationPage from './NavigationPage';
 
 function App() {
-  const [menu, setMenu] = useState('route');
+  // 처음 실행하면 지도 메뉴 선택
+  const [menu, setMenu] = useState('map');
+
   const [showSOS, setShowSOS] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
 
-  if (showSOS) {
-    return <SosPage onCancel={() => setShowSOS(false)} />;
-  }
+  // 길 안내 진행 여부
+  const [navigationActive, setNavigationActive] = useState(false);
 
-  if (showLogin) {
-    return <LoginPage onBack={() => setShowLogin(false)} />;
-  }
+  // 메뉴 변경 시 안내창 닫기
+  const handleMenuChange = (nextMenu) => {
+    if (nextMenu !== 'route') {
+      setNavigationActive(false);
+    }
+
+    setMenu(nextMenu);
+  };
+
+  // 안내 시작
+  const handleStartNavigation = () => {
+    setMenu('route');
+    setNavigationActive(true);
+  };
+
+  // 안내 종료
+  const handleEndNavigation = () => {
+    setNavigationActive(false);
+  };
+
+  // SOS 화면 열기
+  const handleOpenSOS = () => {
+    setNavigationActive(false);
+    setShowSOS(true);
+  };
+
+  // 로그인 화면 열기
+  const handleOpenLogin = () => {
+    setNavigationActive(false);
+    setShowLogin(true);
+  };
 
   return (
-    <div className="app">
-      {/* 왼쪽 메뉴 */}
-      <aside className="sidebar">
-        <div>
-          <div className="logo">
-            <img src={logo} alt="친절한 이웃 로고" className="logoImage" />
+    <>
+      {/*
+        SOS나 로그인 화면을 열어도 기존 화면을 삭제하지 않고 숨김.
+        돌아왔을 때 경로 선택 상태를 유지하기 위한 구조.
+      */}
+      <div
+        className="app"
+        style={showSOS || showLogin ? { display: 'none' } : undefined}
+      >
+        {/* =========================
+            왼쪽 메뉴
+        ========================= */}
 
-            <div className="logoText">
-              친절한 <span>이웃</span>
+        <aside className="sidebar">
+          <div>
+            <div className="logo">
+              <img src={logo} alt="친절한 이웃 로고" className="logoImage" />
+
+              <div className="logoText">
+                친절한 <span>이웃</span>
+              </div>
+            </div>
+
+            <nav className="menu">
+              <button
+                type="button"
+                className={menu === 'map' ? 'menuItem active' : 'menuItem'}
+                onClick={() => handleMenuChange('map')}
+              >
+                <MapPin size={22} />
+                <span>지도</span>
+              </button>
+
+              <button
+                type="button"
+                className={menu === 'route' ? 'menuItem active' : 'menuItem'}
+                onClick={() => handleMenuChange('route')}
+              >
+                <Route size={22} />
+                <span>경로</span>
+              </button>
+
+              <button
+                type="button"
+                className={menu === 'help' ? 'menuItem active' : 'menuItem'}
+                onClick={() => handleMenuChange('help')}
+              >
+                <Bell size={22} />
+                <span>도움요청</span>
+              </button>
+
+              <button
+                type="button"
+                className={menu === 'settings' ? 'menuItem active' : 'menuItem'}
+                onClick={() => handleMenuChange('settings')}
+              >
+                <Settings size={22} />
+                <span>설정</span>
+              </button>
+            </nav>
+          </div>
+
+          <div className="sidebarBottom">
+            <button
+              type="button"
+              className="emergencyButton"
+              onClick={handleOpenSOS}
+            >
+              <Siren size={21} />
+              도움 요청하기
+            </button>
+
+            <button
+              type="button"
+              className="loginButton"
+              onClick={handleOpenLogin}
+            >
+              <UserRound size={22} />
+              로그인
+            </button>
+          </div>
+        </aside>
+
+        {/* =========================
+            가운데 기능 패널
+        ========================= */}
+
+        <section className="controlPanel">
+          {menu === 'map' && <MapPanel />}
+
+          {/*
+            RoutePage를 삭제하지 않고 숨겨서
+            안내 종료 후 기존 결과 화면과 선택 상태 유지.
+          */}
+          <div
+            style={{
+              display: menu === 'route' && !navigationActive ? 'block' : 'none',
+            }}
+          >
+            <RoutePage onStartNavigation={handleStartNavigation} />
+          </div>
+
+          {menu === 'route' && navigationActive && (
+            <NavigationPage onEnd={handleEndNavigation} />
+          )}
+
+          {menu === 'help' && <HelpPanel />}
+
+          {menu === 'settings' && <SettingsPanel />}
+        </section>
+
+        {/* =========================
+            오른쪽 지도 영역
+        ========================= */}
+
+        <main className="mapArea">
+          <div id="map" className="kakaoMap">
+            <div className="mapPlaceholder">
+              <MapPin size={42} />
+
+              <strong>카카오맵 API 영역</strong>
+
+              <span>나중에 실제 지도가 여기에 표시됩니다.</span>
             </div>
           </div>
+        </main>
+      </div>
 
-          <nav className="menu">
-            <button
-              className={menu === 'route' ? 'menuItem active' : 'menuItem'}
-              onClick={() => setMenu('route')}
-            >
-              <MapPin size={22} />
-              <span>안전 귀갓길 찾기</span>
-            </button>
+      {/* =========================
+          SOS / 로그인 화면
+      ========================= */}
 
-            <button
-              className={menu === 'help' ? 'menuItem active' : 'menuItem'}
-              onClick={() => setMenu('help')}
-            >
-              <Bell size={22} />
-              <span>도움 요청</span>
-            </button>
+      {showSOS && <SosPage onCancel={() => setShowSOS(false)} />}
 
-            <button
-              className={menu === 'facility' ? 'menuItem active' : 'menuItem'}
-              onClick={() => setMenu('facility')}
-            >
-              <ShieldCheck size={22} />
-              <span>공공시설 확인</span>
-            </button>
-          </nav>
-        </div>
-
-        <div className="sidebarBottom">
-          <button className="emergencyButton" onClick={() => setShowSOS(true)}>
-            <Siren size={21} />
-            도움 요청하기
-          </button>
-
-          <button className="loginButton" onClick={() => setShowLogin(true)}>
-            <UserRound size={22} />
-            로그인
-          </button>
-        </div>
-      </aside>
-
-      {/* 가운데 기능 패널 */}
-      <section className="controlPanel">
-        {menu === 'route' && <RoutePanel />}
-        {menu === 'help' && <HelpPanel />}
-        {menu === 'facility' && <FacilityPanel />}
-      </section>
-
-      {/* 오른쪽 지도 영역 */}
-      <main className="mapArea">
-        <div id="map" className="kakaoMap">
-          <div className="mapPlaceholder">
-            <MapPin size={42} />
-            <strong>카카오맵 API 영역</strong>
-            <span>나중에 실제 지도가 여기에 표시됩니다.</span>
-          </div>
-        </div>
-      </main>
-    </div>
+      {showLogin && <LoginPage onBack={() => setShowLogin(false)} />}
+    </>
   );
 }
 
-function RoutePanel() {
+/* =========================================================
+   지도 패널
+========================================================= */
+
+function MapPanel() {
   return (
     <div className="panelContent">
-      <h1>안전 귀갓길 찾기</h1>
+      <h1>지도</h1>
 
-      <p className="subtitle">더 안전한 길, 함께 만들어가는 우리 동네</p>
+      <p className="subtitle">주변의 안전시설과 위험구간을 확인하세요.</p>
 
       <div className="locationBox">
         <div className="locationInput">
-          <span className="dot blue"></span>
-          <input placeholder="출발지 입력" />
-        </div>
+          <Search size={20} />
 
-        <div className="divider"></div>
-
-        <div className="locationInput">
-          <span className="dot red"></span>
-          <input placeholder="도착지 입력" />
-        </div>
-
-        <button className="swap">
-          <ArrowUpDown size={18} />
-        </button>
-      </div>
-
-      <h3 className="sectionTitle">경로 옵션</h3>
-
-      <div className="routeOptions">
-        <button className="routeOption activeOption">
-          <ShieldCheck size={29} />
-          <strong>안전 우선</strong>
-          <small>CCTV, 가로등 고려</small>
-        </button>
-
-        <button className="routeOption">
-          <Clock3 size={29} />
-          <strong>빠른 길</strong>
-          <small>최단 시간 경로</small>
-        </button>
-
-        <button className="routeOption">
-          <PersonStanding size={29} />
-          <strong>도보 전용</strong>
-          <small>걸어가는 경로</small>
-        </button>
-      </div>
-
-      <button className="searchRouteButton">
-        <Search size={22} />
-        경로 검색하기
-      </button>
-
-      <div className="safetyCard">
-        <h3>안전 지표 안내</h3>
-
-        <div className="safetyRow">
-          <div className="safetyIcon blueSafety">
-            <Camera />
-          </div>
-
-          <div>
-            <strong>CCTV</strong>
-            <p>주변 CCTV 설치 지역</p>
-          </div>
-        </div>
-
-        <div className="safetyRow">
-          <div className="safetyIcon yellowSafety">
-            <Lightbulb />
-          </div>
-
-          <div>
-            <strong>가로등</strong>
-            <p>가로등이 설치된 구간</p>
-          </div>
-        </div>
-
-        <div className="safetyRow">
-          <div className="safetyIcon purpleSafety">
-            <ShieldCheck />
-          </div>
-
-          <div>
-            <strong>여성지킴이 귀갓길</strong>
-            <p>안전 순찰 구간</p>
-          </div>
+          <input placeholder="어디로 갈까요?" aria-label="장소 검색" />
         </div>
       </div>
 
-      <div className="communityCard">
-        <div className="peopleIllustration">👩‍🦰👨</div>
+      <button type="button" className="facilityButton">
+        <Camera />
 
         <div>
-          <strong>
-            함께 만드는
-            <br />더 안전한 우리 동네
-          </strong>
-
-          <p>친절한 이웃이 함께합니다.</p>
+          <strong>CCTV</strong>
+          <span>주변 CCTV 위치 확인</span>
         </div>
-      </div>
+      </button>
+
+      <button type="button" className="facilityButton">
+        <Lightbulb />
+
+        <div>
+          <strong>가로등</strong>
+          <span>주변 가로등 위치 확인</span>
+        </div>
+      </button>
+
+      <button type="button" className="facilityButton">
+        <ShieldCheck />
+
+        <div>
+          <strong>여성지킴이 귀갓길</strong>
+          <span>안전 귀갓길 구역 확인</span>
+        </div>
+      </button>
+
+      <button type="button" className="facilityButton">
+        <TriangleAlert />
+
+        <div>
+          <strong>범죄주의구간</strong>
+          <span>주변 주의구간 확인</span>
+        </div>
+      </button>
     </div>
   );
 }
+
+/* =========================================================
+   도움요청 패널
+========================================================= */
 
 function HelpPanel() {
   return (
@@ -240,6 +300,7 @@ function HelpPanel() {
         </div>
 
         <p>성수역 2번 출구 근처</p>
+
         <div className="requestInfo">약 0.8km · 5분 전</div>
       </div>
 
@@ -250,6 +311,7 @@ function HelpPanel() {
         </div>
 
         <p>서울숲 인근 골목</p>
+
         <div className="requestInfo">약 1.2km · 2분 전</div>
       </div>
 
@@ -260,44 +322,177 @@ function HelpPanel() {
         </div>
 
         <p>왕십리역 근처</p>
+
         <div className="requestInfo">약 1.5km · 12분 전</div>
       </div>
     </div>
   );
 }
 
-function FacilityPanel() {
+/* =========================================================
+   설정 패널
+========================================================= */
+
+function SettingsPanel() {
+  const [safetyLevel, setSafetyLevel] = useState(50);
+  const [theme, setTheme] = useState('light');
+
+  const [dangerAlert, setDangerAlert] = useState(true);
+  const [routeAlert, setRouteAlert] = useState(true);
+  const [guardianAlert, setGuardianAlert] = useState(false);
+
   return (
-    <div className="panelContent">
-      <h1>공공시설 확인</h1>
+    <div className="panelContent settingsPanel">
+      <h1>설정</h1>
 
-      <p className="subtitle">지도에서 원하는 안전시설을 확인하세요.</p>
+      <p className="subtitle">친절한 이웃의 설정을 변경할 수 있습니다.</p>
 
-      <button className="facilityButton">
-        <Camera />
+      {/* 기본 안전 우선도 */}
+      <div className="settingsCard">
+        <h3>기본 안전 우선도</h3>
 
-        <div>
-          <strong>CCTV 위치</strong>
-          <span>주변 CCTV 확인</span>
+        <p className="settingsDescription">
+          모든 경로 계산의 기본값으로 사용됩니다.
+        </p>
+
+        <input
+          type="range"
+          min="0"
+          max="100"
+          value={safetyLevel}
+          onChange={(e) => setSafetyLevel(Number(e.target.value))}
+          className="safetyRange"
+          aria-label="기본 안전 우선도"
+        />
+
+        <div className="rangeLabels">
+          <span>거리 최우선</span>
+          <span>균형 (기본)</span>
+          <span>안전 최우선</span>
         </div>
-      </button>
+      </div>
 
-      <button className="facilityButton">
-        <Lightbulb />
+      {/* 보호자 연락처 */}
+      <div className="settingsCard">
+        <h3>보호자 연락처</h3>
 
-        <div>
-          <strong>가로등 위치</strong>
-          <span>주변 가로등 확인</span>
+        <div className="guardianItem">
+          <div className="guardianAvatar">엄마</div>
+
+          <div className="guardianInfo">
+            <strong>김서연</strong>
+            <span>010-2841-XXXX</span>
+          </div>
+
+          <span className="guardianBadge">기본</span>
         </div>
-      </button>
 
-      <button className="facilityButton">
-        <ShieldCheck />
+        <div className="guardianDivider"></div>
 
-        <div>
-          <strong>여성지킴이 귀갓길</strong>
-          <span>안전 귀갓길 구역 확인</span>
+        <div className="guardianItem">
+          <div className="guardianAvatar">친구</div>
+
+          <div className="guardianInfo">
+            <strong>이지훈</strong>
+            <span>010-7745-XXXX</span>
+          </div>
+
+          <span className="guardianBadge">보조</span>
         </div>
+
+        <button type="button" className="addGuardianButton">
+          <UserPlus size={18} />
+          연락처 추가
+        </button>
+      </div>
+
+      {/* 테마 */}
+      <div className="settingsCard">
+        <h3>테마</h3>
+
+        <div className="themeButtons">
+          <button
+            type="button"
+            className={
+              theme === 'light' ? 'themeButton selected' : 'themeButton'
+            }
+            onClick={() => setTheme('light')}
+          >
+            라이트
+          </button>
+
+          <button
+            type="button"
+            className={
+              theme === 'dark' ? 'themeButton selected' : 'themeButton'
+            }
+            onClick={() => setTheme('dark')}
+          >
+            다크
+          </button>
+
+          <button
+            type="button"
+            className={
+              theme === 'system' ? 'themeButton selected' : 'themeButton'
+            }
+            onClick={() => setTheme('system')}
+          >
+            시스템
+          </button>
+        </div>
+      </div>
+
+      {/* 알림 */}
+      <div className="settingsCard">
+        <h3>알림</h3>
+
+        <SettingToggle
+          title="위험 구간 진입 알림"
+          description="주의구간 100m 이내 진입 시 진동"
+          checked={dangerAlert}
+          onChange={() => setDangerAlert((previous) => !previous)}
+        />
+
+        <SettingToggle
+          title="야간 경로 재계산 알림"
+          description="일몰 후 저장 경로 안전도 변동 시"
+          checked={routeAlert}
+          onChange={() => setRouteAlert((previous) => !previous)}
+        />
+
+        <SettingToggle
+          title="보호자 도착 알림"
+          description="목적지 도착 시 보호자에게 자동 전송"
+          checked={guardianAlert}
+          onChange={() => setGuardianAlert((previous) => !previous)}
+        />
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   설정 ON / OFF 버튼
+========================================================= */
+
+function SettingToggle({ title, description, checked, onChange }) {
+  return (
+    <div className="settingToggleRow">
+      <div>
+        <strong>{title}</strong>
+        <span>{description}</span>
+      </div>
+
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        aria-label={title}
+        className={checked ? 'toggleSwitch on' : 'toggleSwitch'}
+        onClick={onChange}
+      >
+        <span></span>
       </button>
     </div>
   );

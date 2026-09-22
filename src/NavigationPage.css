@@ -1,0 +1,348 @@
+/* =========================================================
+   길 안내 왼쪽 패널
+========================================================= */
+
+.navigationPage {
+  width: 100%;
+  box-sizing: border-box;
+
+  padding: 10px 0 25px;
+
+  color: #202938;
+}
+
+/* =========================================================
+   현재 길 안내
+========================================================= */
+
+.navigationGuide {
+  width: 100%;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+
+  gap: 18px;
+
+  padding: 15px 5px 22px;
+}
+
+/* 화살표 */
+
+.navigationGuideArrow {
+  flex-shrink: 0;
+
+  color: #315aa9;
+}
+
+/* 안내 텍스트 */
+
+.navigationGuideText {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 5px;
+}
+
+.navigationGuideText strong {
+  color: #252e3c;
+
+  font-size: 23px;
+  font-weight: 850;
+}
+
+.navigationGuideText span {
+  color: #667085;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.navigationGuideText small {
+  color: #9aa3b0;
+
+  font-size: 10px;
+  font-weight: 500;
+}
+
+/* =========================================================
+   안내와 구간 정보 사이 구분선
+========================================================= */
+
+.navigationDivider {
+  width: 100%;
+  height: 1px;
+
+  margin-bottom: 22px;
+
+  background: #edf0f3;
+}
+
+/* =========================================================
+   구간별 안전 요인 제목
+========================================================= */
+
+.navigationPanelHeader {
+  margin-bottom: 18px;
+}
+
+.navigationPanelHeader > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 15px;
+}
+
+.navigationPanelHeader span {
+  color: #8b95a4;
+
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.navigationPanelHeader strong {
+  color: #939ca9;
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* =========================================================
+   안전 구간 목록
+========================================================= */
+
+.navigationSectionList {
+  display: flex;
+  flex-direction: column;
+
+  gap: 12px;
+}
+
+.navigationSection {
+  position: relative;
+
+  min-height: 75px;
+
+  padding: 10px 4px 10px 24px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 13px;
+}
+
+/* =========================================================
+   왼쪽 색상 막대
+========================================================= */
+
+.navigationSectionBar {
+  position: absolute;
+
+  top: 6px;
+  bottom: 6px;
+  left: 0;
+
+  width: 6px;
+
+  border-radius: 20px;
+}
+
+.navigationSection.safe .navigationSectionBar {
+  background: #358663;
+}
+
+.navigationSection.normal .navigationSectionBar {
+  background: #9c751c;
+}
+
+.navigationSection.warning .navigationSectionBar {
+  background: #b46425;
+}
+
+/* =========================================================
+   상태 아이콘
+========================================================= */
+
+.navigationStatusIcon {
+  width: 45px;
+  height: 45px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navigationSection.safe .navigationStatusIcon {
+  color: #34795d;
+
+  background: #e8f5ed;
+}
+
+.navigationSection.normal .navigationStatusIcon {
+  color: #91701d;
+
+  background: #fff5d9;
+}
+
+.navigationSection.warning .navigationStatusIcon {
+  color: #a75e26;
+
+  background: #ffead7;
+}
+
+/* =========================================================
+   도로 정보
+========================================================= */
+
+.navigationSectionInfo {
+  min-width: 0;
+
+  flex: 1;
+}
+
+.navigationRoadTitle {
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  margin-bottom: 6px;
+}
+
+.navigationRoadTitle strong {
+  color: #252e3c;
+
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.navigationSectionInfo p {
+  margin: 0;
+
+  color: #929aa7;
+
+  font-size: 11.5px;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* =========================================================
+   안전 / 보통 / 주의 표시
+========================================================= */
+
+.navigationLevel {
+  padding: 4px 7px;
+
+  border-radius: 8px;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  flex-shrink: 0;
+}
+
+.navigationLevel.safe {
+  color: #34795d;
+
+  background: #e8f5ed;
+}
+
+.navigationLevel.normal {
+  color: #91701d;
+
+  background: #fff5d9;
+}
+
+.navigationLevel.warning {
+  color: #a75e26;
+
+  background: #ffead7;
+}
+
+/* =========================================================
+   아래 버튼
+========================================================= */
+
+.navigationButtons {
+  display: grid;
+
+  grid-template-columns: 1fr 1.3fr;
+
+  gap: 10px;
+
+  margin-top: 25px;
+}
+
+.navigationButtons button {
+  height: 55px;
+
+  border-radius: 12px;
+
+  font-size: 14px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.navigationEndButton {
+  border: 1px solid #e0e4e9;
+
+  background: white;
+
+  color: #353e4c;
+}
+
+.guardianShareButton {
+  border: none;
+
+  background: #edf3fc;
+
+  color: #315ba7;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+}
+
+.navigationEndButton:hover {
+  background: #f5f6f8;
+}
+
+.guardianShareButton:hover {
+  background: #e1ebfa;
+}
+
+.navigationButtons button:active {
+  transform: scale(0.98);
+}
+
+/* =========================================================
+   좁은 화면
+========================================================= */
+
+@media (max-width: 1100px) {
+  .navigationGuideText strong {
+    font-size: 20px;
+  }
+
+  .navigationRoadTitle strong {
+    font-size: 14px;
+  }
+}
