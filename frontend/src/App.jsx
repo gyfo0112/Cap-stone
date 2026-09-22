@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import './App.css';
 import logo from './images/logo.png';
+import LoginPage from './LoginPage';
+import SosPage from './SosPage';
 import { useCctvLayer } from './useCctvLayer';
 import { useIsMobile } from './useIsMobile';
 import { useCurrentLocation } from './useCurrentLocation';
@@ -128,6 +130,18 @@ function App() {
     return () => observer.disconnect();
   }, [isMobile]);
 
+  // 데스크탑 사이드바의 로그인/도움요청하기 버튼 — 전체 화면을 덮는 별도 페이지로 전환.
+  // 모바일에서는 sidebarBottom 자체가 숨겨져 있어 두 state 모두 쓰이지 않는다.
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [desktopSosOpen, setDesktopSosOpen] = useState(false);
+
+  if (loginOpen) {
+    return <LoginPage onBack={() => setLoginOpen(false)} />;
+  }
+  if (desktopSosOpen) {
+    return <SosPage onCancel={() => setDesktopSosOpen(false)} />;
+  }
+
   return (
     <div className="app">
       {/* 왼쪽 메뉴 */}
@@ -173,12 +187,12 @@ function App() {
         </div>
 
         <div className="sidebarBottom">
-          <button className="emergencyButton">
+          <button className="emergencyButton" onClick={() => setDesktopSosOpen(true)}>
             <Siren size={21} />
             도움요청하기
           </button>
 
-          <button className="loginButton">
+          <button className="loginButton" onClick={() => setLoginOpen(true)}>
             <UserRound size={22} />
             로그인
           </button>

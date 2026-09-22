@@ -1,0 +1,148 @@
+.sos-page {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  background: white;
+}
+
+.sos-left {
+  width: 450px;
+  padding: 35px;
+  background: white;
+}
+
+.sos-circle {
+  width: 210px;
+  height: 210px;
+
+  border: none;
+  border-radius: 50%;
+
+  background: #a94f43;
+  color: white;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  margin: 0 auto;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.sos-circle:hover {
+  transform: scale(1.03);
+}
+
+.sos-circle.active {
+  background: #d64545;
+  animation: sosPulse 1s infinite;
+}
+
+@keyframes sosPulse {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.05);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.sos-text {
+  font-size: 30px;
+  font-weight: bold;
+  letter-spacing: 3px;
+}
+
+.sos-small {
+  margin-top: 10px;
+  font-size: 15px;
+}
+
+.sos-info {
+  text-align: center;
+  margin: 25px 0 30px;
+  line-height: 1.6;
+  font-weight: 600;
+  color: #555;
+}
+
+.guardian-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 18px;
+
+  border-radius: 16px;
+
+  background: #e9f1fb;
+
+  margin-bottom: 25px;
+}
+
+.guardian-box p {
+  margin: 5px 0 0;
+  color: #777;
+  font-size: 13px;
+}
+
+.guardian-toggle {
+  width: 56px;
+  height: 32px;
+
+  background: #3473b9;
+
+  border-radius: 20px;
+
+  padding: 3px;
+}
+
+.guardian-toggle div {
+  width: 26px;
+  height: 26px;
+
+  background: white;
+
+  border-radius: 50%;
+
+  margin-left: auto;
+}
+
+.safe-place {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  border: 1px solid #ddd;
+
+  border-radius: 14px;
+
+  padding: 15px;
+
+  margin-bottom: 12px;
+}
+
+.safe-place p {
+  margin: 5px 0 0;
+  color: #888;
+  font-size: 13px;
+}
+
+.sos-map {
+  flex: 1;
+  background: #eeeeea;
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+}
