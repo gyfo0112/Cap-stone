@@ -11,13 +11,16 @@ import {
   Camera,
   Lightbulb,
   Siren,
+  CircleCheck,
+  TriangleAlert,
 } from 'lucide-react';
 import './App.css';
 import logo from './images/logo.png';
 import LoginPage from './LoginPage';
 import SosPage from './SosPage';
-import { useCctvLayer } from './useCctvLayer';
-import { useIsMobile } from './useIsMobile';
+import { MapView } from './KakaoMapView';
+import { hasKakaoRestKey, searchPlaces } from './kakaoLocal';
+import { useIsMobile, scoreGrade } from './useIsMobile';
 import { useCurrentLocation } from './useCurrentLocation';
 import { useTheme } from './useTheme';
 import {
@@ -35,6 +38,7 @@ import {
   SosFab,
   SosOverlay,
 } from './MobileFlow';
+import { ROUTE_OPTIONS, SEGMENTS, GRADE_COLOR, GRADE_SOFT } from './routeData';
 
 function App() {
   const [theme, setTheme] = useTheme();
@@ -139,7 +143,7 @@ function App() {
     return <LoginPage onBack={() => setLoginOpen(false)} />;
   }
   if (desktopSosOpen) {
-    return <SosPage onCancel={() => setDesktopSosOpen(false)} />;
+    return <SosPage onCancel={() => setDesktopSosOpen(false)} location={myLocation} />;
   }
 
   return (
@@ -210,7 +214,7 @@ function App() {
           </>
         ) : (
           <>
-            {menu === 'route' && <RoutePanel />}
+            {menu === 'route' && <RoutePanel originLabel={myLocation.address} />}
             {menu === 'help' && <HelpPanel />}
             {menu === 'facility' && <FacilityPanel layers={layers} onToggle={toggleLayer} />}
           </>
@@ -304,127 +308,71 @@ function App() {
   );
 }
 
-const SEOUL_CENTER = { lat: 37.5665, lng: 126.978 };
+// 데스크탑의 3개 "경로 옵션" 버튼은 모바일처럼 슬라이더가 아니라 프리셋 버튼이라,
+// 안전/빠른/도보 각각을 mock 대안 경로 3개(safe/shortest/balanced) 중 하나에 매핑한다.
+// "도보 전용"은 셋 다 도보 경로라 딱 맞는 대응이 없어 균형 경로로 눌러뒀다.
+const ROUTE_MODES = [
+  { id: 'safe', icon: ShieldCheck, label: '안전 우선', desc: 'CCTV, 가로등 고려' },
+  { id: 'shortest', icon: Clock3, label: '빠른 길', desc: '최단 시간 경로' },
+  { id: 'balanced', icon: PersonStanding, label: '도보 전용', desc: '걸어가는 경로' },
+];
 
-function MapPlaceholder({ text }) {
-  return (
-    <div className="mapPlaceholder">
-      <MapPin size={42} />
-      <strong>카카오맵</strong>
-      <span>{text}</span>
-    </div>
-  );
-}
+function RoutePanel({ originLabel }) {
+  const [origin, setOrigin] = useState(originLabel || '현재 위치');
+  const [destination, setDestination] = useState('');
+  const [places, setPlaces] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [selectedMode, setSelectedMode] = useState('safe');
+  const [selectedRouteId, setSelectedRouteId] = useState('safe');
+  const [resultsReady, setResultsReady] = useState(false);
+  const [showDetail, setShowDetail] = useState(false);
+  const [notice, setNotice] = useState('');
 
-function MapView({ layers, location, pickMode, onCenterIdle }) {
-  const apiKey = import.meta.env.VITE_KAKAO_MAP_KEY;
-  if (!apiKey) {
-    return <MapPlaceholder text=".env.local 파일에 VITE_KAKAO_MAP_KEY를 설정하세요." />;
-  }
-  return (
-    <KakaoMap
-      apiKey={apiKey}
-      layers={layers}
-      location={location}
-      pickMode={pickMode}
-      onCenterIdle={onCenterIdle}
-    />
-  );
-}
+  const query = destination.trim();
+  const canSearch = hasKakaoRestKey();
 
-function KakaoMap({ apiKey, layers, location, pickMode, onCenterIdle }) {
-  const boxRef = useRef(null);
-  const [error, setError] = useState('');
-  const [map, setMap] = useState(null);
-  const meOverlayRef = useRef(null);
-
-  useCctvLayer(map, layers.cctv);
-
-  // 지도에서 찍기 모드: 지도를 움직여 멈출 때마다(idle) 중심 좌표를 위로 올려준다.
+  // 실제 카카오 장소 검색 (모바일 경로설정 화면과 동일한 방식)
   useEffect(() => {
-    if (!map || !pickMode) return undefined;
-    const { kakao } = window;
-    const reportCenter = () => {
-      const center = map.getCenter();
-      onCenterIdle?.({ lat: center.getLat(), lng: center.getLng() });
-    };
-    kakao.maps.event.addListener(map, 'idle', reportCenter);
-    reportCenter();
-    return () => kakao.maps.event.removeListener(map, 'idle', reportCenter);
-  }, [map, pickMode, onCenterIdle]);
-
-  // 실제 GPS 좌표가 들어오면 지도를 그쪽으로 이동하고 "내 위치" 점을 찍는다.
-  useEffect(() => {
-    if (!map || location?.lat == null) return;
-    const { kakao } = window;
-    const pos = new kakao.maps.LatLng(location.lat, location.lng);
-    map.panTo(pos);
-
-    if (!meOverlayRef.current) {
-      const content = document.createElement('div');
-      content.className = 'kakaoMeDot';
-      meOverlayRef.current = new kakao.maps.CustomOverlay({ position: pos, content, zIndex: 10 });
-      meOverlayRef.current.setMap(map);
-    } else {
-      meOverlayRef.current.setPosition(pos);
-    }
-  }, [map, location]);
-
-  useEffect(() => {
+    if (!query || !canSearch) return undefined;
     let cancelled = false;
-
-    const draw = () => {
-      if (cancelled || !boxRef.current) return;
-      window.kakao.maps.load(() => {
-        if (cancelled || !boxRef.current) return;
-        setMap(
-          new window.kakao.maps.Map(boxRef.current, {
-            center: new window.kakao.maps.LatLng(SEOUL_CENTER.lat, SEOUL_CENTER.lng),
-            level: 5,
-          }),
-        );
-      });
-    };
-
-    if (window.kakao?.maps) {
-      draw();
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    let script = document.getElementById('kakao-map-sdk');
-    if (!script) {
-      script = document.createElement('script');
-      script.id = 'kakao-map-sdk';
-      script.async = true;
-      script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${apiKey}&autoload=false&libraries=clusterer`;
-      document.head.appendChild(script);
-    }
-
-    const onError = () => {
-      if (!cancelled) {
-        setError(
-          '카카오맵 SDK를 불러오지 못했습니다. Kakao Developers에서 카카오맵 활성화, 비즈월렛 연결, Web 플랫폼 도메인 등록을 확인하세요.',
-        );
-      }
-    };
-    script.addEventListener('load', draw);
-    script.addEventListener('error', onError);
-
+    const timer = setTimeout(() => {
+      setSearching(true);
+      searchPlaces(query)
+        .then((r) => !cancelled && setPlaces(r))
+        .catch(() => !cancelled && setPlaces([]))
+        .finally(() => !cancelled && setSearching(false));
+    }, 350);
     return () => {
       cancelled = true;
-      script.removeEventListener('load', draw);
-      script.removeEventListener('error', onError);
+      clearTimeout(timer);
     };
-  }, [apiKey]);
+  }, [query, canSearch]);
 
-  if (error) return <MapPlaceholder text={error} />;
+  const pickPlace = (name) => {
+    setDestination(name);
+    setPlaces([]);
+  };
 
-  return <div ref={boxRef} id="map" className="kakaoMap" />;
-}
+  const swap = () => {
+    setOrigin(destination);
+    setDestination(origin);
+    setPlaces([]);
+  };
 
-function RoutePanel() {
+  const runSearch = () => {
+    if (!query) {
+      setNotice('도착지를 입력해주세요.');
+      return;
+    }
+    setNotice('');
+    setSelectedRouteId(selectedMode);
+    setResultsReady(true);
+    setShowDetail(false);
+  };
+
+  const selectedRoute = ROUTE_OPTIONS.find((r) => r.id === selectedRouteId) ?? ROUTE_OPTIONS[0];
+  const grade = scoreGrade(selectedRoute.score);
+
   return (
     <div className="panelContent">
       <h1>안전 귀갓길 찾기</h1>
@@ -434,47 +382,143 @@ function RoutePanel() {
       <div className="locationBox">
         <div className="locationInput">
           <span className="dot blue"></span>
-          <input placeholder="출발지 입력" />
+          <input
+            placeholder="출발지 입력"
+            value={origin}
+            onChange={(e) => setOrigin(e.target.value)}
+          />
         </div>
 
         <div className="divider"></div>
 
         <div className="locationInput">
           <span className="dot red"></span>
-          <input placeholder="도착지 입력" />
+          <input
+            placeholder="도착지 입력"
+            value={destination}
+            onChange={(e) => setDestination(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && runSearch()}
+          />
         </div>
 
-        <button className="swap">
+        <button className="swap" onClick={swap} aria-label="출발지/도착지 바꾸기">
           <ArrowUpDown size={18} />
         </button>
       </div>
 
+      {query && canSearch && (
+        <div className="searchSuggestions">
+          {searching && <div className="searchSuggestionEmpty">검색 중…</div>}
+          {!searching && places.length === 0 && (
+            <div className="searchSuggestionEmpty">검색 결과가 없습니다</div>
+          )}
+          {!searching &&
+            places.map((p) => (
+              <button key={p.id} className="searchSuggestionItem" onClick={() => pickPlace(p.name)}>
+                <strong>{p.name}</strong>
+                <span>{p.address}</span>
+              </button>
+            ))}
+        </div>
+      )}
+
       <h3 className="sectionTitle">경로 옵션</h3>
 
       <div className="routeOptions">
-        <button className="routeOption activeOption">
-          <ShieldCheck size={29} />
-          <strong>안전 우선</strong>
-          <small>CCTV, 가로등 고려</small>
-        </button>
-
-        <button className="routeOption">
-          <Clock3 size={29} />
-          <strong>빠른 길</strong>
-          <small>최단 시간 경로</small>
-        </button>
-
-        <button className="routeOption">
-          <PersonStanding size={29} />
-          <strong>도보 전용</strong>
-          <small>걸어가는 경로</small>
-        </button>
+        {ROUTE_MODES.map((m) => (
+          <button
+            key={m.id}
+            className={selectedMode === m.id ? 'routeOption activeOption' : 'routeOption'}
+            onClick={() => setSelectedMode(m.id)}
+          >
+            <m.icon size={29} />
+            <strong>{m.label}</strong>
+            <small>{m.desc}</small>
+          </button>
+        ))}
       </div>
 
-      <button className="searchRouteButton">
+      <button className="searchRouteButton" onClick={runSearch}>
         <Search size={22} />
         경로 검색하기
       </button>
+      {notice && <p className="routeNotice">{notice}</p>}
+
+      {resultsReady && (
+        <div className="routeResultCard">
+          <div className="routeResultHeader">
+            <div className="mfScoreBadge mfScoreBadge--lg" style={{ background: grade.soft, color: grade.color }}>
+              <strong>{selectedRoute.score}</strong>
+              <span>{grade.label}</span>
+            </div>
+            <div>
+              <strong>
+                {selectedRoute.distance}km · 도보 {selectedRoute.duration}분
+              </strong>
+              <p>{selectedRoute.note}</p>
+            </div>
+          </div>
+
+          <div className="mfRouteList">
+            {ROUTE_OPTIONS.map((r) => {
+              const g = scoreGrade(r.score);
+              return (
+                <button
+                  key={r.id}
+                  className={r.id === selectedRouteId ? 'mfRouteOption selected' : 'mfRouteOption'}
+                  onClick={() => setSelectedRouteId(r.id)}
+                >
+                  <div className="mfScoreBadge mfScoreBadge--sm" style={{ background: g.soft, color: g.color }}>
+                    <strong>{r.score}</strong>
+                  </div>
+                  <div>
+                    <strong>{r.name}</strong>
+                    <span>{r.note}</span>
+                  </div>
+                  <div className="mfRouteMeta">
+                    <strong>{r.duration}분</strong>
+                    <span>{r.distance}km</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          <button className="mfOutlineBtn routeDetailToggle" onClick={() => setShowDetail((v) => !v)}>
+            {showDetail ? '구간별 정보 접기' : '구간별 안전 요인 보기'}
+          </button>
+
+          {showDetail && (
+            <div className="mfSegmentList">
+              {SEGMENTS.map((s) => (
+                <div className="mfSegmentRow" key={s.name}>
+                  <span className="mfSegmentBar" style={{ background: GRADE_COLOR[s.grade] }} />
+                  <div
+                    className="mfSegmentIcon"
+                    style={{ color: GRADE_COLOR[s.grade], background: GRADE_SOFT[s.grade] }}
+                  >
+                    {s.grade === '안전' ? <CircleCheck size={16} /> : <TriangleAlert size={16} />}
+                  </div>
+                  <div className="mfSegmentBody">
+                    <div className="mfSegmentTitleRow">
+                      <strong>
+                        {s.name} · {s.meters}m
+                      </strong>
+                      <span
+                        className="mfSegmentGradeTag"
+                        style={{ color: GRADE_COLOR[s.grade], background: GRADE_SOFT[s.grade] }}
+                      >
+                        {s.grade}
+                      </span>
+                    </div>
+                    <p>{s.note}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="safetyCard">
         <h3>안전 지표 안내</h3>

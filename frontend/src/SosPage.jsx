@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import './SosPage.css';
+import { MapView } from './KakaoMapView';
 
-function SosPage({ onCancel }) {
+// SOS 상황에서는 주변 CCTV 위치가 바로 보이는 게 유용해서 기본으로 켜둔다.
+const SOS_LAYERS = { cctv: true };
+
+function SosPage({ onCancel, location }) {
   const [counting, setCounting] = useState(false);
   const [count, setCount] = useState(3);
 
@@ -137,7 +141,7 @@ function SosPage({ onCancel }) {
       </div>
 
       <div className="sos-map">
-        <div id="map">{/* 여기에 나중에 카카오맵 */}</div>
+        <MapView layers={SOS_LAYERS} location={location} />
       </div>
     </div>
   );

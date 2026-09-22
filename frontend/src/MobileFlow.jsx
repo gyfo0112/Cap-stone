@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { scoreGrade } from './useIsMobile';
 import { coordToAddress, hasKakaoRestKey, searchPlaces } from './kakaoLocal';
+import { ROUTE_OPTIONS, SEGMENTS, GRADE_COLOR, GRADE_SOFT } from './routeData';
 import './MobileFlow.css';
 
 // 안전점수 배지 — 화면 여러 곳(메인카드/최근검색/대안경로)에서 재사용.
@@ -456,11 +457,7 @@ export function MapPickScreen({ center, onCancel, onConfirm }) {
 
 /* ---------- 4. 경로 결과 ---------- */
 
-const ROUTE_OPTIONS = [
-  { id: 'safe', name: '안전 우선 경로', score: 82, note: 'CCTV 12대 · 보안등 34개 · 대로변 위주', duration: 24, distance: 1.8 },
-  { id: 'balanced', name: '균형 경로', score: 71, note: '어두운 구간 120m 포함', duration: 21, distance: 1.6 },
-  { id: 'shortest', name: '최단 거리', score: 58, note: '어두운 골목 320m · 야간 신고 4건', duration: 18, distance: 1.4 },
-];
+
 
 // 목적지가 바뀔 때마다 이 컴포넌트 자체를 새로 마운트해서(key=destination)
 // "계산 중" 스켈레톤을 다시 보여준다 — 아직 실제 경로 API가 없어서 결과는
@@ -612,15 +609,7 @@ function RouteResultBody({
 
 /* ---------- 5. 경로 상세 / 턴바이턴 ---------- */
 
-const SEGMENTS = [
-  { name: '어울마당로', meters: 260, grade: '안전', note: 'CCTV 3대, 보안등 8개 · 유동인구 많음' },
-  { name: '서교로 골목', meters: 180, grade: '보통', note: '보안등 2개 · 야간 조도 낮음, 안심벨 40m' },
-  { name: '동교로 뒷길', meters: 200, grade: '주의', note: '어두운 구간 · 최근 6개월 야간 신고 4건' },
-  { name: '연남로', meters: 340, grade: '안전', note: '안심벨 1개, CCTV 5대 · 상가 밀집' },
-];
 
-const GRADE_COLOR = { 안전: '#137050', 보통: '#875c0c', 주의: '#a5510f', 위험: '#f34b52' };
-const GRADE_SOFT = { 안전: '#e3f5ec', 보통: '#fff7da', 주의: '#ffe9d6', 위험: '#fdecec' };
 
 export function RouteDetailScreen({ onEnd }) {
   const [sharing, setSharing] = useState(false);
