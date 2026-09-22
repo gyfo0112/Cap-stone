@@ -170,6 +170,28 @@ export function MapControls({ onLocate, bottomOffset }) {
   );
 }
 
+// 화면 상단 헤더 — 뒤로가기+제목(일반/지도 위 floating) 또는 뒤로가기 없는 제목만,
+// 세 가지 모양을 한 곳에서 관리한다. 화면들은 제목·뒤로가기 핸들러만 넘기고
+// 자기 바디만 갖고 있으면 되게 하기 위한 공통 컴포넌트.
+export function MobileHeader({ title, onBack, floating = false, backLabel = '뒤로' }) {
+  if (!onBack) {
+    return <h1 className="mfPageTitle">{title}</h1>;
+  }
+  const content = (
+    <>
+      <button className="mfIconBtn" onClick={onBack} aria-label={backLabel}>
+        <ChevronLeft size={22} />
+      </button>
+      <h1>{title}</h1>
+    </>
+  );
+  return floating ? (
+    <div className="mfFloatingHeader">{content}</div>
+  ) : (
+    <header className="mfHeader">{content}</header>
+  );
+}
+
 /* ---------- 1. 온보딩 ---------- */
 
 const FEATURES = [
@@ -325,12 +347,7 @@ export function RouteInputScreen({ initialDestination, originLabel, onBack, onPi
 
   return (
     <div className="mfScreen mfScreenTabbed">
-      <header className="mfHeader">
-        <button className="mfIconBtn" onClick={onBack} aria-label="뒤로">
-          <ChevronLeft size={22} />
-        </button>
-        <h1>경로 설정</h1>
-      </header>
+      <MobileHeader title="경로 설정" onBack={onBack} />
 
       <div className="mfOdCard">
         <div className="mfOdRow">
@@ -480,12 +497,7 @@ export function MapPickScreen({ center, onCancel, onConfirm }) {
 
   return (
     <div className="mfRouteScreen">
-      <div className="mfFloatingHeader">
-        <button className="mfIconBtn" onClick={onCancel} aria-label="취소">
-          <ChevronLeft size={22} />
-        </button>
-        <h1>지도에서 위치 선택</h1>
-      </div>
+      <MobileHeader title="지도에서 위치 선택" onBack={onCancel} floating backLabel="취소" />
 
       <span className="mfPickCrosshair" aria-hidden="true">
         <MapPin size={36} color="#ff4b50" fill="#ff4b50" />
@@ -545,14 +557,11 @@ function RouteResultBody({
   const [expanded, sheetHandlers] = useSheetToggle(true);
 
   const header = (
-    <div className="mfFloatingHeader">
-      <button className="mfIconBtn" onClick={onBack} aria-label="뒤로">
-        <ChevronLeft size={22} />
-      </button>
-      <h1>
-        {originLabel || '홍대입구역 2번출구'} → {destination || '목적지'}
-      </h1>
-    </div>
+    <MobileHeader
+      title={`${originLabel || '홍대입구역 2번출구'} → ${destination || '목적지'}`}
+      onBack={onBack}
+      floating
+    />
   );
 
   if (!ready) {
@@ -1002,7 +1011,7 @@ export function SettingsScreen({ safetyWeight, onSafetyWeightChange, theme, onTh
 
   return (
     <div className="mfScreen mfScreenTabbed">
-      <h1 className="mfPageTitle">설정</h1>
+      <MobileHeader title="설정" />
 
       <div className="mfSettingsCard">
         <strong>기본 안전 우선도</strong>
