@@ -25,7 +25,7 @@ import {
   Share,
 } from 'lucide-react';
 import { scoreGrade } from './useIsMobile';
-import { hasKakaoRestKey, searchPlaces } from './kakaoLocal';
+import { coordToAddress, hasKakaoRestKey, searchPlaces } from './kakaoLocal';
 import './MobileFlow.css';
 
 // 안전점수 배지 — 화면 여러 곳(메인카드/최근검색/대안경로)에서 재사용.
@@ -271,7 +271,7 @@ const RECENTS = [
   { name: '상수동 골목시장', sub: '서울 마포구 와우산로 · 3일 전', score: 58 },
 ];
 
-export function RouteInputScreen({ initialDestination, originLabel, onBack, onSelect }) {
+export function RouteInputScreen({ initialDestination, originLabel, onBack, onPickOnMap, onSelect }) {
   const [destination, setDestination] = useState(initialDestination || '');
   const [places, setPlaces] = useState(null); // 마지막으로 완료된 검색 결과
   const [placesQuery, setPlacesQuery] = useState(''); // places가 어떤 검색어의 결과인지
@@ -336,7 +336,7 @@ export function RouteInputScreen({ initialDestination, originLabel, onBack, onSe
       </div>
 
       <div className="mfOdActions">
-        <button className="mfOutlineBtn" disabled>
+        <button className="mfOutlineBtn" onClick={onPickOnMap}>
           <Crosshair size={16} /> 지도에서 찍기
         </button>
         <button className="mfOutlineBtn" disabled>
@@ -386,6 +386,70 @@ export function RouteInputScreen({ initialDestination, originLabel, onBack, onSe
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+/* ---------- 3-1. 지도에서 찍기 ---------- */
+
+// 지도 중심에 항상 고정된 핀을 두고, 사용자가 지도를 움직이면(idle) App에서
+// 내려주는 center로 역지오코딩해 주소를 보여준다. 확정하면 그 주소를 목적지로 씀.
+export function MapPickScreen({ center, onCancel, onConfirm }) {
+  const [address, setAddress] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const restKeyMissing = !hasKakaoRestKey();
+
+  useEffect(() => {
+    if (!center || restKeyMissing) return undefined;
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      setLoading(true);
+      coordToAddress(center.lat, center.lng)
+        .then((result) => {
+          if (cancelled) return;
+          setAddress(result || '');
+          setFailed(!result);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          setFailed(true);
+        })
+        .finally(() => !cancelled && setLoading(false));
+    }, 350);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [center, restKeyMissing]);
+
+  return (
+    <div className="mfRouteScreen">
+      <div className="mfFloatingHeader">
+        <button className="mfIconBtn" onClick={onCancel} aria-label="취소">
+          <ChevronLeft size={22} />
+        </button>
+        <h1>지도에서 위치 선택</h1>
+      </div>
+
+      <span className="mfPickCrosshair" aria-hidden="true">
+        <MapPin size={36} color="#ff4b50" fill="#ff4b50" />
+      </span>
+
+      <div className="mfRouteSheet">
+        <span className="mfGrabHandle" />
+        <h3 className="mfSectionLabel">선택한 위치</h3>
+        <p className="mfPickAddress">
+          {loading ? '주소를 확인하는 중…' : failed ? '주소를 확인할 수 없습니다' : address || '지도를 움직여 위치를 맞춰보세요'}
+        </p>
+        <button
+          className="mfPrimaryBtn mfMainCta"
+          disabled={!address || loading}
+          onClick={() => onConfirm(address)}
+        >
+          이 위치로 설정
+        </button>
+      </div>
     </div>
   );
 }

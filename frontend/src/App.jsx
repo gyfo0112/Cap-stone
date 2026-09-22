@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   MapPin,
   Bell,
@@ -27,6 +27,7 @@ import {
   RouteInputScreen,
   RouteResultScreen,
   RouteDetailScreen,
+  MapPickScreen,
   CrimeLayerScreen,
   SettingsScreen,
   SosFab,
@@ -73,11 +74,20 @@ function App() {
     return hour >= 19 || hour < 6 ? 'night' : 'now';
   });
   const [selectedRouteId, setSelectedRouteId] = useState('safe');
+  const [mapPickerOpen, setMapPickerOpen] = useState(false);
+  const [pickCenter, setPickCenter] = useState(null);
+  const onCenterIdle = useCallback((coord) => setPickCenter(coord), []);
 
-  // 범죄주의구간/SOS 오버레이는 탭·화면 상태와 별개라, 화면을 옮길 때 같이 닫아준다
+  // 범죄주의구간/SOS/지도찍기 오버레이는 탭·화면 상태와 별개라, 화면을 옮길 때 같이 닫아준다
   const closeOverlays = () => {
     setCrimeLayerOpen(false);
     setSosOpen(false);
+    setMapPickerOpen(false);
+  };
+
+  const openMapPicker = () => {
+    setPickCenter(null);
+    setMapPickerOpen(true);
   };
 
   const openRouteInput = (prefill) => {
@@ -195,7 +205,12 @@ function App() {
 
       {/* 오른쪽 지도 영역 */}
       <main className="mapArea">
-        <MapView layers={layers} location={isMobile ? myLocation : null} />
+        <MapView
+          layers={layers}
+          location={isMobile ? myLocation : null}
+          pickMode={mapPickerOpen}
+          onCenterIdle={onCenterIdle}
+        />
       </main>
 
       {/* 모바일 전용: 지도 위 검색바+오버레이 칩+컨트롤 / 온보딩 / 경로 흐름 / SOS / 범죄레이어 / 설정 */}
@@ -214,13 +229,26 @@ function App() {
 
       {isMobile && !onboardingDone && <Onboarding onDone={finishOnboarding} />}
 
-      {isMobile && onboardingDone && mobileScreen === 'input' && (
+      {isMobile && onboardingDone && mobileScreen === 'input' && !mapPickerOpen && (
         <RouteInputScreen
           initialDestination={destination}
           originLabel={myLocation.address}
           onBack={closeRouteFlow}
+          onPickOnMap={openMapPicker}
           onSelect={(name) => {
             setDestination(name);
+            setMobileScreen('result');
+          }}
+        />
+      )}
+
+      {isMobile && onboardingDone && mapPickerOpen && (
+        <MapPickScreen
+          center={pickCenter}
+          onCancel={() => setMapPickerOpen(false)}
+          onConfirm={(name) => {
+            setDestination(name);
+            setMapPickerOpen(false);
             setMobileScreen('result');
           }}
         />
@@ -274,21 +302,42 @@ function MapPlaceholder({ text }) {
   );
 }
 
-function MapView({ layers, location }) {
+function MapView({ layers, location, pickMode, onCenterIdle }) {
   const apiKey = import.meta.env.VITE_KAKAO_MAP_KEY;
   if (!apiKey) {
     return <MapPlaceholder text=".env.local 파일에 VITE_KAKAO_MAP_KEY를 설정하세요." />;
   }
-  return <KakaoMap apiKey={apiKey} layers={layers} location={location} />;
+  return (
+    <KakaoMap
+      apiKey={apiKey}
+      layers={layers}
+      location={location}
+      pickMode={pickMode}
+      onCenterIdle={onCenterIdle}
+    />
+  );
 }
 
-function KakaoMap({ apiKey, layers, location }) {
+function KakaoMap({ apiKey, layers, location, pickMode, onCenterIdle }) {
   const boxRef = useRef(null);
   const [error, setError] = useState('');
   const [map, setMap] = useState(null);
   const meOverlayRef = useRef(null);
 
   useCctvLayer(map, layers.cctv);
+
+  // 지도에서 찍기 모드: 지도를 움직여 멈출 때마다(idle) 중심 좌표를 위로 올려준다.
+  useEffect(() => {
+    if (!map || !pickMode) return undefined;
+    const { kakao } = window;
+    const reportCenter = () => {
+      const center = map.getCenter();
+      onCenterIdle?.({ lat: center.getLat(), lng: center.getLng() });
+    };
+    kakao.maps.event.addListener(map, 'idle', reportCenter);
+    reportCenter();
+    return () => kakao.maps.event.removeListener(map, 'idle', reportCenter);
+  }, [map, pickMode, onCenterIdle]);
 
   // 실제 GPS 좌표가 들어오면 지도를 그쪽으로 이동하고 "내 위치" 점을 찍는다.
   useEffect(() => {

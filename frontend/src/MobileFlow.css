@@ -100,6 +100,26 @@
   white-space: nowrap;
 }
 
+/* 지도에서 찍기 — 화면 정중앙에 고정, 지도가 그 아래에서 움직인다.
+   핀 끝(뾰족한 아래쪽)이 정확히 중심에 오도록 아이콘 높이만큼 위로 올림. */
+.mfPickCrosshair {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, calc(-50% - 18px));
+  z-index: 51;
+  pointer-events: none;
+  filter: drop-shadow(0 3px 6px rgba(16, 24, 33, 0.35));
+}
+
+.mfPickAddress {
+  margin: 0 0 16px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--mf-text-primary);
+  min-height: 20px;
+}
+
 .mfRouteSheet {
   pointer-events: auto;
   align-self: stretch;
