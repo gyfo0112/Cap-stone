@@ -15,6 +15,9 @@ import {
   TriangleAlert,
   Settings,
   UserPlus,
+  Route,
+  Users,
+  ArrowUp,
 } from 'lucide-react';
 import './App.css';
 import logo from './images/logo.png';
@@ -45,16 +48,24 @@ import { ROUTE_OPTIONS, SEGMENTS, GRADE_COLOR, GRADE_SOFT } from './routeData';
 
 // 데스크탑 왼쪽 메뉴 — MobileTabBar의 TABS 배열과 같은 방식으로, 여기 하나만
 // 고치면 메뉴 추가/순서 변경이 되게 데이터로 관리한다.
+// frontend-junwoo 브랜치와 이름·순서를 맞춤: 지도(공공시설 확인 내용) / 경로 / 도움요청 / 설정.
 const DESKTOP_MENU = [
-  { key: 'route', icon: MapPin, label: '안전 귀갓길 찾기' },
+  { key: 'map', icon: MapPin, label: '지도' },
+  { key: 'route', icon: Route, label: '경로' },
   { key: 'help', icon: Bell, label: '도움요청' },
-  { key: 'facility', icon: ShieldCheck, label: '공공시설 확인' },
   { key: 'settings', icon: Settings, label: '설정' },
 ];
 
 function App() {
   const [theme, setTheme] = useTheme();
-  const [menu, setMenu] = useState('route');
+  const [menu, setMenu] = useState('map');
+  const [navigationActive, setNavigationActive] = useState(false);
+
+  // 메뉴를 바꾸면 진행 중이던 길 안내는 접어둔다 (frontend-junwoo의 handleMenuChange와 동일)
+  const selectDesktopMenu = (key) => {
+    if (key !== 'route') setNavigationActive(false);
+    setMenu(key);
+  };
   const [layers, setLayers] = useState({ cctv: false });
   const toggleLayer = (key) => setLayers((s) => ({ ...s, [key]: !s[key] }));
 
@@ -179,7 +190,7 @@ function App() {
                 <button
                   key={m.key}
                   className={menu === m.key ? 'menuItem active' : 'menuItem'}
-                  onClick={() => setMenu(m.key)}
+                  onClick={() => selectDesktopMenu(m.key)}
                 >
                   <m.icon size={22} />
                   <span>{m.label}</span>
@@ -192,7 +203,7 @@ function App() {
         <div className="sidebarBottom">
           <button className="emergencyButton" onClick={() => setDesktopSosOpen(true)}>
             <Siren size={21} />
-            도움요청하기
+            도움 요청하기
           </button>
 
           <button className="loginButton" onClick={() => setLoginOpen(true)}>
@@ -213,9 +224,19 @@ function App() {
           </>
         ) : (
           <>
-            {menu === 'route' && <RoutePanel originLabel={myLocation.address} />}
+            {/* menu 조건 밖에 항상 마운트해서, 다른 메뉴 다녀와도 검색 상태가 안 날아가게 함
+                (frontend-junwoo RoutePage와 같은 방식) */}
+            <div style={{ display: menu === 'route' && !navigationActive ? 'block' : 'none' }}>
+              <RoutePanel
+                originLabel={myLocation.address}
+                onStartNavigation={() => setNavigationActive(true)}
+              />
+            </div>
+            {menu === 'route' && navigationActive && (
+              <NavigationPanel onEnd={() => setNavigationActive(false)} />
+            )}
             {menu === 'help' && <HelpPanel />}
-            {menu === 'facility' && <FacilityPanel layers={layers} onToggle={toggleLayer} />}
+            {menu === 'map' && <FacilityPanel layers={layers} onToggle={toggleLayer} />}
             {menu === 'settings' && (
               <SettingsPanel
                 safetyWeight={safetyWeight}
@@ -324,8 +345,14 @@ const ROUTE_MODES = [
   { id: 'balanced', icon: PersonStanding, label: '도보 전용', desc: '걸어가는 경로' },
 ];
 
-function RoutePanel({ originLabel }) {
+function RoutePanel({ originLabel, onStartNavigation }) {
   const [origin, setOrigin] = useState(originLabel || '현재 위치');
+  // 이 패널이 항상 마운트돼 있어서(탭 전환에도 검색상태 유지) 첫 렌더 시점엔
+  // GPS 주소가 아직 안 왔을 수 있다 — 사용자가 직접 수정하기 전까지는 계속 따라간다.
+  const originTouched = useRef(false);
+  useEffect(() => {
+    if (!originTouched.current && originLabel) setOrigin(originLabel);
+  }, [originLabel]);
   const [destination, setDestination] = useState('');
   const [places, setPlaces] = useState([]);
   const [searching, setSearching] = useState(false);
@@ -361,6 +388,7 @@ function RoutePanel({ originLabel }) {
   };
 
   const swap = () => {
+    originTouched.current = true;
     setOrigin(destination);
     setDestination(origin);
     setPlaces([]);
@@ -382,7 +410,7 @@ function RoutePanel({ originLabel }) {
 
   return (
     <div className="panelContent">
-      <h1>안전 귀갓길 찾기</h1>
+      <h1>경로 설정</h1>
 
       <p className="subtitle">더 안전한 길, 함께 만들어가는 우리 동네</p>
 
@@ -392,7 +420,10 @@ function RoutePanel({ originLabel }) {
           <input
             placeholder="출발지 입력"
             value={origin}
-            onChange={(e) => setOrigin(e.target.value)}
+            onChange={(e) => {
+              originTouched.current = true;
+              setOrigin(e.target.value);
+            }}
           />
         </div>
 
@@ -524,6 +555,10 @@ function RoutePanel({ originLabel }) {
               ))}
             </div>
           )}
+
+          <button className="mfPrimaryBtn startNavigationButton" onClick={onStartNavigation}>
+            안내 시작
+          </button>
         </div>
       )}
 
@@ -575,6 +610,60 @@ function RoutePanel({ originLabel }) {
 
           <p>친절한 이웃이 함께합니다.</p>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// 데스크탑 길 안내 화면 — frontend-junwoo의 NavigationPage와 같은 구성(턴 배너 +
+// 구간별 안전요인 + 안내종료/보호자공유). 모바일 RouteDetailScreen과 같은
+// mock SEGMENTS를 쓰고, mf* 클래스를 그대로 재사용해 별도 CSS 없이 붙였다.
+function NavigationPanel({ onEnd }) {
+  const [sharing, setSharing] = useState(false);
+
+  return (
+    <div className="panelContent">
+      <div className="mfTurnBanner">
+        <ArrowUp size={26} />
+        <div>
+          <strong>250m 직진</strong>
+          <span>어울마당로 · 다음 좌회전까지</span>
+        </div>
+      </div>
+
+      <h3 className="sectionTitle" style={{ marginTop: 20 }}>
+        구간별 안전 요인 · 총 {SEGMENTS.length}구간 · 1.8km
+      </h3>
+
+      <div className="mfSegmentList">
+        {SEGMENTS.map((s) => (
+          <div className="mfSegmentRow" key={s.name}>
+            <span className="mfSegmentBar" style={{ background: GRADE_COLOR[s.grade] }} />
+            <div className="mfSegmentIcon" style={{ color: GRADE_COLOR[s.grade], background: GRADE_SOFT[s.grade] }}>
+              {s.grade === '안전' ? <CircleCheck size={16} /> : <TriangleAlert size={16} />}
+            </div>
+            <div className="mfSegmentBody">
+              <div className="mfSegmentTitleRow">
+                <strong>
+                  {s.name} · {s.meters}m
+                </strong>
+                <span className="mfSegmentGradeTag" style={{ color: GRADE_COLOR[s.grade], background: GRADE_SOFT[s.grade] }}>
+                  {s.grade}
+                </span>
+              </div>
+              <p>{s.note}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mfDetailActions">
+        <button className="mfOutlineBtn mfFlex1" onClick={onEnd}>
+          안내 종료
+        </button>
+        <button className="mfShareBtn mfFlex1_4" onClick={() => setSharing((v) => !v)}>
+          <Users size={16} /> {sharing ? '공유 중' : '보호자 공유'}
+        </button>
       </div>
     </div>
   );
@@ -640,9 +729,9 @@ function HelpPanel() {
 function FacilityPanel({ layers, onToggle }) {
   return (
     <div className="panelContent">
-      <h1>공공시설 확인</h1>
+      <h1>지도</h1>
 
-      <p className="subtitle">지도에서 원하는 안전시설을 확인하세요.</p>
+      <p className="subtitle">주변의 안전시설과 위험구간을 확인하세요.</p>
 
       <button
         className={layers.cctv ? 'facilityButton active' : 'facilityButton'}
@@ -670,6 +759,15 @@ function FacilityPanel({ layers, onToggle }) {
 
         <div>
           <strong>여성지킴이 귀갓길</strong>
+          <span>준비 중</span>
+        </div>
+      </button>
+
+      <button className="facilityButton" disabled>
+        <TriangleAlert />
+
+        <div>
+          <strong>범죄주의구간</strong>
           <span>준비 중</span>
         </div>
       </button>

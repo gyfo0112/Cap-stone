@@ -302,6 +302,10 @@ button {
   margin-top: 10px;
 }
 
+.startNavigationButton {
+  margin-top: 16px;
+}
+
 .locationInput {
   height: 55px;
 
