@@ -660,14 +660,16 @@ button {
 
 .yellowBadge {
   background: #e9be1f;
+  color: #3a2c00;
 }
 
 .orangeBadge {
   background: #ff8433;
+  color: #3a1c00;
 }
 
 .redBadge {
-  background: #f34b52;
+  background: #d93a41;
 }
 
 .requestCard p {
@@ -679,7 +681,7 @@ button {
 .requestInfo {
   font-size: 11px;
 
-  color: #a0a6ad;
+  color: #6b7480;
 }
 
 /* =========================
@@ -837,6 +839,11 @@ button {
   /* 다크모드 — 데스크탑 폭에서는 이 미디어쿼리 자체가 안 걸리므로 안전하게 모바일에만 적용 */
   [data-theme='dark'] .controlPanel {
     background: var(--mf-surface, #1c2027);
+  }
+
+  /* 카드는 흰 배경 그대로라 글자색을 상속시키면 안 되고, 어두운 패널 위 제목만 밝게 */
+  [data-theme='dark'] .controlPanel .panelContent > h1 {
+    color: var(--mf-text-primary, #eef1f5);
   }
 
   [data-theme='dark'] .sidebar {
