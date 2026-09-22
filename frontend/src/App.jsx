@@ -43,6 +43,15 @@ import {
 } from './MobileFlow';
 import { ROUTE_OPTIONS, SEGMENTS, GRADE_COLOR, GRADE_SOFT } from './routeData';
 
+// 데스크탑 왼쪽 메뉴 — MobileTabBar의 TABS 배열과 같은 방식으로, 여기 하나만
+// 고치면 메뉴 추가/순서 변경이 되게 데이터로 관리한다.
+const DESKTOP_MENU = [
+  { key: 'route', icon: MapPin, label: '안전 귀갓길 찾기' },
+  { key: 'help', icon: Bell, label: '도움요청' },
+  { key: 'facility', icon: ShieldCheck, label: '공공시설 확인' },
+  { key: 'settings', icon: Settings, label: '설정' },
+];
+
 function App() {
   const [theme, setTheme] = useTheme();
   const [menu, setMenu] = useState('route');
@@ -166,37 +175,16 @@ function App() {
             <MobileTabBar active={mobileTab} onSelect={selectMobileTab} />
           ) : (
             <nav className="menu">
-              <button
-                className={menu === 'route' ? 'menuItem active' : 'menuItem'}
-                onClick={() => setMenu('route')}
-              >
-                <MapPin size={22} />
-                <span>안전 귀갓길 찾기</span>
-              </button>
-
-              <button
-                className={menu === 'help' ? 'menuItem active' : 'menuItem'}
-                onClick={() => setMenu('help')}
-              >
-                <Bell size={22} />
-                <span>도움요청</span>
-              </button>
-
-              <button
-                className={menu === 'facility' ? 'menuItem active' : 'menuItem'}
-                onClick={() => setMenu('facility')}
-              >
-                <ShieldCheck size={22} />
-                <span>공공시설 확인</span>
-              </button>
-
-              <button
-                className={menu === 'settings' ? 'menuItem active' : 'menuItem'}
-                onClick={() => setMenu('settings')}
-              >
-                <Settings size={22} />
-                <span>설정</span>
-              </button>
+              {DESKTOP_MENU.map((m) => (
+                <button
+                  key={m.key}
+                  className={menu === m.key ? 'menuItem active' : 'menuItem'}
+                  onClick={() => setMenu(m.key)}
+                >
+                  <m.icon size={22} />
+                  <span>{m.label}</span>
+                </button>
+              ))}
             </nav>
           )}
         </div>
