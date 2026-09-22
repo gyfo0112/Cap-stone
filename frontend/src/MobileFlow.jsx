@@ -555,7 +555,7 @@ const SEGMENTS = [
   { name: '연남로', meters: 340, grade: '안전', note: '안심벨 1개, CCTV 5대 · 상가 밀집' },
 ];
 
-const GRADE_COLOR = { 안전: '#22a06b', 보통: '#9a6910', 주의: '#c1631a', 위험: '#f34b52' };
+const GRADE_COLOR = { 안전: '#137050', 보통: '#875c0c', 주의: '#a5510f', 위험: '#f34b52' };
 const GRADE_SOFT = { 안전: '#e3f5ec', 보통: '#fff7da', 주의: '#ffe9d6', 위험: '#fdecec' };
 
 export function RouteDetailScreen({ onEnd }) {
@@ -776,6 +776,14 @@ const CRIME_LEGEND = [
   '#f34b52',
 ];
 
+// 범례 칸 배경(초록~빨강)에서 흰색/짙은색 중 대비가 더 큰 글자색을 고른다
+function legendTextColor(hex) {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+  const f = (v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+  const L = 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+  return 1.05 / (L + 0.05) > (L + 0.05) / 0.06 ? '#fff' : '#1c2027';
+}
+
 export function CrimeLayerScreen() {
   const [enabled, setEnabled] = useState(true);
   const [opacity, setOpacity] = useState(60);
@@ -806,7 +814,7 @@ export function CrimeLayerScreen() {
           <h3 className="mfSectionLabel">위험 등급 범례</h3>
           <div className="mfLegend">
             {CRIME_LEGEND.map((c, i) => (
-              <div key={c} className="mfLegendCell" style={{ background: c }}>
+              <div key={c} className="mfLegendCell" style={{ background: c, color: legendTextColor(c) }}>
                 {i + 1}
               </div>
             ))}

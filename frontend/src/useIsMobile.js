@@ -19,8 +19,8 @@ export function useIsMobile() {
 // 보통은 기존 가로등 아이콘 배경(#fff7da)을 재사용하고 대비용으로 텍스트만 어둡게,
 // 주의는 기존 주의색(#ff8b38) 계열에서 파생. 위험은 기존 레드 그대로.
 export function scoreGrade(score) {
-  if (score >= 80) return { label: '안전', color: '#22a06b', soft: '#e3f5ec' };
-  if (score >= 60) return { label: '보통', color: '#9a6910', soft: '#fff7da' };
-  if (score >= 35) return { label: '주의', color: '#c1631a', soft: '#ffe9d6' };
+  if (score >= 80) return { label: '안전', color: '#137050', soft: '#e3f5ec' };
+  if (score >= 60) return { label: '보통', color: '#875c0c', soft: '#fff7da' };
+  if (score >= 35) return { label: '주의', color: '#a5510f', soft: '#ffe9d6' };
   return { label: '위험', color: '#f34b52', soft: '#fdecec' };
 }

@@ -16,6 +16,10 @@
   --mf-text-muted: #9da5b2;
   --mf-border: #e4e7eb;
   --mf-border-soft: #eef0f2;
+  --mf-track: #eef1f4;
+  --mf-accent-text: #1e4fa0;
+  --mf-tab-active: #1477f8;
+  --mf-danger-text: #f34b52;
 }
 
 :root[data-theme='dark'] {
@@ -24,8 +28,12 @@
   --mf-scrim: rgba(18, 20, 24, 0.92);
   --mf-text-primary: #eef1f5;
   --mf-text-secondary: #b7bfca;
-  --mf-text-tertiary: #8791a0;
-  --mf-text-muted: #6b7480;
+  --mf-text-tertiary: #a3acb9;
+  --mf-text-muted: #9aa3b0;
+  --mf-track: #333a45;
+  --mf-accent-text: #7db0ff;
+  --mf-tab-active: #5aa2ff;
+  --mf-danger-text: #ff7379;
   --mf-border: #383f4a;
   --mf-border-soft: #2a2f38;
 }
@@ -400,6 +408,7 @@
 
 .mfLocationTitle {
   margin: 4px 0 0;
+  color: var(--mf-text-primary);
   font-size: 19px;
   font-weight: 800;
 }
@@ -614,7 +623,7 @@
 .mfToggleBg {
   display: flex;
   gap: 3px;
-  background: #eef1f4;
+  background: var(--mf-track);
   border-radius: 11px;
   padding: 3px;
   margin-bottom: 8px;
@@ -695,8 +704,9 @@
   color: #16294f;
 }
 
-.mfRouteOption.selected > div:nth-child(2) span {
-  color: #5b7ba8;
+.mfRouteOption.selected > div:nth-child(2) span,
+.mfRouteOption.selected span {
+  color: #4a6690;
 }
 
 .mfRouteMeta {
@@ -897,7 +907,7 @@
   display: block;
   font-size: 13px;
   font-weight: 800;
-  color: #f34b52;
+  color: var(--mf-danger-text);
   margin-bottom: 6px;
 }
 
@@ -1106,7 +1116,7 @@
 }
 
 .mfTabItem.active {
-  color: #1477f8;
+  color: var(--mf-tab-active);
 }
 
 .mfTabSpacer {
@@ -1397,7 +1407,7 @@
   height: 40px;
   justify-content: flex-start;
   gap: 6px;
-  color: #1e4fa0;
+  color: var(--mf-accent-text);
   font-weight: 700;
 }
 
