@@ -4,8 +4,13 @@
 
 export const ROUTE_OPTIONS = [
   { id: 'safe', name: '안전 우선 경로', score: 82, note: 'CCTV 12대 · 보안등 34개 · 대로변 위주', duration: 24, distance: 1.8 },
-  { id: 'balanced', name: '균형 경로', score: 71, note: '어두운 구간 120m 포함', duration: 21, distance: 1.6 },
   { id: 'shortest', name: '최단 거리', score: 58, note: '어두운 골목 320m · 야간 신고 4건', duration: 18, distance: 1.4 },
+];
+
+// 기본 안전 우선도 — key가 ROUTE_OPTIONS의 id와 같아서 고른 값이 곧 기본 선택 경로가 된다.
+export const PRIORITY_OPTIONS = [
+  { key: 'shortest', label: '거리 최우선' },
+  { key: 'safe', label: '안전 최우선' },
 ];
 
 export const SEGMENTS = [

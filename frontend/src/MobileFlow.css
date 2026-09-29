@@ -613,14 +613,6 @@
   margin-bottom: 14px;
 }
 
-.mfSliderLabels {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--mf-text-tertiary);
-  margin-bottom: 10px;
-}
 
 .mfSlider {
   -webkit-appearance: none;

@@ -869,33 +869,6 @@ button {
   color: var(--mf-text-tertiary);
 }
 
-.safetyRange {
-  width: 100%;
-  height: 6px;
-  border-radius: 99px;
-  background: linear-gradient(90deg, #1e4fa0, #22a06b);
-  appearance: none;
-  margin: 4px 0 10px;
-}
-
-.safetyRange::-webkit-slider-thumb {
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--mf-surface);
-  border: 3px solid #1e4fa0;
-  box-shadow: 0 2px 6px rgba(16, 24, 33, 0.2);
-  cursor: pointer;
-}
-
-.rangeLabels {
-  display: flex;
-  justify-content: space-between;
-  font-size: 11.5px;
-  color: var(--mf-text-muted);
-}
-
 .guardianItem {
   display: flex;
   align-items: center;

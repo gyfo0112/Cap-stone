@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import { scoreGrade } from './useIsMobile';
 import { coordToAddress, hasKakaoRestKey, searchPlaces } from './kakaoLocal';
-import { ROUTE_OPTIONS, SEGMENTS, GRADE_COLOR, GRADE_SOFT } from './routeData';
+import { ROUTE_OPTIONS, PRIORITY_OPTIONS, SEGMENTS, GRADE_COLOR, GRADE_SOFT } from './routeData';
 import { getContacts, addContact, removeContact } from './contacts';
 import { getFavorites, addFavorite, removeFavoriteByName } from './favorites';
 import './MobileFlow.css';
@@ -537,8 +537,8 @@ export function RouteResultScreen(props) {
 function RouteResultBody({
   destination,
   originLabel,
-  safetyWeight,
-  onSafetyWeightChange,
+  routePriority,
+  onRoutePriorityChange,
   timeMode,
   onTimeModeChange,
   selectedRouteId,
@@ -610,20 +610,9 @@ function RouteResultBody({
         <div className={expanded ? 'mfCollapsible' : 'mfCollapsible collapsed'}>
           <div className="mfCollapsibleInner">
             <div className="mfSliderBlock">
-              <div className="mfSliderLabels">
-                <span>거리 최우선</span>
-                <span>안전 최우선</span>
-              </div>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={safetyWeight}
-                onChange={(e) => onSafetyWeightChange(Number(e.target.value))}
-                className="mfSlider"
-              />
+              <PrioritySegment value={routePriority} onChange={onRoutePriorityChange} />
               <div className="mfSliderFooter">
-                <span className="mfSliderValue">안전 우선 {safetyWeight}%</span>
+                <span className="mfSliderValue">시간대</span>
                 <div className="mfToggleBg mfToggleBgCompact">
                   <button
                     className={timeMode === 'now' ? 'mfToggleItem active' : 'mfToggleItem'}
@@ -988,7 +977,23 @@ const NOTIF_ITEMS = [
   { key: 'arrival', title: '보호자 도착 알림', desc: '목적지 도착 시 보호자에게 자동 전송' },
 ];
 
-export function SettingsScreen({ safetyWeight, onSafetyWeightChange, theme, onThemeChange, onOpenLogin }) {
+function PrioritySegment({ value, onChange }) {
+  return (
+    <div className="mfSegment">
+      {PRIORITY_OPTIONS.map((p) => (
+        <button
+          key={p.key}
+          className={value === p.key ? 'mfSegmentItem active' : 'mfSegmentItem'}
+          onClick={() => onChange(p.key)}
+        >
+          {p.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function SettingsScreen({ routePriority, onRoutePriorityChange, theme, onThemeChange, onOpenLogin }) {
   const [notif, setNotif] = useState({ zoneEntry: true, nightRecalc: true, arrival: false });
   const [contacts, setContacts] = useState(getContacts);
   const [addingContact, setAddingContact] = useState(false);
@@ -1030,18 +1035,7 @@ export function SettingsScreen({ safetyWeight, onSafetyWeightChange, theme, onTh
       <div className="mfSettingsCard">
         <strong>기본 안전 우선도</strong>
         <p>모든 경로 계산의 기본값으로 사용됩니다.</p>
-        <input
-          type="range"
-          min={0}
-          max={100}
-          value={safetyWeight}
-          onChange={(e) => onSafetyWeightChange(Number(e.target.value))}
-          className="mfSlider"
-        />
-        <div className="mfSliderLabels">
-          <span>거리 최우선</span>
-          <span>안전 최우선</span>
-        </div>
+        <PrioritySegment value={routePriority} onChange={onRoutePriorityChange} />
       </div>
 
       <div className="mfSettingsCard">

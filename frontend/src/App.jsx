@@ -44,7 +44,7 @@ import {
   SosFab,
   SosOverlay,
 } from './MobileFlow';
-import { ROUTE_OPTIONS, SEGMENTS, GRADE_COLOR, GRADE_SOFT } from './routeData';
+import { ROUTE_OPTIONS, PRIORITY_OPTIONS, SEGMENTS, GRADE_COLOR, GRADE_SOFT } from './routeData';
 
 // 데스크탑 왼쪽 메뉴 — MobileTabBar의 TABS 배열과 같은 방식으로, 여기 하나만
 // 고치면 메뉴 추가/순서 변경이 되게 데이터로 관리한다.
@@ -96,7 +96,7 @@ function App() {
   const [sosOpen, setSosOpen] = useState(false);
   const [crimeLayerOpen, setCrimeLayerOpen] = useState(false);
   const [destination, setDestination] = useState('');
-  const [safetyWeight, setSafetyWeight] = useState(62);
+  const [routePriority, setRoutePriority] = useState('safe'); // 'safe' | 'shortest'
   // 일몰 이후 진입하면 기본값을 '야간'으로 시작 (README 스펙)
   const [timeMode, setTimeMode] = useState(() => {
     const hour = new Date().getHours();
@@ -239,8 +239,8 @@ function App() {
             {menu === 'map' && <FacilityPanel layers={layers} onToggle={toggleLayer} />}
             {menu === 'settings' && (
               <SettingsPanel
-                safetyWeight={safetyWeight}
-                onSafetyWeightChange={setSafetyWeight}
+                routePriority={routePriority}
+                onRoutePriorityChange={setRoutePriority}
                 theme={theme}
                 onThemeChange={setTheme}
               />
@@ -283,6 +283,7 @@ function App() {
           onPickOnMap={openMapPicker}
           onSelect={(name) => {
             setDestination(name);
+            setSelectedRouteId(routePriority);
             setMobileScreen('result');
           }}
         />
@@ -295,6 +296,7 @@ function App() {
           onConfirm={(name) => {
             setDestination(name);
             setMapPickerOpen(false);
+            setSelectedRouteId(routePriority);
             setMobileScreen('result');
           }}
         />
@@ -304,8 +306,11 @@ function App() {
         <RouteResultScreen
           destination={destination}
           originLabel={myLocation.address}
-          safetyWeight={safetyWeight}
-          onSafetyWeightChange={setSafetyWeight}
+          routePriority={routePriority}
+          onRoutePriorityChange={(p) => {
+            setRoutePriority(p);
+            setSelectedRouteId(p);
+          }}
           timeMode={timeMode}
           onTimeModeChange={setTimeMode}
           selectedRouteId={selectedRouteId}
@@ -321,8 +326,8 @@ function App() {
 
       {isMobile && onboardingDone && mobileTab === 'settings' && (
         <SettingsScreen
-          safetyWeight={safetyWeight}
-          onSafetyWeightChange={setSafetyWeight}
+          routePriority={routePriority}
+          onRoutePriorityChange={setRoutePriority}
           theme={theme}
           onThemeChange={setTheme}
           onOpenLogin={() => setLoginOpen(true)}
@@ -337,13 +342,12 @@ function App() {
   );
 }
 
-// 데스크탑의 3개 "경로 옵션" 버튼은 모바일처럼 슬라이더가 아니라 프리셋 버튼이라,
-// 안전/빠른/도보 각각을 mock 대안 경로 3개(safe/shortest/balanced) 중 하나에 매핑한다.
-// "도보 전용"은 셋 다 도보 경로라 딱 맞는 대응이 없어 균형 경로로 눌러뒀다.
+// 데스크탑의 3개 "경로 옵션" 버튼을 mock 대안 경로 2개(safe/shortest) 중 하나에 매핑한다.
+// "도보 전용"은 두 경로 모두 도보라 딱 맞는 대응이 없어 안전 우선 경로로 눌러뒀다.
 const ROUTE_MODES = [
-  { id: 'safe', icon: ShieldCheck, label: '안전 우선', desc: 'CCTV, 가로등 고려' },
-  { id: 'shortest', icon: Clock3, label: '빠른 길', desc: '최단 시간 경로' },
-  { id: 'balanced', icon: PersonStanding, label: '도보 전용', desc: '걸어가는 경로' },
+  { id: 'safe', route: 'safe', icon: ShieldCheck, label: '안전 우선', desc: 'CCTV, 가로등 고려' },
+  { id: 'shortest', route: 'shortest', icon: Clock3, label: '빠른 길', desc: '최단 시간 경로' },
+  { id: 'walk', route: 'safe', icon: PersonStanding, label: '도보 전용', desc: '걸어가는 경로' },
 ];
 
 function RoutePanel({ originLabel, onStartNavigation }) {
@@ -401,7 +405,7 @@ function RoutePanel({ originLabel, onStartNavigation }) {
       return;
     }
     setNotice('');
-    setSelectedRouteId(selectedMode);
+    setSelectedRouteId(ROUTE_MODES.find((m) => m.id === selectedMode).route);
     setResultsReady(true);
     setShowDetail(false);
   };
@@ -790,7 +794,7 @@ const NOTIF_ITEMS = [
 
 // 모바일 설정 화면과 내용은 같되, controlPanel 안에 들어가는 데스크탑 전용 레이아웃.
 // 보호자 연락처는 모바일과 완전히 같은 저장소(contacts.js/localStorage)를 그대로 쓴다.
-function SettingsPanel({ safetyWeight, onSafetyWeightChange, theme, onThemeChange }) {
+function SettingsPanel({ routePriority, onRoutePriorityChange, theme, onThemeChange }) {
   const [notif, setNotif] = useState({ zoneEntry: true, nightRecalc: true, arrival: false });
   const [contacts, setContacts] = useState(getContacts);
   const [addingContact, setAddingContact] = useState(false);
@@ -820,17 +824,16 @@ function SettingsPanel({ safetyWeight, onSafetyWeightChange, theme, onThemeChang
       <div className="settingsCard">
         <h3>기본 안전 우선도</h3>
         <p className="settingsDescription">모든 경로 계산의 기본값으로 사용됩니다.</p>
-        <input
-          type="range"
-          min={0}
-          max={100}
-          value={safetyWeight}
-          onChange={(e) => onSafetyWeightChange(Number(e.target.value))}
-          className="safetyRange"
-        />
-        <div className="rangeLabels">
-          <span>거리 최우선</span>
-          <span>안전 최우선</span>
+        <div className="themeButtons">
+          {PRIORITY_OPTIONS.map((p) => (
+            <button
+              key={p.key}
+              className={routePriority === p.key ? 'themeButton selected' : 'themeButton'}
+              onClick={() => onRoutePriorityChange(p.key)}
+            >
+              {p.label}
+            </button>
+          ))}
         </div>
       </div>
 
