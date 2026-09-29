@@ -1,0 +1,1738 @@
+/* 모바일 전용 화면들 (온보딩 / 경로입력 / 경로결과 / 경로상세 / SOS).
+   isMobile일 때만 마운트되므로 데스크탑/태블릿 스타일과 섞이지 않는다.
+   색상은 App.css에 이미 쓰이던 값을 그대로 재사용. 새로 추가한 건
+   초록(안전·보통 등급용 #22a06b)과 연한 빨강(위험 등급 배경 #fdecec) 둘뿐. */
+
+/* 다크모드 토큰 — 표면/텍스트/보더만 변수화. 브랜드색(#1e4fa0)과 등급색은
+   라이트/다크 공통이라 그대로 둔다. 설정 화면에서 document.documentElement에
+   data-theme을 얹는 방식(useTheme.js)이라 :root 스코프면 충분하다. */
+:root {
+  --mf-surface: #fff;
+  --mf-surface-soft: #f4f7fb;
+  --mf-scrim: rgba(233, 237, 242, 0.94);
+  --mf-text-primary: #202938;
+  --mf-text-secondary: #46505f;
+  --mf-text-tertiary: #8c95a4;
+  --mf-text-muted: #9da5b2;
+  --mf-border: #e4e7eb;
+  --mf-border-soft: #eef0f2;
+  --mf-track: #eef1f4;
+  --mf-accent-text: #1e4fa0;
+  --mf-tab-active: #1477f8;
+  --mf-danger-text: #f34b52;
+  --mf-accent-soft: #eaf1fb; /* 선택/강조 칸의 연한 파랑 배경 */
+}
+
+/* 다크 — 순백 글자·밝은 테두리 대신 한 톤 낮춘 회색과 채도 낮은 파랑으로
+   대비를 눌러서 '고대비 모드' 느낌이 나지 않게 한다. */
+:root[data-theme='dark'] {
+  --mf-surface: #1e2228;
+  --mf-surface-soft: #252a31;
+  --mf-scrim: rgba(18, 20, 24, 0.92);
+  --mf-text-primary: #dde1e6;
+  --mf-text-secondary: #a9b1bb;
+  --mf-text-tertiary: #8b939e;
+  --mf-text-muted: #7d8590;
+  --mf-track: #2b3038;
+  --mf-accent-text: #8cb1e3;
+  --mf-tab-active: #79a8e8;
+  --mf-danger-text: #eb7c80;
+  --mf-border: #30353d;
+  --mf-border-soft: #282c33;
+  --mf-accent-soft: #243246;
+}
+
+/* 라이트용 연한 배경이 고정값으로 박혀 있던 곳들 — 다크에서만 덮어쓴다 */
+:root[data-theme='dark'] .mfOutlineBtn.active,
+:root[data-theme='dark'] .mfShareBtn,
+:root[data-theme='dark'] .mfContactAvatar {
+  background: var(--mf-accent-soft);
+  color: var(--mf-accent-text);
+}
+
+:root[data-theme='dark'] .mfOnbFeatureIcon {
+  background: var(--mf-accent-soft);
+}
+
+:root[data-theme='dark'] .mfRouteOption.selected {
+  background: var(--mf-accent-soft);
+  color: var(--mf-text-primary);
+}
+
+:root[data-theme='dark'] .mfRouteOption.selected span {
+  color: var(--mf-text-secondary);
+}
+
+:root[data-theme='dark'] .mfCrimeTopIcon,
+:root[data-theme='dark'] .mfCrimeAreaCard {
+  background: rgba(243, 75, 82, 0.14);
+}
+
+:root[data-theme='dark'] .mfSosFab {
+  border-color: var(--mf-surface);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+}
+
+:root[data-theme='dark'] .mfPrimaryBtn {
+  box-shadow: none;
+}
+
+/* 안전점수 배지·구간 등급 — 컴포넌트가 inline으로 --tone(등급색)/--tone-soft(파스텔)만 넘기고
+   실제 색은 여기서 정한다. 다크에선 파스텔 대신 등급색을 옅게 깐 톤으로. */
+.mfScoreBadge,
+.mfSegmentIcon,
+.mfSegmentGradeTag {
+  background: var(--tone-soft);
+  color: var(--tone);
+}
+
+:root[data-theme='dark'] .mfScoreBadge,
+:root[data-theme='dark'] .mfSegmentIcon,
+:root[data-theme='dark'] .mfSegmentGradeTag {
+  background: color-mix(in srgb, var(--tone) 24%, var(--mf-surface));
+  color: color-mix(in srgb, var(--tone) 50%, #fff);
+}
+
+.mfScreen {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+
+  display: flex;
+  flex-direction: column;
+
+  background: var(--mf-surface);
+  color: var(--mf-text-primary);
+  overflow-y: auto;
+
+  padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
+}
+
+/* 설정처럼 뒤로가기 없이 탭바로만 이동하는 화면 — 하단 탭바(64px)는 가리지 않는다. */
+.mfScreenTabbed {
+  inset: 0 0 64px 0;
+}
+
+/* 경로결과/경로상세 전용 — 지도가 계속 보이도록 화면을 투명하게 두고
+   위에는 떠 있는 헤더, 아래는 하단시트만 배경을 채운다. */
+.mfRouteScreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 64px; /* 하단 탭바(SOS 포함) 위는 계속 보이게 비워둠 */
+  z-index: 50;
+
+  display: flex;
+  flex-direction: column;
+
+  pointer-events: none;
+}
+
+.mfFloatingHeader {
+  pointer-events: auto;
+
+  margin: calc(12px + env(safe-area-inset-top)) 14px 0;
+  height: 52px;
+  padding: 0 8px 0 4px;
+
+  background: var(--mf-surface);
+  color: var(--mf-text-primary);
+  border-radius: 16px;
+  box-shadow: 0 10px 28px rgba(16, 24, 33, 0.12);
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mfFloatingHeader h1 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 지도에서 찍기 — 화면 정중앙에 고정, 지도가 그 아래에서 움직인다.
+   핀 끝(뾰족한 아래쪽)이 정확히 중심에 오도록 아이콘 높이만큼 위로 올림. */
+.mfPickCrosshair {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, calc(-50% - 18px));
+  z-index: 51;
+  pointer-events: none;
+  filter: drop-shadow(0 3px 6px rgba(16, 24, 33, 0.35));
+}
+
+.mfPickAddress {
+  margin: 0 0 16px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--mf-text-primary);
+  min-height: 20px;
+}
+
+.mfRouteSheet {
+  pointer-events: auto;
+  align-self: stretch;
+  width: 100%;
+  margin-top: auto;
+
+  max-height: 78vh;
+  overflow-y: auto;
+
+  background: var(--mf-surface);
+  color: var(--mf-text-primary);
+  border-radius: 22px 22px 0 0;
+  box-shadow: 0 -12px 30px rgba(16, 24, 33, 0.14);
+
+  padding: 10px 20px calc(18px + env(safe-area-inset-bottom));
+}
+
+.mfGrabHandle {
+  display: block;
+  width: 44px;
+  height: 4px;
+  margin: 0 auto;
+  border-radius: 99px;
+  background: #dfe3e8;
+}
+
+/* 그랩핸들의 실제 탭/드래그 히트 영역 — 시각 바(4px)보다 훨씬 크게 잡는다 */
+.mfGrabHandleZone {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 8px 0 16px;
+  touch-action: none;
+  cursor: grab;
+}
+
+.mfGrabHandleZone:active {
+  cursor: grabbing;
+}
+
+/* 하단시트 접기/펼치기 — grid-template-rows 트릭으로 높이를 애니메이션 */
+.mfCollapsible {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 0.25s ease;
+}
+
+.mfCollapsible.collapsed {
+  grid-template-rows: 0fr;
+}
+
+.mfCollapsibleInner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.mfHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.mfHeader h1 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.mfIconBtn {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--mf-surface-soft);
+  color: var(--mf-text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mfSectionLabel {
+  margin: 18px 0 10px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--mf-text-tertiary);
+}
+
+.mfSectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 18px 0 10px;
+}
+
+.mfSectionHeader .mfSectionLabel {
+  margin: 0;
+}
+
+.mfSectionAction {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--mf-text-tertiary);
+}
+
+.mfSectionLabelLight {
+  color: #979fab;
+}
+
+.mfPrimaryBtn {
+  width: 100%;
+  height: 56px;
+  border: 0;
+  border-radius: 16px;
+  background: #1e4fa0;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  box-shadow: 0 7px 17px rgba(30, 79, 160, 0.25);
+}
+
+.mfMainCta {
+  margin-top: 4px;
+}
+
+.mfTextBtn {
+  width: 100%;
+  height: 44px;
+  border: 0;
+  background: transparent;
+  color: var(--mf-text-tertiary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mfOutlineBtn {
+  height: 42px;
+  border: 1px solid var(--mf-border);
+  border-radius: 12px;
+  background: var(--mf-surface);
+  color: var(--mf-text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.mfOutlineBtn:disabled {
+  opacity: 0.5;
+}
+
+.mfOutlineBtn.active {
+  border-color: var(--mf-accent-text);
+  background: #eaf1fb;
+  color: #1e4fa0;
+}
+
+/* ---------- 안전점수 배지 ---------- */
+
+.mfScoreBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.mfScoreBadge strong {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.mfScoreBadge--lg {
+  height: 58px;
+  width: 58px;
+  padding: 6px 0;
+  flex-direction: column;
+  justify-content: center;
+  border-radius: 16px;
+  gap: 3px;
+}
+
+.mfScoreBadge--lg strong {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.mfScoreBadge--lg span {
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
+.mfScoreBadge--sm {
+  width: 42px;
+  height: 34px;
+  padding: 0;
+  justify-content: center;
+}
+
+.mfScoreBadge--sm strong {
+  font-size: 15px;
+}
+
+/* ---------- 1. 온보딩 ---------- */
+
+.mfOnboarding {
+  padding: 36px 24px 24px;
+  justify-content: flex-start;
+}
+
+.mfOnbIcon {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: #2c82f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 22px;
+}
+
+.mfOnbHeadline {
+  margin: 0 0 12px;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.mfOnbSub {
+  margin: 0 0 26px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--mf-text-secondary);
+}
+
+.mfOnbFeatures {
+  list-style: none;
+  margin: 0 0 24px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mfOnbFeatures li {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.mfOnbFeatureIcon {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: #eaf3ff;
+  color: #2c82f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mfOnbFeatures strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+
+.mfOnbFeatures p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--mf-text-secondary);
+}
+
+.mfOnbPermCard {
+  margin-top: auto;
+  background: var(--mf-surface-soft);
+  border: 1px solid var(--mf-border);
+  border-radius: 18px;
+  padding: 18px;
+}
+
+.mfOnbPermCard > strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.mfOnbPermCard > p {
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--mf-text-secondary);
+}
+
+/* ---------- 2. 메인 지도 카드 (하단시트 안에 렌더) ---------- */
+
+.mfMainCard {
+  display: flex;
+  flex-direction: column;
+}
+
+.mfMainCardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.mfCaption {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--mf-text-tertiary);
+}
+
+.mfLocationTitle {
+  margin: 4px 0 0;
+  color: var(--mf-text-primary);
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.mfMainCaption {
+  margin: 0 0 16px;
+  font-size: 12.5px;
+  color: var(--mf-text-tertiary);
+}
+
+.mfQuickRow {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.mfQuickBtn {
+  flex: 1;
+  height: 44px;
+  border: 1px solid var(--mf-border);
+  border-radius: 14px;
+  background: var(--mf-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--mf-text-secondary);
+}
+
+/* ---------- 3. 경로 입력 ---------- */
+
+.mfOdCard {
+  background: var(--mf-surface-soft);
+  border: 1px solid var(--mf-border);
+  border-radius: 18px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.mfOdRow {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--mf-text-secondary);
+}
+
+.mfOdDivider {
+  height: 1px;
+  background: var(--mf-border);
+  margin-left: 20px;
+}
+
+.mfOdDotOrigin {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 3px solid #2c82f6;
+  flex-shrink: 0;
+}
+
+.mfOdInput {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  flex: 1;
+  font-size: 14px;
+  color: var(--mf-text-primary);
+}
+
+.mfOdActions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.mfOdActions .mfOutlineBtn {
+  flex: 1;
+}
+
+.mfRecentList {
+  display: flex;
+  flex-direction: column;
+}
+
+.mfRecentRow {
+  height: 60px;
+  border: 0;
+  border-bottom: 1px solid var(--mf-border-soft);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  text-align: left;
+}
+
+.mfRecentRow .mfRecentInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* 즐겨찾기 별표가 붙는 행 — 이동 버튼과 별표 버튼을 형제로 분리해서
+   button 안에 button이 중첩되지 않게 한다. */
+.mfRecentRowMain {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  display: flex;
+  align-items: center;
+}
+
+.mfFavoriteToggle {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--mf-text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mfFavoriteToggle.active {
+  color: #f5a623;
+}
+
+.mfRecentRow strong {
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mfRecentRow span {
+  font-size: 12px;
+  color: var(--mf-text-muted);
+}
+
+/* ---------- 4. 경로 결과 ---------- */
+
+.mfSummaryCard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.mfSummaryCard strong {
+  display: block;
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.mfSummaryCard p {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  color: var(--mf-text-tertiary);
+}
+
+.mfSliderBlock {
+  background: var(--mf-surface-soft);
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+
+.mfSlider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #1e4fa0, #22a06b);
+  margin: 0;
+}
+
+.mfSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--mf-surface);
+  border: 3px solid #1e4fa0;
+  box-shadow: 0 3px 10px rgba(16, 24, 33, 0.18);
+  cursor: pointer;
+}
+
+.mfSlider::-moz-range-thumb {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--mf-surface);
+  border: 3px solid #1e4fa0;
+  box-shadow: 0 3px 10px rgba(16, 24, 33, 0.18);
+  cursor: pointer;
+}
+
+.mfSliderValue {
+  display: block;
+  margin-top: 10px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--mf-text-secondary);
+}
+
+/* 경로결과: 시간대 토글을 슬라이더 값 옆에 작게 붙이기 위한 레이아웃 */
+.mfSliderFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.mfSliderFooter .mfSliderValue {
+  display: inline;
+  margin-top: 0;
+}
+
+.mfToggleBg {
+  display: flex;
+  gap: 3px;
+  background: var(--mf-track);
+  border-radius: 11px;
+  padding: 3px;
+  margin-bottom: 8px;
+}
+
+.mfToggleBgCompact {
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.mfToggleBgCompact .mfToggleItem {
+  height: 26px;
+  padding: 0 10px;
+  font-size: 11px;
+  gap: 3px;
+}
+
+.mfToggleItem {
+  flex: 1;
+  height: 32px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--mf-text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.mfToggleItem.active {
+  background: #1e4fa0;
+  color: #fff;
+}
+
+.mfRouteList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.mfRouteOption {
+  border: 1.5px solid var(--mf-border);
+  border-radius: 14px;
+  background: var(--mf-surface);
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+
+.mfRouteOption > div:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mfRouteOption strong {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.mfRouteOption > div:nth-child(2) span {
+  font-size: 12px;
+  color: var(--mf-text-muted);
+}
+
+.mfRouteOption.selected {
+  border-color: var(--mf-accent-text);
+  background: #eef3fa;
+  /* 선택 강조색은 테마 무관 고정 배경이라 글자색도 여기서 고정해준다 */
+  color: #16294f;
+}
+
+.mfRouteOption.selected > div:nth-child(2) span,
+.mfRouteOption.selected span {
+  color: #4a6690;
+}
+
+.mfRouteMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.mfRouteMeta strong {
+  font-size: 14px;
+}
+
+.mfRouteMeta span {
+  font-size: 11px;
+  color: var(--mf-text-muted);
+}
+
+/* ---------- 5. 경로 상세 / 턴바이턴 ---------- */
+
+.mfTurnBanner {
+  pointer-events: auto;
+
+  margin: calc(12px + env(safe-area-inset-top)) 14px 0;
+  background: #1e4fa0;
+  border-radius: 18px;
+  padding: 14px 16px;
+  box-shadow: 0 10px 28px rgba(16, 24, 33, 0.18);
+
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: #fff;
+}
+
+.mfTurnBanner strong {
+  display: block;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.mfTurnBanner span {
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.mfSegmentHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mfSegmentSummary {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--mf-text-muted);
+}
+
+.mfSegmentList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1;
+}
+
+.mfSegmentRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.mfSegmentBar {
+  width: 5px;
+  align-self: stretch;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.mfSegmentIcon {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.mfSegmentBody {
+  min-width: 0;
+}
+
+.mfSegmentTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mfSegmentTitleRow strong {
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.mfSegmentGradeTag {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.mfSegmentRow p {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: var(--mf-text-tertiary);
+}
+
+.mfDetailActions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.mfFlex1 {
+  flex: 1;
+  height: 52px;
+}
+
+.mfFlex1_4 {
+  flex: 1.4;
+  height: 52px;
+}
+
+.mfShareBtn {
+  border: 0;
+  border-radius: 12px;
+  background: #eaf1fb;
+  color: #1e4fa0;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* ---------- 6. SOS ---------- */
+
+.mfSosFab {
+  position: fixed;
+  left: 50%;
+  bottom: 4px; /* 탭바 아이콘/글씨 높이와 맞춤 */
+  transform: translateX(-50%);
+  z-index: 52; /* .mfRouteScreen/.mfSosScreen(50)보다 위에서 항상 보이도록 */
+
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  border: 4px solid #fffdfa;
+
+  background: linear-gradient(135deg, #ff6969, #ff4646);
+  color: #fff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 16px rgba(255, 74, 74, 0.32);
+}
+
+.mfSosScreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 64px; /* 하단 탭바는 계속 보이게 */
+  z-index: 60;
+
+  background: var(--mf-scrim);
+  color: var(--mf-text-primary);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  padding: 36px 24px 0;
+  overflow: hidden;
+}
+
+.mfSosTop {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.mfSosEyebrow {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--mf-danger-text);
+  margin-bottom: 6px;
+}
+
+.mfSosTop p {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--mf-text-primary);
+  white-space: pre-line;
+}
+
+.mfSosCircle {
+  width: 196px;
+  height: 196px;
+  border-radius: 50%;
+  border: 0;
+  background: linear-gradient(160deg, #c1594d, #9c362c);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 28px;
+  touch-action: none;
+  box-shadow: 0 0 0 16px rgba(176, 68, 58, 0.14), 0 10px 24px rgba(156, 54, 44, 0.35);
+}
+
+.mfSosCircle.pressing {
+  animation: mfSosPulse 1.6s ease-out infinite;
+}
+
+@keyframes mfSosPulse {
+  0% {
+    box-shadow: 0 0 0 16px rgba(176, 68, 58, 0.14), 0 0 0 16px rgba(176, 68, 58, 0.38);
+  }
+  100% {
+    box-shadow: 0 0 0 16px rgba(176, 68, 58, 0.14), 0 0 0 42px rgba(176, 68, 58, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mfSosCircle.pressing {
+    animation: none;
+  }
+}
+
+.mfSosCountdown {
+  font-size: 56px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.mfSosLabel {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.mfSosHint {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.mfGuardianCard {
+  width: 100%;
+  padding: 4px 0 18px;
+  border-bottom: 1px solid var(--mf-border-soft);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.mfGuardianIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #1e4fa0;
+  color: #fff;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mfGuardianCard > div {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  color: var(--mf-text-primary);
+}
+
+.mfGuardianCard strong {
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.mfGuardianCard span {
+  font-size: 12px;
+  color: var(--mf-text-secondary);
+}
+
+.mfSwitch {
+  width: 44px;
+  height: 26px;
+  border-radius: 99px;
+  border: 0;
+  background: #dce3ea;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.mfSwitch span {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--mf-surface);
+  transition: transform 0.15s;
+}
+
+.mfSwitch.on {
+  background: #1e4fa0;
+}
+
+.mfSwitch.on span {
+  transform: translateX(18px);
+}
+
+.mfNearbyList {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.mfNearbyRow {
+  background: var(--mf-surface);
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--mf-text-secondary);
+}
+
+.mfNearbyRow > div {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.mfNearbyRow strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--mf-text-primary);
+}
+
+.mfNearbyRow span {
+  font-size: 11.5px;
+  color: var(--mf-text-muted);
+}
+
+.mfNearbyDist {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--mf-text-tertiary);
+  flex-shrink: 0;
+}
+
+.mfCancelBtn {
+  width: 100%;
+  height: 52px;
+  margin-top: 16px;
+  background: var(--mf-surface);
+}
+
+/* ---------- 하단 탭바 (지도/경로/SOS자리/도움요청/설정) ---------- */
+
+.mfTabBar {
+  display: flex;
+  width: 100%;
+  align-items: stretch;
+}
+
+.mfTabItem {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 2px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--mf-text-tertiary);
+}
+
+.mfTabItem.active {
+  color: var(--mf-tab-active);
+}
+
+.mfTabSpacer {
+  flex: 1;
+}
+
+/* ---------- 지도 위 검색바 + 오버레이 칩 ---------- */
+
+.mfMapOverlay {
+  position: fixed;
+  left: 14px;
+  right: 14px;
+  top: calc(12px + env(safe-area-inset-top));
+  z-index: 12;
+}
+
+.mfSearchBar {
+  width: 100%;
+  height: 52px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--mf-surface);
+  box-shadow: 0 10px 28px rgba(16, 24, 33, 0.12);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  margin-bottom: 10px;
+  color: var(--mf-text-muted);
+}
+
+.mfSearchBar span {
+  font-size: 15px;
+  color: var(--mf-text-muted);
+}
+
+.mfMapControls {
+  position: fixed;
+  right: 14px;
+  /* App에서 실제 시트 높이를 측정해 인라인 style로 덮어씀. 측정 전 잠깐 보일 기본값. */
+  bottom: 300px;
+  z-index: 12;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mfMapControlBtn {
+  width: 46px;
+  height: 46px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--mf-surface);
+  color: #1477f8;
+  box-shadow: 0 10px 28px rgba(16, 24, 33, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mfChipRow {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.mfChip {
+  flex-shrink: 0;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 13px;
+  border: 1.5px solid var(--mf-border);
+  background: var(--mf-surface);
+  color: var(--mf-text-secondary);
+  font-size: 14px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  box-shadow: 0 3px 10px rgba(16, 24, 33, 0.08);
+}
+
+.mfChip:disabled {
+  opacity: 0.5;
+}
+
+.mfChip.active {
+  background: #1477f8;
+  border-color: #1477f8;
+  color: #fff;
+}
+
+/* 켜진 시설 칩 앞의 색 점 = 지도에 찍히는 마커 색(범례 역할) */
+.mfChipDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  flex-shrink: 0;
+}
+
+.mfMapNotice {
+  display: inline-block;
+  margin: 8px 0 0;
+  padding: 7px 12px;
+  border-radius: 10px;
+  background: var(--mf-scrim);
+  color: var(--mf-text-secondary);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+/* ---------- 범죄주의구간 ---------- */
+
+.mfCrimeHeaderRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 16px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--mf-border-soft);
+}
+
+.mfCrimeBody--off {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.mfCrimeTopIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #fdecec;
+  color: #f34b52;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mfCrimeTopText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.mfCrimeTopText strong {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.mfCrimeTopText span {
+  font-size: 12px;
+  color: var(--mf-text-tertiary);
+}
+
+.mfLegend {
+  display: flex;
+  gap: 3px;
+}
+
+.mfLegendCell {
+  flex: 1;
+  height: 26px;
+  border-radius: 5px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mfLegendCaption {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--mf-text-tertiary);
+}
+
+.mfCrimeAreaCard {
+  margin-top: 18px;
+  background: #fdecec;
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  gap: 10px;
+}
+
+.mfCrimeAreaDot {
+  width: 10px;
+  height: 10px;
+  margin-top: 5px;
+  border-radius: 3px;
+  background: #f34b52;
+  flex-shrink: 0;
+}
+
+.mfCrimeAreaCard strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+  color: #f34b52;
+  margin-bottom: 6px;
+}
+
+.mfCrimeAreaCard p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  /* 배경(#fdecec)이 테마 무관 고정색이라 글자색도 고정 */
+  color: #8a5b5b;
+}
+
+.mfSliderNeutral {
+  background: #dce3ea;
+}
+
+.mfSliderHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mfSliderHeaderRow .mfSectionLabel {
+  margin: 18px 0 10px;
+}
+
+.mfSliderHeaderRow .mfSliderValue {
+  margin: 0;
+}
+
+/* ---------- 설정 ---------- */
+
+.mfPageTitle {
+  margin: 4px 0 18px;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.mfSettingsCard {
+  background: var(--mf-surface);
+  border: 1px solid var(--mf-border);
+  border-radius: 18px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.mfAccountCard {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-color: var(--mf-accent-text);
+}
+
+.mfAccountChevron {
+  flex-shrink: 0;
+  color: var(--mf-text-muted);
+}
+
+.mfSettingsCard > strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.mfSettingsCard > p {
+  margin: -6px 0 12px;
+  font-size: 12.5px;
+  color: var(--mf-text-tertiary);
+}
+
+.mfContactRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--mf-border-soft);
+}
+
+.mfContactAvatar {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #eaf1fb;
+  color: #1e4fa0;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mfContactInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mfContactInfo strong {
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.mfContactInfo span {
+  font-size: 12px;
+  color: var(--mf-text-muted);
+}
+
+.mfContactTag {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mf-text-tertiary);
+  background: var(--mf-surface-soft);
+  padding: 3px 8px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.mfAddContact {
+  height: 40px;
+  justify-content: flex-start;
+  gap: 6px;
+  color: var(--mf-accent-text);
+  font-weight: 700;
+}
+
+.mfContactRemove {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--mf-text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mfAddContactForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+}
+
+.mfAddContactInput {
+  height: 44px;
+  border: 1px solid var(--mf-border);
+  border-radius: 10px;
+  background: var(--mf-surface);
+  color: var(--mf-text-primary);
+  padding: 0 14px;
+  font-size: 14px;
+}
+
+.mfAddContactActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+/* 가로를 꽉 채운 선택 토글 — 안전 우선도·테마 공용 (ToggleGroup) */
+.mfToggleGroup {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--mf-track);
+}
+
+.mfToggleGroupItem {
+  flex: 1;
+  height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--mf-text-tertiary);
+  font-size: 13.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.mfToggleGroupItem.active {
+  background: var(--mf-surface);
+  color: var(--mf-accent-text);
+  box-shadow: 0 1px 4px rgba(16, 24, 33, 0.12);
+}
+
+.mfSegment {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mfSegmentItem {
+  height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--mf-text-tertiary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.mfSegmentItem.active {
+  background: #1e4fa0;
+  color: #fff;
+}
+
+.mfNotifRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.mfNotifInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mfNotifInfo strong {
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.mfNotifInfo span {
+  font-size: 11.5px;
+  color: var(--mf-text-muted);
+}
+
+/* ---------- 검색 결과 없음 / 로딩 스켈레톤 ---------- */
+
+.mfEmptyHint {
+  margin: 18px 4px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--mf-text-muted);
+}
+
+.mfSkeleton {
+  border-radius: 14px;
+  background: linear-gradient(90deg, var(--mf-track) 25%, var(--mf-border) 37%, var(--mf-track) 63%);
+  background-size: 400% 100%;
+  animation: mfShimmer 1.4s ease infinite;
+}
+
+.mfSkeletonCard {
+  height: 58px;
+  margin-bottom: 18px;
+}
+
+.mfSkeletonBlock {
+  height: 90px;
+  margin-bottom: 14px;
+}
+
+.mfSkeletonRow {
+  height: 62px;
+  margin-bottom: 10px;
+}
+
+@keyframes mfShimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mfSkeleton {
+    animation: none;
+  }
+}
