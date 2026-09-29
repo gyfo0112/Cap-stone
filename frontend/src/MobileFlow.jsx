@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   ChevronLeft,
+  ChevronRight,
+  UserRound,
   Sun,
   Moon,
   CircleCheck,
@@ -986,7 +988,7 @@ const NOTIF_ITEMS = [
   { key: 'arrival', title: '보호자 도착 알림', desc: '목적지 도착 시 보호자에게 자동 전송' },
 ];
 
-export function SettingsScreen({ safetyWeight, onSafetyWeightChange, theme, onThemeChange }) {
+export function SettingsScreen({ safetyWeight, onSafetyWeightChange, theme, onThemeChange, onOpenLogin }) {
   const [notif, setNotif] = useState({ zoneEntry: true, nightRecalc: true, arrival: false });
   const [contacts, setContacts] = useState(getContacts);
   const [addingContact, setAddingContact] = useState(false);
@@ -1012,6 +1014,18 @@ export function SettingsScreen({ safetyWeight, onSafetyWeightChange, theme, onTh
   return (
     <div className="mfScreen mfScreenTabbed">
       <MobileHeader title="설정" />
+
+      {/* 계정 카드 — 로그인 API가 붙으면 로그인 후엔 이름·아이디·로그아웃으로 바꾼다 */}
+      <button className="mfSettingsCard mfAccountCard" onClick={onOpenLogin}>
+        <span className="mfContactAvatar">
+          <UserRound size={20} />
+        </span>
+        <div className="mfContactInfo">
+          <strong>로그인하세요</strong>
+          <span>연락처·즐겨찾기를 안전하게 보관</span>
+        </div>
+        <ChevronRight size={20} className="mfAccountChevron" />
+      </button>
 
       <div className="mfSettingsCard">
         <strong>기본 안전 우선도</strong>

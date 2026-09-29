@@ -325,6 +325,7 @@ function App() {
           onSafetyWeightChange={setSafetyWeight}
           theme={theme}
           onThemeChange={setTheme}
+          onOpenLogin={() => setLoginOpen(true)}
         />
       )}
 

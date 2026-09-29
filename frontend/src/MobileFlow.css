@@ -259,7 +259,7 @@
 }
 
 .mfOutlineBtn.active {
-  border-color: #1e4fa0;
+  border-color: var(--mf-accent-text);
   background: #eaf1fb;
   color: #1e4fa0;
 }
@@ -754,7 +754,7 @@
 }
 
 .mfRouteOption.selected {
-  border-color: #1e4fa0;
+  border-color: var(--mf-accent-text);
   background: #eef3fa;
   /* 선택 강조색은 테마 무관 고정 배경이라 글자색도 여기서 고정해준다 */
   color: #16294f;
@@ -1400,6 +1400,23 @@
   border-radius: 18px;
   padding: 16px;
   margin-bottom: 14px;
+}
+
+.mfAccountCard {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-color: var(--mf-accent-text);
+}
+
+.mfAccountChevron {
+  flex-shrink: 0;
+  color: var(--mf-text-muted);
 }
 
 .mfSettingsCard > strong {

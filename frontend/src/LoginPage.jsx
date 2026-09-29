@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { UserRound, LockKeyhole, ShieldCheck } from 'lucide-react';
+import { ChevronLeft, UserRound, LockKeyhole, ShieldCheck } from 'lucide-react';
 import './LoginPage.css';
 import logo from './images/logo.png';
 
@@ -28,6 +28,11 @@ function LoginPage({ onBack }) {
   return (
     <div className="login-page">
       <div className="login-container">
+        <button className="login-back" onClick={onBack}>
+          <ChevronLeft size={20} />
+          뒤로
+        </button>
+
         <button className="login-logo" onClick={onBack}>
           <img src={logo} alt="친절한 이웃 로고" />
 
