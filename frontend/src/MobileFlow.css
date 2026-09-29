@@ -1577,8 +1577,8 @@
   margin-top: 2px;
 }
 
-/* 기본 안전 우선도 — 가로를 꽉 채운 2칸 토글 (설정·경로결과·데스크탑 설정 공용) */
-.mfPriorityToggle {
+/* 가로를 꽉 채운 선택 토글 — 안전 우선도·테마 공용 (ToggleGroup) */
+.mfToggleGroup {
   display: flex;
   gap: 4px;
   padding: 4px;
@@ -1586,7 +1586,7 @@
   background: var(--mf-track);
 }
 
-.mfPriorityItem {
+.mfToggleGroupItem {
   flex: 1;
   height: 40px;
   border: 0;
@@ -1602,7 +1602,7 @@
   cursor: pointer;
 }
 
-.mfPriorityItem.active {
+.mfToggleGroupItem.active {
   background: var(--mf-surface);
   color: var(--mf-accent-text);
   box-shadow: 0 1px 4px rgba(16, 24, 33, 0.12);

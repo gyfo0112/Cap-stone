@@ -29,7 +29,14 @@ import {
 } from 'lucide-react';
 import { scoreGrade } from './useIsMobile';
 import { coordToAddress, hasKakaoRestKey, searchPlaces } from './kakaoLocal';
-import { ROUTE_OPTIONS, PRIORITY_OPTIONS, SEGMENTS, GRADE_COLOR, GRADE_SOFT } from './routeData';
+import {
+  ROUTE_OPTIONS,
+  PRIORITY_OPTIONS,
+  THEME_OPTIONS,
+  SEGMENTS,
+  GRADE_COLOR,
+  GRADE_SOFT,
+} from './routeData';
 import { getContacts, addContact, removeContact } from './contacts';
 import { getFavorites, addFavorite, removeFavoriteByName } from './favorites';
 import { getRecents, addRecent, removeRecent, clearRecents } from './recents';
@@ -628,7 +635,7 @@ function RouteResultBody({
         <div className={expanded ? 'mfCollapsible' : 'mfCollapsible collapsed'}>
           <div className="mfCollapsibleInner">
             <div className="mfSliderBlock">
-              <PriorityToggle value={routePriority} onChange={onRoutePriorityChange} />
+              <ToggleGroup options={PRIORITY_OPTIONS} value={routePriority} onChange={onRoutePriorityChange} label="기본 안전 우선도" />
               <div className="mfSliderFooter">
                 <span className="mfSliderValue">시간대</span>
                 <div className="mfToggleBg mfToggleBgCompact">
@@ -978,32 +985,26 @@ export function CrimeLayerScreen() {
 
 /* ---------- 8. 설정 ---------- */
 
-const THEME_OPTIONS = [
-  { key: 'light', label: '라이트' },
-  { key: 'dark', label: '다크' },
-  { key: 'system', label: '시스템' },
-];
-
 const NOTIF_ITEMS = [
   { key: 'zoneEntry', title: '위험 구간 진입 알림', desc: '주의구간 100m 이내 진입 시 진동' },
   { key: 'nightRecalc', title: '야간 경로 재계산 알림', desc: '일몰 후 저장 경로 안전도 변동 시' },
   { key: 'arrival', title: '보호자 도착 알림', desc: '목적지 도착 시 보호자에게 자동 전송' },
 ];
 
-// 데스크탑 설정(App.jsx)에서도 같은 모양을 쓰도록 export
-export function PriorityToggle({ value, onChange }) {
+// 가로를 꽉 채운 선택 토글 — 안전 우선도·테마에 공용, 데스크탑 설정(App.jsx)도 같은 모양을 쓴다
+export function ToggleGroup({ options, value, onChange, label }) {
   return (
-    <div className="mfPriorityToggle" role="radiogroup" aria-label="기본 안전 우선도">
-      {PRIORITY_OPTIONS.map((p) => (
+    <div className="mfToggleGroup" role="radiogroup" aria-label={label}>
+      {options.map((o) => (
         <button
-          key={p.key}
+          key={o.key}
           role="radio"
-          aria-checked={value === p.key}
-          className={value === p.key ? 'mfPriorityItem active' : 'mfPriorityItem'}
-          onClick={() => onChange(p.key)}
+          aria-checked={value === o.key}
+          className={value === o.key ? 'mfToggleGroupItem active' : 'mfToggleGroupItem'}
+          onClick={() => onChange(o.key)}
         >
-          <p.icon size={16} />
-          {p.label}
+          <o.icon size={16} />
+          {o.label}
         </button>
       ))}
     </div>
@@ -1052,7 +1053,7 @@ export function SettingsScreen({ routePriority, onRoutePriorityChange, theme, on
       <div className="mfSettingsCard">
         <strong>기본 안전 우선도</strong>
         <p>모든 경로 계산의 기본값으로 사용됩니다.</p>
-        <PriorityToggle value={routePriority} onChange={onRoutePriorityChange} />
+        <ToggleGroup options={PRIORITY_OPTIONS} value={routePriority} onChange={onRoutePriorityChange} label="기본 안전 우선도" />
       </div>
 
       <div className="mfSettingsCard">
@@ -1124,17 +1125,7 @@ export function SettingsScreen({ routePriority, onRoutePriorityChange, theme, on
 
       <div className="mfSettingsCard">
         <strong>테마</strong>
-        <div className="mfSegment">
-          {THEME_OPTIONS.map((t) => (
-            <button
-              key={t.key}
-              className={theme === t.key ? 'mfSegmentItem active' : 'mfSegmentItem'}
-              onClick={() => onThemeChange(t.key)}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+        <ToggleGroup options={THEME_OPTIONS} value={theme} onChange={onThemeChange} label="테마" />
       </div>
 
       <div className="mfSettingsCard">

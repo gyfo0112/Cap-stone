@@ -1,7 +1,7 @@
 // 경로 결과/상세에서 쓰는 mock 데이터 — 모바일(MobileFlow.jsx)과 데스크탑(App.jsx)
 // RoutePanel이 함께 쓰기 때문에 컴포넌트 파일이 아닌 별도 모듈로 둔다.
 // (컴포넌트 파일에 상수를 export하면 react-refresh 경고가 뜬다)
-import { Route, ShieldCheck } from 'lucide-react';
+import { Route, ShieldCheck, Sun, Moon, Smartphone } from 'lucide-react';
 
 export const ROUTE_OPTIONS = [
   { id: 'safe', name: '안전 우선 경로', score: 82, note: 'CCTV 12대 · 보안등 34개 · 대로변 위주', duration: 24, distance: 1.8 },
@@ -12,6 +12,13 @@ export const ROUTE_OPTIONS = [
 export const PRIORITY_OPTIONS = [
   { key: 'shortest', label: '거리 최우선', icon: Route },
   { key: 'safe', label: '안전 최우선', icon: ShieldCheck },
+];
+
+// 설정 > 테마 (모바일·데스크탑 공용)
+export const THEME_OPTIONS = [
+  { key: 'light', label: '라이트', icon: Sun },
+  { key: 'dark', label: '다크', icon: Moon },
+  { key: 'system', label: '시스템', icon: Smartphone },
 ];
 
 export const SEGMENTS = [

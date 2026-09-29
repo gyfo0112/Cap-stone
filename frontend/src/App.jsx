@@ -56,11 +56,11 @@ import {
   MapPickScreen,
   CrimeLayerScreen,
   SettingsScreen,
-  PriorityToggle,
+  ToggleGroup,
   SosFab,
   SosOverlay,
 } from './MobileFlow';
-import { ROUTE_OPTIONS, SEGMENTS, GRADE_COLOR, GRADE_SOFT } from './routeData';
+import { ROUTE_OPTIONS, PRIORITY_OPTIONS, THEME_OPTIONS, SEGMENTS, GRADE_COLOR, GRADE_SOFT } from './routeData';
 
 // 데스크탑 왼쪽 메뉴 — MobileTabBar의 TABS 배열과 같은 방식으로, 여기 하나만
 // 고치면 메뉴 추가/순서 변경이 되게 데이터로 관리한다.
@@ -996,11 +996,6 @@ function FacilityPanel({ layers, onToggle }) {
   );
 }
 
-const THEME_OPTIONS = [
-  { key: 'light', label: '라이트' },
-  { key: 'dark', label: '다크' },
-  { key: 'system', label: '시스템' },
-];
 
 const NOTIF_ITEMS = [
   { key: 'zoneEntry', title: '위험 구간 진입 알림', desc: '주의구간 100m 이내 진입 시 진동' },
@@ -1040,7 +1035,7 @@ function SettingsPanel({ routePriority, onRoutePriorityChange, theme, onThemeCha
       <div className="settingsCard">
         <h3>기본 안전 우선도</h3>
         <p className="settingsDescription">모든 경로 계산의 기본값으로 사용됩니다.</p>
-        <PriorityToggle value={routePriority} onChange={onRoutePriorityChange} />
+        <ToggleGroup options={PRIORITY_OPTIONS} value={routePriority} onChange={onRoutePriorityChange} label="기본 안전 우선도" />
       </div>
 
       <div className="settingsCard">
@@ -1117,17 +1112,7 @@ function SettingsPanel({ routePriority, onRoutePriorityChange, theme, onThemeCha
 
       <div className="settingsCard">
         <h3>테마</h3>
-        <div className="themeButtons">
-          {THEME_OPTIONS.map((t) => (
-            <button
-              key={t.key}
-              className={theme === t.key ? 'themeButton selected' : 'themeButton'}
-              onClick={() => onThemeChange(t.key)}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+        <ToggleGroup options={THEME_OPTIONS} value={theme} onChange={onThemeChange} label="테마" />
       </div>
 
       <div className="settingsCard">
