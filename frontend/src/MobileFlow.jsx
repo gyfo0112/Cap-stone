@@ -40,6 +40,7 @@ import {
 import { getContacts, addContact, removeContact } from './contacts';
 import { getFavorites, addFavorite, removeFavoriteByName } from './favorites';
 import { getRecents, addRecent, removeRecent, clearRecents } from './recents';
+import { useStoredState } from './useStoredState';
 import './MobileFlow.css';
 
 // 안전점수 배지 — 화면 여러 곳(메인카드/최근검색/대안경로)에서 재사용.
@@ -49,7 +50,7 @@ function ScoreBadge({ score, size = 'md' }) {
   const grade = scoreGrade(score);
   const Icon = score >= 80 ? CircleCheck : TriangleAlert;
   return (
-    <div className={`mfScoreBadge mfScoreBadge--${size}`} style={{ background: grade.soft, color: grade.color }}>
+    <div className={`mfScoreBadge mfScoreBadge--${size}`} style={{ '--tone': grade.color, '--tone-soft': grade.soft }}>
       {size === 'md' && <Icon size={14} />}
       <strong>{score}</strong>
       {size !== 'sm' && <span>{grade.label}</span>}
@@ -275,7 +276,7 @@ export function MainMapCard({ onOpenInput, locationLabel }) {
       <div className="mfMainCardTop">
         <div>
           <span className="mfCaption">현재 위치</span>
-          <h2 className="mfLocationTitle">{locationLabel || '서울 마포구 서교동'}</h2>
+          <h2 className="mfLocationTitle">{locationLabel || '현재 위치'}</h2>
         </div>
         <ScoreBadge score={68} />
       </div>
@@ -361,7 +362,7 @@ export function RouteInputScreen({ initialDestination, originLabel, onBack, onPi
       <div className="mfOdCard">
         <div className="mfOdRow">
           <span className="mfOdDotOrigin" />
-          <span>현재 위치 · {originLabel || '홍대입구역 2번출구'}</span>
+          <span>{originLabel ? `현재 위치 · ${originLabel}` : '현재 위치'}</span>
         </div>
         <div className="mfOdDivider" />
         <div className="mfOdRow">
@@ -585,7 +586,7 @@ function RouteResultBody({
 
   const header = (
     <MobileHeader
-      title={`${originLabel || '홍대입구역 2번출구'} → ${destination || '목적지'}`}
+      title={`${originLabel || '현재 위치'} → ${destination || '목적지'}`}
       onBack={onBack}
       floating
     />
@@ -628,7 +629,9 @@ function RouteResultBody({
             <strong>
               {selected.distance}km · 도보 {selected.duration}분
             </strong>
-            <p>{timeDiff === 0 ? '가장 빠른 경로예요' : `최단 대비 +${timeDiff}분`} · 어두운 구간 80m 회피</p>
+            <p>
+              {timeDiff === 0 ? '가장 빠른 경로예요' : `최단 대비 +${timeDiff}분`} · {selected.note}
+            </p>
           </div>
         </div>
 
@@ -729,7 +732,7 @@ export function RouteDetailScreen({ onEnd }) {
                   <span className="mfSegmentBar" style={{ background: GRADE_COLOR[s.grade] }} />
                   <div
                     className="mfSegmentIcon"
-                    style={{ color: GRADE_COLOR[s.grade], background: GRADE_SOFT[s.grade] }}
+                    style={{ '--tone': GRADE_COLOR[s.grade], '--tone-soft': GRADE_SOFT[s.grade] }}
                   >
                     {s.grade === '안전' ? <CircleCheck size={16} /> : <TriangleAlert size={16} />}
                   </div>
@@ -740,7 +743,7 @@ export function RouteDetailScreen({ onEnd }) {
                       </strong>
                       <span
                         className="mfSegmentGradeTag"
-                        style={{ color: GRADE_COLOR[s.grade], background: GRADE_SOFT[s.grade] }}
+                        style={{ '--tone': GRADE_COLOR[s.grade], '--tone-soft': GRADE_SOFT[s.grade] }}
                       >
                         {s.grade}
                       </span>
@@ -1012,7 +1015,7 @@ export function ToggleGroup({ options, value, onChange, label }) {
 }
 
 export function SettingsScreen({ routePriority, onRoutePriorityChange, theme, onThemeChange, onOpenLogin }) {
-  const [notif, setNotif] = useState({ zoneEntry: true, nightRecalc: true, arrival: false });
+  const [notif, setNotif] = useStoredState('mf-notif', { zoneEntry: true, nightRecalc: true, arrival: false });
   const [contacts, setContacts] = useState(getContacts);
   const [addingContact, setAddingContact] = useState(false);
   const [newName, setNewName] = useState('');

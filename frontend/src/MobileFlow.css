@@ -77,6 +77,22 @@
   box-shadow: none;
 }
 
+/* 안전점수 배지·구간 등급 — 컴포넌트가 inline으로 --tone(등급색)/--tone-soft(파스텔)만 넘기고
+   실제 색은 여기서 정한다. 다크에선 파스텔 대신 등급색을 옅게 깐 톤으로. */
+.mfScoreBadge,
+.mfSegmentIcon,
+.mfSegmentGradeTag {
+  background: var(--tone-soft);
+  color: var(--tone);
+}
+
+:root[data-theme='dark'] .mfScoreBadge,
+:root[data-theme='dark'] .mfSegmentIcon,
+:root[data-theme='dark'] .mfSegmentGradeTag {
+  background: color-mix(in srgb, var(--tone) 24%, var(--mf-surface));
+  color: color-mix(in srgb, var(--tone) 50%, #fff);
+}
+
 .mfScreen {
   position: fixed;
   inset: 0;

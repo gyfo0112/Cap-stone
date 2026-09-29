@@ -44,6 +44,7 @@ import {
 import { useIsMobile, scoreGrade } from './useIsMobile';
 import { useCurrentLocation } from './useCurrentLocation';
 import { useTheme } from './useTheme';
+import { useStoredState } from './useStoredState';
 import {
   Onboarding,
   MainMapCard,
@@ -112,7 +113,7 @@ function App() {
   const [sosOpen, setSosOpen] = useState(false);
   const [crimeLayerOpen, setCrimeLayerOpen] = useState(false);
   const [destination, setDestination] = useState('');
-  const [routePriority, setRoutePriority] = useState('safe'); // 'safe' | 'shortest'
+  const [routePriority, setRoutePriority] = useStoredState('mf-route-priority', 'safe'); // 'safe' | 'shortest'
   // 일몰 이후 진입하면 기본값을 '야간'으로 시작 (README 스펙)
   const [timeMode, setTimeMode] = useState(() => {
     const hour = new Date().getHours();
@@ -234,7 +235,10 @@ function App() {
         {isMobile ? (
           <>
             {mobileTab === 'map' && (
-              <MainMapCard onOpenInput={openRouteInput} locationLabel={myLocation.address} />
+              <MainMapCard
+                onOpenInput={openRouteInput}
+                locationLabel={myLocation.address || (myLocation.status === 'loading' ? '위치 확인 중' : '')}
+              />
             )}
             {mobileTab === 'help' && <HelpPanel />}
           </>
@@ -245,6 +249,7 @@ function App() {
             <div style={{ display: menu === 'route' && !navigationActive ? 'block' : 'none' }}>
               <RoutePanel
                 originLabel={myLocation.address}
+                routePriority={routePriority}
                 onStartNavigation={() => setNavigationActive(true)}
               />
             </div>
@@ -366,7 +371,7 @@ const ROUTE_MODES = [
   { id: 'walk', route: 'safe', icon: PersonStanding, label: '도보 전용', desc: '걸어가는 경로' },
 ];
 
-function RoutePanel({ originLabel, onStartNavigation }) {
+function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
   const [origin, setOrigin] = useState(originLabel || '현재 위치');
   // 이 패널이 항상 마운트돼 있어서(탭 전환에도 검색상태 유지) 첫 렌더 시점엔
   // GPS 주소가 아직 안 왔을 수 있다 — 사용자가 직접 수정하기 전까지는 계속 따라간다.
@@ -377,8 +382,15 @@ function RoutePanel({ originLabel, onStartNavigation }) {
   const [destination, setDestination] = useState('');
   const [places, setPlaces] = useState([]);
   const [searching, setSearching] = useState(false);
-  const [selectedMode, setSelectedMode] = useState('safe');
-  const [selectedRouteId, setSelectedRouteId] = useState('safe');
+  // 경로 옵션 기본값 = 설정의 기본 안전 우선도(ROUTE_MODES id가 우선도 key와 같음).
+  // 패널이 항상 마운트돼 있으니 설정에서 바꾸면 그 값으로 다시 맞춘다.
+  const [selectedMode, setSelectedMode] = useState(routePriority);
+  const [prevPriority, setPrevPriority] = useState(routePriority);
+  if (prevPriority !== routePriority) {
+    setPrevPriority(routePriority);
+    setSelectedMode(routePriority);
+  }
+  const [selectedRouteId, setSelectedRouteId] = useState(routePriority);
   const [resultsReady, setResultsReady] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
   const [notice, setNotice] = useState('');
@@ -506,7 +518,7 @@ function RoutePanel({ originLabel, onStartNavigation }) {
       {resultsReady && (
         <div className="routeResultCard">
           <div className="routeResultHeader">
-            <div className="mfScoreBadge mfScoreBadge--lg" style={{ background: grade.soft, color: grade.color }}>
+            <div className="mfScoreBadge mfScoreBadge--lg" style={{ '--tone': grade.color, '--tone-soft': grade.soft }}>
               <strong>{selectedRoute.score}</strong>
               <span>{grade.label}</span>
             </div>
@@ -527,7 +539,7 @@ function RoutePanel({ originLabel, onStartNavigation }) {
                   className={r.id === selectedRouteId ? 'mfRouteOption selected' : 'mfRouteOption'}
                   onClick={() => setSelectedRouteId(r.id)}
                 >
-                  <div className="mfScoreBadge mfScoreBadge--sm" style={{ background: g.soft, color: g.color }}>
+                  <div className="mfScoreBadge mfScoreBadge--sm" style={{ '--tone': g.color, '--tone-soft': g.soft }}>
                     <strong>{r.score}</strong>
                   </div>
                   <div>
@@ -554,7 +566,7 @@ function RoutePanel({ originLabel, onStartNavigation }) {
                   <span className="mfSegmentBar" style={{ background: GRADE_COLOR[s.grade] }} />
                   <div
                     className="mfSegmentIcon"
-                    style={{ color: GRADE_COLOR[s.grade], background: GRADE_SOFT[s.grade] }}
+                    style={{ '--tone': GRADE_COLOR[s.grade], '--tone-soft': GRADE_SOFT[s.grade] }}
                   >
                     {s.grade === '안전' ? <CircleCheck size={16} /> : <TriangleAlert size={16} />}
                   </div>
@@ -565,7 +577,7 @@ function RoutePanel({ originLabel, onStartNavigation }) {
                       </strong>
                       <span
                         className="mfSegmentGradeTag"
-                        style={{ color: GRADE_COLOR[s.grade], background: GRADE_SOFT[s.grade] }}
+                        style={{ '--tone': GRADE_COLOR[s.grade], '--tone-soft': GRADE_SOFT[s.grade] }}
                       >
                         {s.grade}
                       </span>
@@ -660,7 +672,7 @@ function NavigationPanel({ onEnd }) {
         {SEGMENTS.map((s) => (
           <div className="mfSegmentRow" key={s.name}>
             <span className="mfSegmentBar" style={{ background: GRADE_COLOR[s.grade] }} />
-            <div className="mfSegmentIcon" style={{ color: GRADE_COLOR[s.grade], background: GRADE_SOFT[s.grade] }}>
+            <div className="mfSegmentIcon" style={{ '--tone': GRADE_COLOR[s.grade], '--tone-soft': GRADE_SOFT[s.grade] }}>
               {s.grade === '안전' ? <CircleCheck size={16} /> : <TriangleAlert size={16} />}
             </div>
             <div className="mfSegmentBody">
@@ -668,7 +680,7 @@ function NavigationPanel({ onEnd }) {
                 <strong>
                   {s.name} · {s.meters}m
                 </strong>
-                <span className="mfSegmentGradeTag" style={{ color: GRADE_COLOR[s.grade], background: GRADE_SOFT[s.grade] }}>
+                <span className="mfSegmentGradeTag" style={{ '--tone': GRADE_COLOR[s.grade], '--tone-soft': GRADE_SOFT[s.grade] }}>
                   {s.grade}
                 </span>
               </div>
@@ -1006,7 +1018,7 @@ const NOTIF_ITEMS = [
 // 모바일 설정 화면과 내용은 같되, controlPanel 안에 들어가는 데스크탑 전용 레이아웃.
 // 보호자 연락처는 모바일과 완전히 같은 저장소(contacts.js/localStorage)를 그대로 쓴다.
 function SettingsPanel({ routePriority, onRoutePriorityChange, theme, onThemeChange }) {
-  const [notif, setNotif] = useState({ zoneEntry: true, nightRecalc: true, arrival: false });
+  const [notif, setNotif] = useStoredState('mf-notif', { zoneEntry: true, nightRecalc: true, arrival: false });
   const [contacts, setContacts] = useState(getContacts);
   const [addingContact, setAddingContact] = useState(false);
   const [newName, setNewName] = useState('');
