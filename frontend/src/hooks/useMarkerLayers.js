@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { MARKER_LAYERS, fetchMarkers, loadLocalCctv } from './markersApi';
+import { MARKER_LAYERS, fetchMarkers, loadLocalCctv } from '../api/markersApi';
 
 // 백엔드는 화면 사각형 안의 마커를 개수 제한 없이 전부 돌려준다. 너무 넓게 보면
 // (레벨이 크면) 한 번에 수만 건이 오므로 이 레벨까지 확대했을 때만 요청한다.

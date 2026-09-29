@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ChevronLeft, UserRound, LockKeyhole, ShieldCheck } from 'lucide-react';
 import './LoginPage.css';
-import logo from './images/logo.png';
+import logo from '../../images/logo.png';
 
 function LoginPage({ onBack }) {
   const [userId, setUserId] = useState('');

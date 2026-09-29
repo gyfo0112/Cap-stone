@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { MapPin } from 'lucide-react';
-import { useMarkerLayers } from './useMarkerLayers';
+import { useMarkerLayers } from '../hooks/useMarkerLayers';
 
 // App.jsx의 메인 지도 + SosPage.jsx의 SOS 화면 지도가 함께 쓰는 카카오맵 컴포넌트.
 // 두 화면이 동시에 마운트되는 일이 없어(SOS는 전체화면 전환) id="map" 중복 걱정은 없다.

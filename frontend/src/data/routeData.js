@@ -1,4 +1,4 @@
-// 경로 결과/상세에서 쓰는 mock 데이터 — 모바일(MobileFlow.jsx)과 데스크탑(App.jsx)
+// 경로 결과/상세에서 쓰는 mock 데이터 — 모바일 경로 화면(pages/route/*Screen)과 데스크탑
 // RoutePanel이 함께 쓰기 때문에 컴포넌트 파일이 아닌 별도 모듈로 둔다.
 // (컴포넌트 파일에 상수를 export하면 react-refresh 경고가 뜬다)
 import { Route, ShieldCheck, Sun, Moon, Smartphone, Home, Building2 } from 'lucide-react';

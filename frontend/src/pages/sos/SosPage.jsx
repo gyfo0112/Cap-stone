@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import './SosPage.css';
-import { MapView } from './KakaoMapView';
+import { MapView } from '../../components/KakaoMapView';
 
 // SOS 상황에서는 주변 CCTV·안심벨·안심지킴이집 위치가 바로 보이는 게 유용해서 기본으로 켜둔다.
 const SOS_LAYERS = { cctv: true, safetyBell: true, safeHouse: true };
