@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
+import { ChevronLeft } from 'lucide-react';
 import './SosPage.css';
 import { MapView } from './KakaoMapView';
 
-// SOS 상황에서는 주변 CCTV 위치가 바로 보이는 게 유용해서 기본으로 켜둔다.
-const SOS_LAYERS = { cctv: true };
+// SOS 상황에서는 주변 CCTV·안심벨·안심지킴이집 위치가 바로 보이는 게 유용해서 기본으로 켜둔다.
+const SOS_LAYERS = { cctv: true, safetyBell: true, safeHouse: true };
 
 function SosPage({ onCancel, location }) {
   const [counting, setCounting] = useState(false);
@@ -49,9 +50,7 @@ function SosPage({ onCancel, location }) {
       setCounting(false);
       setCount(3);
 
-      console.log('SOS 전송');
-
-      alert('도움 요청이 전송되었습니다.');
+      alert('SOS 화면 테스트가 완료되었습니다. 실제 신고나 메시지는 전송되지 않았습니다.');
 
       // 나중에 여기에 실제 도움 요청 기능 연결
       // 예:
@@ -72,6 +71,12 @@ function SosPage({ onCancel, location }) {
   return (
     <div className="sos-page">
       <div className="sos-left">
+        <button type="button" className="sosBackButton" onClick={onCancel}>
+          <ChevronLeft size={18} />
+          돌아가기
+        </button>
+        <p className="sosDemoNotice">화면 예시 · 실제 신고 및 위치 전송 기능은 아직 연결되지 않았습니다.</p>
+
         <button
           className={`sos-circle ${counting ? 'active' : ''}`}
           onClick={handleSOSClick}

@@ -3,9 +3,10 @@ import { defineConfig } from 'vite'
 import process from 'node:process'
 
 // `npm run build:spring` → 스프링 프로젝트(SafetyMap)의 static 폴더로 바로 빌드한다.
-// 스프링 프로젝트 위치가 다르면 SPRING_STATIC_DIR 환경변수로 경로를 지정.
+// 팀 구조처럼 SafetyMap/frontend 안에 이 폴더가 있으면 기본값 그대로 동작하고,
+// 위치가 다르면 SPRING_STATIC_DIR 환경변수로 경로를 지정.
 const SPRING_STATIC_DIR =
-  process.env.SPRING_STATIC_DIR || '../SafetyMap/src/main/resources/static'
+  process.env.SPRING_STATIC_DIR || '../src/main/resources/static'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({

@@ -711,6 +711,7 @@ function RouteResultBody({
               ))}
             </div>
 
+            <p className="mfEmptyHint">화면 확인용 예시 경로입니다. 실제 경로 계산은 서버 연결 후 반영됩니다.</p>
             <button className="mfPrimaryBtn mfMainCta" onClick={onStart}>
               안내 시작
             </button>
@@ -735,7 +736,7 @@ export function RouteDetailScreen({ onEnd }) {
         <ArrowUp size={26} />
         <div>
           <strong>250m 직진</strong>
-          <span>어울마당로 · 다음 좌회전까지</span>
+          <span>어울마당로 · 다음 좌회전까지 (예시 안내)</span>
         </div>
       </div>
 
@@ -791,7 +792,7 @@ export function RouteDetailScreen({ onEnd }) {
                 안내 종료
               </button>
               <button className="mfShareBtn mfFlex1_4" onClick={() => setSharing((v) => !v)}>
-                <Users size={16} /> {sharing ? '공유 중' : '보호자 공유'}
+                <Users size={16} /> {sharing ? '공유 예시' : '보호자 공유'}
               </button>
             </div>
           </div>
@@ -855,10 +856,10 @@ export function SosOverlay({ onClose }) {
         <span className="mfSosEyebrow">긴급 도움요청</span>
         <p>
           {state === 'sent'
-            ? '112와 보호자에게 위치가 전송되었습니다'
+            ? 'SOS 화면 테스트 완료 · 실제 전송은 되지 않았습니다'
             : state === 'pressing'
-              ? `${countdown}초 후 112와 보호자에게\n위치가 전송됩니다`
-              : '3초간 눌러 112와 보호자에게 위치를 전송합니다'}
+              ? `${countdown}초 후 SOS 화면 테스트가 완료됩니다`
+              : '화면 예시입니다. 3초간 눌러 SOS 동작을 확인하세요'}
         </p>
       </div>
 
@@ -868,7 +869,7 @@ export function SosOverlay({ onClose }) {
         onPointerUp={cancelPress}
         onPointerLeave={cancelPress}
       >
-        {state === 'sent' && <strong className="mfSosLabel">전송됨</strong>}
+        {state === 'sent' && <strong className="mfSosLabel">테스트 완료</strong>}
         {state === 'pressing' && (
           <>
             <strong className="mfSosCountdown">{countdown}</strong>
@@ -893,7 +894,7 @@ export function SosOverlay({ onClose }) {
           </span>
           <div>
             <strong>보호자 실시간 위치 공유</strong>
-            <span>엄마 · 김서연{sharing ? ' (30분간 공유 중)' : ''}</span>
+            <span>엄마 · 김서연{sharing ? ' (공유 화면 예시)' : ''}</span>
           </div>
           <button
             className={sharing ? 'mfSwitch on' : 'mfSwitch'}

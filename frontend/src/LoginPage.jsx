@@ -19,9 +19,6 @@ function LoginPage({ onBack }) {
       return;
     }
 
-    console.log('아이디:', userId);
-    console.log('비밀번호:', password);
-
     alert('로그인 기능은 나중에 서버와 연결하면 됩니다.');
   };
 

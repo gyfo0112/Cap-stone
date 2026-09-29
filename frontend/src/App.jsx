@@ -186,15 +186,13 @@ function App() {
   const [loginOpen, setLoginOpen] = useState(false);
   const [desktopSosOpen, setDesktopSosOpen] = useState(false);
 
-  if (loginOpen) {
-    return <LoginPage onBack={() => setLoginOpen(false)} />;
-  }
-  if (desktopSosOpen) {
-    return <SosPage onCancel={() => setDesktopSosOpen(false)} location={myLocation} />;
-  }
+  // 로그인/SOS 페이지를 여는 동안 메인 화면은 숨기기만 하고 마운트는 유지 — 경로 검색·결과,
+  // 설정 중이던 값이 돌아왔을 때 그대로 남는다(SafetyMap/frontend 통합본 방식).
+  const fullPageOpen = loginOpen || desktopSosOpen;
 
   return (
-    <div className="app">
+    <>
+    <div className="app" style={fullPageOpen ? { display: 'none' } : undefined}>
       {/* 왼쪽 메뉴 */}
       <aside className="sidebar">
         <div>
@@ -283,13 +281,16 @@ function App() {
 
       {/* 오른쪽 지도 영역 */}
       <main className="mapArea">
-        <MapView
-          layers={layers}
-          location={isMobile ? myLocation : null}
-          pickMode={mapPickerOpen}
-          onCenterIdle={onCenterIdle}
-          onLayerStatus={onLayerStatus}
-        />
+        {/* SOS 페이지가 자기 지도(id="map")를 띄우므로 그동안은 메인 지도를 내린다 */}
+        {!fullPageOpen && (
+          <MapView
+            layers={layers}
+            location={isMobile ? myLocation : null}
+            pickMode={mapPickerOpen}
+            onCenterIdle={onCenterIdle}
+            onLayerStatus={onLayerStatus}
+          />
+        )}
       </main>
 
       {/* 모바일 전용: 지도 위 검색바+오버레이 칩+컨트롤 / 온보딩 / 경로 흐름 / SOS / 범죄레이어 / 설정 */}
@@ -373,6 +374,9 @@ function App() {
       {isMobile && onboardingDone && !sosOpen && <SosFab onOpen={() => setSosOpen(true)} />}
       {isMobile && sosOpen && <SosOverlay onClose={() => setSosOpen(false)} />}
     </div>
+    {loginOpen && <LoginPage onBack={() => setLoginOpen(false)} />}
+    {desktopSosOpen && <SosPage onCancel={() => setDesktopSosOpen(false)} location={myLocation} />}
+    </>
   );
 }
 
@@ -708,7 +712,7 @@ function NavigationPanel({ onEnd }) {
           안내 종료
         </button>
         <button className="mfShareBtn mfFlex1_4" onClick={() => setSharing((v) => !v)}>
-          <Users size={16} /> {sharing ? '공유 중' : '보호자 공유'}
+          <Users size={16} /> {sharing ? '공유 예시' : '보호자 공유'}
         </button>
       </div>
     </div>
