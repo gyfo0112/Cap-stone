@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { MARKER_LAYERS, fetchMarkers } from './markersApi';
+import { MARKER_LAYERS, fetchMarkers, loadLocalCctv } from './markersApi';
 
 // 백엔드는 화면 사각형 안의 마커를 개수 제한 없이 전부 돌려준다. 너무 넓게 보면
 // (레벨이 크면) 한 번에 수만 건이 오므로 이 레벨까지 확대했을 때만 요청한다.
@@ -7,23 +7,6 @@ import { MARKER_LAYERS, fetchMarkers } from './markersApi';
 const MAX_LEVEL = 5;
 // ponytail: 한 레이어당 최대 3000개만 그린다. 더 필요하면 서버 쪽 개수 제한/격자 집계로.
 const MAX_MARKERS = 3000;
-
-// 서버 없이 뜬 경우(Vercel 데모)에도 CCTV는 보이도록 기존 서울 CCTV 파일로 대체
-let localCctv = null;
-function loadLocalCctv() {
-  if (!localCctv) {
-    localCctv = fetch('/data/cctv-seoul.json')
-      .then((r) => {
-        if (!r.ok) throw new Error(`cctv-seoul.json ${r.status}`);
-        return r.json(); // [경도, 위도] 배열
-      })
-      .catch((err) => {
-        localCctv = null;
-        throw err;
-      });
-  }
-  return localCctv;
-}
 
 function dotImage(kakao, color) {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="8" cy="8" r="6" fill="${color}" stroke="white" stroke-width="2"/></svg>`;

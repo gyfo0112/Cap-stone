@@ -37,3 +37,51 @@ export async function fetchMarkers({ minLat, maxLat, minLng, maxLng }, markerTyp
   }
   return res.json();
 }
+
+// 서버 없이 뜬 경우(Vercel 데모)에도 CCTV는 보이도록 쓰는 서울 CCTV 파일 — [경도, 위도] 배열
+let localCctv = null;
+export function loadLocalCctv() {
+  if (!localCctv) {
+    localCctv = fetch('/data/cctv-seoul.json')
+      .then((r) => {
+        if (!r.ok) throw new Error(`cctv-seoul.json ${r.status}`);
+        return r.json();
+      })
+      .catch((err) => {
+        localCctv = null;
+        throw err;
+      });
+  }
+  return localCctv;
+}
+
+// 서울 CCTV 파일이 커버하는 범위 — 이 밖에서 그 파일로 세면 0이 나와 오해를 주므로 쓰지 않는다
+const inSeoul = (lat, lng) => lat >= 37.41 && lat <= 37.72 && lng >= 126.76 && lng <= 127.19;
+
+function distanceM(lat1, lng1, lat2, lng2) {
+  const rad = Math.PI / 180;
+  const a =
+    Math.sin(((lat2 - lat1) * rad) / 2) ** 2 +
+    Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(((lng2 - lng1) * rad) / 2) ** 2;
+  return 6371000 * 2 * Math.asin(Math.sqrt(a));
+}
+
+// 내 위치 반경 radiusM 안의 CCTV·보안등 개수 → { cctv, streetlight } (못 센 항목은 null)
+export async function countNearby(lat, lng, signal, radiusM = 500) {
+  const dLat = radiusM / 111320;
+  const dLng = dLat / Math.cos((lat * Math.PI) / 180);
+  const box = { minLat: lat - dLat, maxLat: lat + dLat, minLng: lng - dLng, maxLng: lng + dLng };
+  const within = (pLat, pLng) => distanceM(lat, lng, pLat, pLng) <= radiusM;
+  const count = async (type) =>
+    (await fetchMarkers(box, type, signal)).filter((m) => within(m.latitude, m.longitude)).length;
+
+  const cctv = count('CCTV').catch(async (err) => {
+    if (signal?.aborted || !inSeoul(lat, lng)) throw err;
+    return (await loadLocalCctv()).filter(([pLng, pLat]) => within(pLat, pLng)).length;
+  });
+  const [c, s] = await Promise.allSettled([cctv, count('SECURITY_LIGHT')]);
+  return {
+    cctv: c.status === 'fulfilled' ? c.value : null,
+    streetlight: s.status === 'fulfilled' ? s.value : null,
+  };
+}

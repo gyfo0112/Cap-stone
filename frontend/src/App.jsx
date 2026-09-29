@@ -245,6 +245,8 @@ function App() {
               <MainMapCard
                 onOpenInput={openRouteInput}
                 locationLabel={myLocation.address || (myLocation.status === 'loading' ? '위치 확인 중' : '')}
+                lat={myLocation.lat}
+                lng={myLocation.lng}
               />
             )}
             {mobileTab === 'help' && <HelpPanel />}

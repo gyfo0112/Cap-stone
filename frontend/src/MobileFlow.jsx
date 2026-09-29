@@ -41,7 +41,7 @@ import { getContacts, addContact, removeContact } from './contacts';
 import { getFavorites, addFavorite, removeFavoriteByName } from './favorites';
 import { getRecents, addRecent, removeRecent, clearRecents } from './recents';
 import { useStoredState } from './useStoredState';
-import { MARKER_LAYERS, LAYER_STATUS_TEXT } from './markersApi';
+import { MARKER_LAYERS, LAYER_STATUS_TEXT, countNearby } from './markersApi';
 import './MobileFlow.css';
 
 // 안전점수 배지 — 화면 여러 곳(메인카드/최근검색/대안경로)에서 재사용.
@@ -278,7 +278,29 @@ function timeOfDayLabel() {
   return `${isNight ? '야간' : '주간'}(${hour}시) 기준`;
 }
 
-export function MainMapCard({ onOpenInput, locationLabel }) {
+// 반경 500m 안전시설 개수 문구 — 마커 API로 실제로 센다(서버 없으면 서울 CCTV 파일로 CCTV만)
+function useNearbyCaption(lat, lng) {
+  const key = lat == null ? null : `${lat},${lng}`;
+  const [result, setResult] = useState({ key: null, counts: null });
+
+  useEffect(() => {
+    if (lat == null) return undefined;
+    const controller = new AbortController();
+    countNearby(lat, lng, controller.signal)
+      .then((counts) => setResult({ key: `${lat},${lng}`, counts }))
+      .catch(() => {});
+    return () => controller.abort();
+  }, [lat, lng]);
+
+  if (key == null) return '위치를 켜면 반경 500m 안전시설 수를 알려드려요';
+  if (result.key !== key) return '반경 500m 안전시설 확인 중…';
+  const { cctv, streetlight } = result.counts;
+  const parts = [cctv != null && `CCTV ${cctv}대`, streetlight != null && `보안등 ${streetlight}개`].filter(Boolean);
+  return parts.length ? `반경 500m 내 ${parts.join(', ')}` : '주변 안전시설 정보를 불러오지 못했어요';
+}
+
+export function MainMapCard({ onOpenInput, locationLabel, lat, lng }) {
+  const nearbyCaption = useNearbyCaption(lat, lng);
   return (
     <div className="mfMainCard">
       <div className="mfMainCardTop">
@@ -289,7 +311,9 @@ export function MainMapCard({ onOpenInput, locationLabel }) {
         <ScoreBadge score={68} />
       </div>
 
-      <p className="mfMainCaption">{timeOfDayLabel()} · 반경 500m 내 CCTV 41대, 보안등 128개</p>
+      <p className="mfMainCaption">
+        {timeOfDayLabel()} · {nearbyCaption}
+      </p>
 
       <div className="mfQuickRow">
         <button className="mfQuickBtn" onClick={() => onOpenInput('망원동 396-12 (집)')}>
