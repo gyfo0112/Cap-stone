@@ -67,6 +67,20 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
     document.activeElement?.blur();
   };
 
+  // 입력창 오른쪽 ✕ — 한 번에 비우고 그 칸에 포커스를 남겨 최근 검색 목록이 바로 뜨게 한다
+  const originInputRef = useRef(null);
+  const destInputRef = useRef(null);
+  const clearOrigin = () => {
+    originTouched.current = true;
+    setOrigin('');
+    originInputRef.current?.focus();
+  };
+  const clearDestination = () => {
+    setDestination('');
+    setPickedPlace(null);
+    destInputRef.current?.focus();
+  };
+
   // 실제 카카오 장소 검색 (모바일 경로설정 화면과 동일한 방식)
   useEffect(() => {
     if (!showSuggestions) return undefined;
@@ -139,6 +153,7 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
           <div className="locationInput">
             <span className="dot blue"></span>
             <input
+              ref={originInputRef}
               placeholder="출발지 입력"
               value={origin}
               onFocus={() => setActiveField('origin')}
@@ -149,6 +164,16 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
                 setOrigin(e.target.value);
               }}
             />
+            {origin && (
+              <button
+                className="locationClear"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={clearOrigin}
+                aria-label="출발지 지우기"
+              >
+                <X size={13} />
+              </button>
+            )}
           </div>
 
           <div className="divider"></div>
@@ -156,6 +181,7 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
           <div className="locationInput">
             <span className="dot red"></span>
             <input
+              ref={destInputRef}
               placeholder="도착지 입력"
               value={destination}
               onFocus={() => setActiveField('dest')}
@@ -166,6 +192,16 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
                 if (e.key === 'Escape') closeDropdown();
               }}
             />
+            {destination && (
+              <button
+                className="locationClear"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={clearDestination}
+                aria-label="도착지 지우기"
+              >
+                <X size={13} />
+              </button>
+            )}
           </div>
 
           <button className="swap" onClick={swap} aria-label="출발지/도착지 바꾸기">

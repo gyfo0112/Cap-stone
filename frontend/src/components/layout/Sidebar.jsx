@@ -47,7 +47,7 @@ export function Sidebar({ isMobile, mobileTab, onSelectMobileTab, menu, onSelect
       <div className="sidebarBottom">
         <button className="emergencyButton" onClick={onOpenSos}>
           <Siren size={21} />
-          도움 요청하기
+          도움 요청
         </button>
 
         <button className="loginButton" onClick={onOpenLogin}>

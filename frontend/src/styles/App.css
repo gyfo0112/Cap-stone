@@ -1483,3 +1483,24 @@ button {
     display: none;
   }
 }
+
+/* PC 경로설정 — 입력창 오른쪽 한 번에 지우기 ✕ (값이 있을 때만) */
+.locationClear {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--mf-track);
+  color: var(--mf-text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.locationClear:hover {
+  background: var(--mf-border);
+  color: var(--mf-text-primary);
+}
