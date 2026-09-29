@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronLeft, UserRound, LockKeyhole, ShieldCheck } from 'lucide-react';
+import { ChevronLeft, UserRound, LockKeyhole, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import './LoginPage.css';
 import logo from '../../images/logo.png';
 
@@ -7,6 +7,7 @@ function LoginPage({ onBack }) {
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
   const [keepLogin, setKeepLogin] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = () => {
     if (!userId.trim()) {
@@ -63,7 +64,7 @@ function LoginPage({ onBack }) {
             <LockKeyhole size={21} />
 
             <input
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               placeholder="비밀번호"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -73,6 +74,18 @@ function LoginPage({ onBack }) {
                 }
               }}
             />
+
+            {/* 비밀번호 보기/숨기기 — 누르는 동안 입력창 포커스가 빠지지 않게 mousedown 기본동작을 막는다 */}
+            <button
+              type="button"
+              className="password-toggle"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
+              aria-pressed={showPassword}
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
           </div>
 
           <div className="login-options">
@@ -85,11 +98,6 @@ function LoginPage({ onBack }) {
 
               <span>로그인 상태 유지</span>
             </label>
-
-            <button className="security-button">
-              IP 보안
-              <span className="security-toggle"></span>
-            </button>
           </div>
 
           <button className="main-login-button" onClick={handleLogin}>

@@ -156,49 +156,6 @@
   accent-color: #2f82f5;
 }
 
-.security-button {
-  border: none;
-  background: transparent;
-
-  display: flex;
-  align-items: center;
-
-  gap: 8px;
-
-  color: var(--mf-text-secondary);
-
-  font-size: 14px;
-
-  cursor: pointer;
-}
-
-.security-toggle {
-  width: 38px;
-  height: 22px;
-
-  border-radius: 20px;
-
-  background: #b7bec8;
-
-  position: relative;
-}
-
-.security-toggle::after {
-  content: '';
-
-  position: absolute;
-
-  width: 16px;
-  height: 16px;
-
-  top: 3px;
-  left: 3px;
-
-  background: #fff;
-
-  border-radius: 50%;
-}
-
 .main-login-button {
   width: 100%;
   height: 60px;
@@ -267,7 +224,6 @@
 
   color: var(--mf-text-tertiary);
 }
-
 
 .login-footer p {
   width: 100%;
@@ -340,4 +296,24 @@
   .login-options {
     margin: 16px 2px;
   }
+}
+
+/* 비밀번호 보기/숨기기 (입력창 오른쪽 눈 아이콘) */
+.password-toggle {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--mf-text-tertiary);
+  cursor: pointer;
+}
+
+.password-toggle:hover {
+  color: var(--mf-text-primary);
 }
