@@ -39,6 +39,15 @@ function KakaoMap({ apiKey, layers, location, pickMode, onCenterIdle, onLayerSta
   const [map, setMap] = useState(null);
   const meOverlayRef = useRef(null);
 
+  // 지도 영역 크기가 바뀌면(PC 정보 패널 접기/펴기, 창 크기 변경) 카카오맵은 스스로 다시 그리지
+  // 않아 빈 공간이 생긴다 — 크기 변화를 감지해 relayout 해준다.
+  useEffect(() => {
+    if (!map || !boxRef.current) return undefined;
+    const observer = new ResizeObserver(() => map.relayout());
+    observer.observe(boxRef.current);
+    return () => observer.disconnect();
+  }, [map]);
+
   useMarkerLayers(map, layers, onLayerStatus);
 
   // 지도에서 찍기 모드: 지도를 움직여 멈출 때마다(idle) 중심 좌표를 위로 올려준다.

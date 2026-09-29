@@ -228,46 +228,6 @@ button {
 }
 
 /* 데스크탑 도착지 검색 결과 — 모바일 경로설정과 같은 카카오 실검색, 다른 레이아웃 */
-.searchSuggestions {
-  margin: 0 0 27px;
-  border: 1px solid var(--mf-border);
-  border-radius: 12px;
-  overflow: hidden;
-  background: var(--mf-surface);
-  max-height: 220px;
-  overflow-y: auto;
-}
-
-.searchSuggestionEmpty {
-  padding: 14px 16px;
-  font-size: 13px;
-  color: var(--mf-text-muted);
-}
-
-.searchSuggestionItem {
-  width: 100%;
-  border: 0;
-  border-bottom: 1px solid var(--mf-border-soft);
-  background: var(--mf-surface);
-  padding: 12px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  text-align: left;
-}
-
-.searchSuggestionItem:last-child {
-  border-bottom: 0;
-}
-
-.searchSuggestionItem strong {
-  font-size: 14px;
-}
-
-.searchSuggestionItem span {
-  font-size: 12px;
-  color: var(--mf-text-muted);
-}
 
 .routeNotice {
   margin: 10px 0 0;
@@ -1323,59 +1283,6 @@ button {
   box-shadow: none;
 }
 
-/* PC 경로설정 — 최근 검색 (모바일과 같은 recents.js 저장소) */
-.recentSearches {
-  margin-bottom: 8px;
-}
-
-.recentSearchesHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.recentClearAll {
-  border: 0;
-  background: transparent;
-  padding: 0;
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--mf-text-tertiary);
-  cursor: pointer;
-}
-
-.recentRow {
-  display: flex;
-  align-items: center;
-  border-bottom: 1px solid var(--mf-border-soft);
-}
-
-.recentRow:last-child {
-  border-bottom: 0;
-}
-
-.recentRow .searchSuggestionItem {
-  flex: 1;
-  min-width: 0;
-  border-bottom: 0;
-  cursor: pointer;
-}
-
-.recentRemove {
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  margin-right: 6px;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--mf-text-tertiary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
 /* PC 경로설정 — 집/회사 바로가기 (모바일 mfQuickBtn 스타일 재사용) */
 .routeQuickRow {
   margin: -12px 0 20px;
@@ -1383,4 +1290,196 @@ button {
 
 .routeQuickRow .mfQuickBtn {
   cursor: pointer;
+}
+
+/* PC 경로설정 — 출발지/도착지 입력창을 눌렀을 때만 뜨는 목록(네이버 지도 방식) */
+.routeSearchBox {
+  position: relative;
+  margin-bottom: 27px;
+}
+
+.routeSearchBox .locationBox {
+  margin-bottom: 0;
+}
+
+.locationBox.focused {
+  border-color: #1e4fa0;
+}
+
+.routeDropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  max-height: 340px;
+  overflow-y: auto;
+  padding: 6px 0;
+  border: 1px solid var(--mf-border);
+  border-radius: 12px;
+  background: var(--mf-surface);
+  box-shadow: 0 10px 28px rgba(16, 24, 33, 0.14);
+}
+
+.routeDropRow {
+  display: flex;
+  align-items: center;
+}
+
+.routeDropItem {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border: 0;
+  background: transparent;
+  color: var(--mf-text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.routeDropItem:hover,
+.routeDropRow:hover .routeDropItem {
+  background: var(--mf-surface-soft);
+}
+
+.routeDropIcon {
+  flex-shrink: 0;
+  color: var(--mf-text-muted);
+}
+
+.routeDropIconAccent {
+  color: #1e4fa0;
+}
+
+.routeDropText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.routeDropText strong {
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.routeDropText span {
+  font-size: 12px;
+  color: var(--mf-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.routeDropRemove {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  margin-right: 8px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--mf-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.routeDropRemove:hover {
+  color: var(--mf-text-primary);
+}
+
+.routeDropEmpty {
+  padding: 12px 16px;
+  font-size: 13px;
+  color: var(--mf-text-muted);
+}
+
+.routeDropFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  padding: 8px 16px 4px;
+  border-top: 1px solid var(--mf-border-soft);
+  font-size: 12px;
+  color: var(--mf-text-muted);
+}
+
+.routeDropFooter button {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--mf-text-tertiary);
+  cursor: pointer;
+}
+
+:root[data-theme='dark'] .locationBox.focused,
+:root[data-theme='dark'] .routeDropIconAccent {
+  border-color: var(--mf-accent-text);
+  color: var(--mf-accent-text);
+}
+
+/* PC — 가운데 정보 패널 접기/펴기 (지도 왼쪽 가장자리의 손잡이 버튼) */
+.app {
+  transition: grid-template-columns 0.2s ease;
+}
+
+.app.panelCollapsed {
+  grid-template-columns: 165px 0 1fr;
+}
+
+.app.panelCollapsed .controlPanel {
+  display: none;
+}
+
+/* 패널이 빠지면 그리드 자동 배치로 지도가 0px짜리 두 번째 칸으로 밀려 들어가므로 세 번째 칸에 고정 */
+.app.panelCollapsed .mapArea {
+  grid-column: 3;
+}
+
+.panelToggle {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  z-index: 5;
+  width: 24px;
+  height: 56px;
+  transform: translateY(-50%);
+  border: 1px solid var(--mf-border);
+  border-left: 0;
+  border-radius: 0 10px 10px 0;
+  background: var(--mf-surface);
+  color: var(--mf-text-secondary);
+  box-shadow: 3px 0 10px rgba(16, 24, 33, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.panelToggle:hover {
+  color: var(--mf-text-primary);
+}
+
+@media (min-width: 768px) and (max-width: 1279.98px) {
+  .app.panelCollapsed {
+    grid-template-columns: 140px 0 1fr;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .panelToggle {
+    display: none;
+  }
 }

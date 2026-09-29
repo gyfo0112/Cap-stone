@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 // 전역 스타일 — 기존과 같은 순서(App.css → 로그인/SOS → MobileFlow.css)로 불러온다
 import './styles/App.css';
 import LoginPage from './pages/login/LoginPage';
@@ -143,9 +144,16 @@ function App() {
   // 설정 중이던 값이 돌아왔을 때 그대로 남는다(SafetyMap/frontend 통합본 방식).
   const fullPageOpen = loginOpen || desktopSosOpen;
 
+  // PC 가운데 정보 패널 접기 — 지도를 넓게 보고 싶을 때. 새로고침해도 유지.
+  const [panelCollapsed, setPanelCollapsed] = useStoredState('mf-panel-collapsed', false);
+  const collapsed = panelCollapsed && !isMobile;
+
   return (
     <>
-    <div className="app" style={fullPageOpen ? { display: 'none' } : undefined}>
+    <div
+      className={collapsed ? 'app panelCollapsed' : 'app'}
+      style={fullPageOpen ? { display: 'none' } : undefined}
+    >
       {/* 공통 레이아웃: 왼쪽 메뉴(PC) / 하단 탭바(모바일) */}
       <Sidebar
         isMobile={isMobile}
@@ -203,6 +211,17 @@ function App() {
 
       {/* 오른쪽 지도 영역 */}
       <main className="mapArea">
+        {!isMobile && (
+          <button
+            className="panelToggle"
+            onClick={() => setPanelCollapsed((v) => !v)}
+            aria-label={collapsed ? '정보 패널 펼치기' : '정보 패널 접기'}
+            aria-expanded={!collapsed}
+            title={collapsed ? '패널 펼치기' : '패널 접기'}
+          >
+            {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+          </button>
+        )}
         {/* SOS 페이지가 자기 지도(id="map")를 띄우므로 그동안은 메인 지도를 내린다 */}
         {!fullPageOpen && (
           <MapView

@@ -5,6 +5,8 @@ import {
   CircleCheck,
   Clock3,
   Lightbulb,
+  LocateFixed,
+  MapPin,
   PersonStanding,
   Search,
   ShieldCheck,
@@ -52,9 +54,18 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
   // 추천 목록에서 고른 장소 — 고른 뒤엔 목록을 다시 띄우지 않고, 최근 검색에 주소를 같이 남긴다
   const [pickedPlace, setPickedPlace] = useState(null);
 
+  // 네이버 지도처럼 출발지/도착지 입력창을 눌렀을 때만 아래에 목록(최근 검색·검색 추천)을 띄운다
+  const [activeField, setActiveField] = useState(null); // null | 'origin' | 'dest'
+
   const query = destination.trim();
   const canSearch = hasKakaoRestKey();
-  const showSuggestions = query && canSearch && pickedPlace?.name !== query;
+  const showSuggestions = activeField === 'dest' && query && canSearch && pickedPlace?.name !== query;
+
+  // 목록에서 고르거나 Enter/Esc를 누르면 목록을 닫고 입력창 포커스도 뺀다
+  const closeDropdown = () => {
+    setActiveField(null);
+    document.activeElement?.blur();
+  };
 
   // 실제 카카오 장소 검색 (모바일 경로설정 화면과 동일한 방식)
   useEffect(() => {
@@ -77,6 +88,14 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
     setDestination(place.name);
     setPickedPlace(place);
     setPlaces([]);
+    closeDropdown();
+  };
+
+  // 출발지 목록: 현재 위치로 되돌리기 / 최근 검색 장소를 출발지로
+  const pickOrigin = (name) => {
+    originTouched.current = name !== null;
+    setOrigin(name ?? (originLabel || '현재 위치'));
+    closeDropdown();
   };
 
   const swap = () => {
@@ -92,6 +111,7 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
       return;
     }
     setNotice('');
+    closeDropdown();
     setRecents(addRecent({ name, sub: pickedPlace?.name === name ? pickedPlace.address : '' }));
     setSelectedRouteId(ROUTE_MODES.find((m) => m.id === selectedMode).route);
     setResultsReady(true);
@@ -114,34 +134,106 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
 
       <p className="subtitle">더 안전한 길, 함께 만들어가는 우리 동네</p>
 
-      <div className="locationBox">
-        <div className="locationInput">
-          <span className="dot blue"></span>
-          <input
-            placeholder="출발지 입력"
-            value={origin}
-            onChange={(e) => {
-              originTouched.current = true;
-              setOrigin(e.target.value);
-            }}
-          />
+      <div className="routeSearchBox">
+        <div className={activeField ? 'locationBox focused' : 'locationBox'}>
+          <div className="locationInput">
+            <span className="dot blue"></span>
+            <input
+              placeholder="출발지 입력"
+              value={origin}
+              onFocus={() => setActiveField('origin')}
+              onBlur={() => setActiveField(null)}
+              onKeyDown={(e) => e.key === 'Escape' && closeDropdown()}
+              onChange={(e) => {
+                originTouched.current = true;
+                setOrigin(e.target.value);
+              }}
+            />
+          </div>
+
+          <div className="divider"></div>
+
+          <div className="locationInput">
+            <span className="dot red"></span>
+            <input
+              placeholder="도착지 입력"
+              value={destination}
+              onFocus={() => setActiveField('dest')}
+              onBlur={() => setActiveField(null)}
+              onChange={(e) => setDestination(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') runSearch();
+                if (e.key === 'Escape') closeDropdown();
+              }}
+            />
+          </div>
+
+          <button className="swap" onClick={swap} aria-label="출발지/도착지 바꾸기">
+            <ArrowUpDown size={18} />
+          </button>
         </div>
 
-        <div className="divider"></div>
-
-        <div className="locationInput">
-          <span className="dot red"></span>
-          <input
-            placeholder="도착지 입력"
-            value={destination}
-            onChange={(e) => setDestination(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && runSearch()}
-          />
-        </div>
-
-        <button className="swap" onClick={swap} aria-label="출발지/도착지 바꾸기">
-          <ArrowUpDown size={18} />
-        </button>
+        {/* 입력창을 눌렀을 때만 뜨는 목록. mousedown을 막아야 항목을 누를 때 입력창 blur로 먼저 닫히지 않는다 */}
+        {activeField && (showSuggestions || !query || activeField === 'origin') && (
+          <div className="routeDropdown" onMouseDown={(e) => e.preventDefault()}>
+            {showSuggestions ? (
+              <>
+                {searching && <div className="routeDropEmpty">검색 중…</div>}
+                {!searching && places.length === 0 && <div className="routeDropEmpty">검색 결과가 없습니다</div>}
+                {!searching &&
+                  places.map((p) => (
+                    <button key={p.id} className="routeDropItem" onClick={() => pickPlace(p)}>
+                      <MapPin size={18} className="routeDropIcon" />
+                      <span className="routeDropText">
+                        <strong>{p.name}</strong>
+                        <span>{p.address}</span>
+                      </span>
+                    </button>
+                  ))}
+              </>
+            ) : (
+              <>
+                {activeField === 'origin' && (
+                  <button className="routeDropItem" onClick={() => pickOrigin(null)}>
+                    <LocateFixed size={18} className="routeDropIcon routeDropIconAccent" />
+                    <span className="routeDropText">
+                      <strong>현재 위치</strong>
+                      {originLabel && <span>{originLabel}</span>}
+                    </span>
+                  </button>
+                )}
+                {recents.length === 0 && <div className="routeDropEmpty">최근 검색한 장소가 없어요.</div>}
+                {recents.map((r) => (
+                  <div className="routeDropRow" key={r.name}>
+                    <button
+                      className="routeDropItem"
+                      onClick={() => (activeField === 'origin' ? pickOrigin(r.name) : searchRecent(r))}
+                    >
+                      <Clock3 size={18} className="routeDropIcon" />
+                      <span className="routeDropText">
+                        <strong>{r.name}</strong>
+                        {r.sub && <span>{r.sub}</span>}
+                      </span>
+                    </button>
+                    <button
+                      className="routeDropRemove"
+                      onClick={() => setRecents(removeRecent(r.name))}
+                      aria-label={`${r.name} 최근 검색 삭제`}
+                    >
+                      <X size={15} />
+                    </button>
+                  </div>
+                ))}
+                {recents.length > 0 && (
+                  <div className="routeDropFooter">
+                    <span>최근 검색</span>
+                    <button onClick={() => setRecents(clearRecents())}>전체 삭제</button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 집/회사 바로가기 — 모바일 홈 카드와 같은 장소(routeData.js QUICK_PLACES), 누르면 바로 검색 */}
@@ -152,56 +244,6 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
           </button>
         ))}
       </div>
-
-      {showSuggestions && (
-        <div className="searchSuggestions">
-          {searching && <div className="searchSuggestionEmpty">검색 중…</div>}
-          {!searching && places.length === 0 && (
-            <div className="searchSuggestionEmpty">검색 결과가 없습니다</div>
-          )}
-          {!searching &&
-            places.map((p) => (
-              <button key={p.id} className="searchSuggestionItem" onClick={() => pickPlace(p)}>
-                <strong>{p.name}</strong>
-                <span>{p.address}</span>
-              </button>
-            ))}
-        </div>
-      )}
-
-      {!query && (
-        <div className="recentSearches">
-          <div className="recentSearchesHeader">
-            <h3 className="sectionTitle">최근 검색</h3>
-            {recents.length > 0 && (
-              <button className="recentClearAll" onClick={() => setRecents(clearRecents())}>
-                전체 삭제
-              </button>
-            )}
-          </div>
-          {recents.length === 0 ? (
-            <p className="searchSuggestionEmpty">최근 검색한 장소가 없어요.</p>
-          ) : (
-            <div className="searchSuggestions">
-              {recents.map((r) => (
-                <div className="recentRow" key={r.name}>
-                  <button className="searchSuggestionItem" onClick={() => searchRecent(r)}>
-                    <strong>{r.name}</strong>
-                    {r.sub && <span>{r.sub}</span>}
-                  </button>
-                  <button
-                    className="recentRemove"
-                    onClick={() => setRecents(removeRecent(r.name))}
-                    aria-label={`${r.name} 최근 검색 삭제`}
-                  >
-                    <X size={15} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
 
       <h3 className="sectionTitle">경로 옵션</h3>
 
