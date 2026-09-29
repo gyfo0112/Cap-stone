@@ -11,4 +11,10 @@ const SPRING_STATIC_DIR =
 export default defineConfig(({ mode }) => ({
   plugins: [react()],
   build: mode === 'spring' ? { outDir: SPRING_STATIC_DIR, emptyOutDir: true } : {},
+  // npm run dev 중에는 /api 요청을 스프링 서버(8080)로 넘긴다 — 배포(B안)에선 같은 서버라 필요 없음
+  server: {
+    proxy: {
+      '/api': process.env.API_PROXY_TARGET || 'http://localhost:8080',
+    },
+  },
 }))

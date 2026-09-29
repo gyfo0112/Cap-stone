@@ -1333,6 +1333,26 @@
   color: #fff;
 }
 
+/* 켜진 시설 칩 앞의 색 점 = 지도에 찍히는 마커 색(범례 역할) */
+.mfChipDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  flex-shrink: 0;
+}
+
+.mfMapNotice {
+  display: inline-block;
+  margin: 8px 0 0;
+  padding: 7px 12px;
+  border-radius: 10px;
+  background: var(--mf-scrim);
+  color: var(--mf-text-secondary);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
 /* ---------- 범죄주의구간 ---------- */
 
 .mfCrimeHeaderRow {

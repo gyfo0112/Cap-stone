@@ -28,6 +28,7 @@ import logo from './images/logo.png';
 import LoginPage from './LoginPage';
 import SosPage from './SosPage';
 import { MapView } from './KakaoMapView';
+import { LAYER_STATUS_TEXT } from './markersApi';
 import { hasKakaoRestKey, searchPlaces } from './kakaoLocal';
 import { getContacts, addContact, removeContact } from './contacts';
 import {
@@ -83,8 +84,14 @@ function App() {
     if (key !== 'route') setNavigationActive(false);
     setMenu(key);
   };
-  const [layers, setLayers] = useState({ cctv: false });
+  const [layers, setLayers] = useState({ cctv: false, streetlight: false, safeHouse: false, safetyBell: false });
   const toggleLayer = (key) => setLayers((s) => ({ ...s, [key]: !s[key] }));
+  // 레이어별 불러오기 상태('ok' | 'fallback' | 'zoom' | 'error') — 패널/칩 안내 문구용
+  const [layerStatus, setLayerStatus] = useState({});
+  const onLayerStatus = useCallback(
+    (key, status) => setLayerStatus((s) => (s[key] === status ? s : { ...s, [key]: status })),
+    [],
+  );
 
   const isMobile = useIsMobile();
   // 실제 GPS 위치 + (REST 키 있으면) 주소. 실패해도 각 화면이 알아서 mock으로 대체.
@@ -257,7 +264,9 @@ function App() {
               <NavigationPanel onEnd={() => setNavigationActive(false)} />
             )}
             {menu === 'help' && <HelpPanel />}
-            {menu === 'map' && <FacilityPanel layers={layers} onToggle={toggleLayer} />}
+            {menu === 'map' && (
+              <FacilityPanel layers={layers} layerStatus={layerStatus} onToggle={toggleLayer} />
+            )}
             {menu === 'settings' && (
               <SettingsPanel
                 routePriority={routePriority}
@@ -277,6 +286,7 @@ function App() {
           location={isMobile ? myLocation : null}
           pickMode={mapPickerOpen}
           onCenterIdle={onCenterIdle}
+          onLayerStatus={onLayerStatus}
         />
       </main>
 
@@ -284,8 +294,9 @@ function App() {
       {isMobile && onboardingDone && mobileTab === 'map' && mobileScreen === null && (
         <>
           <MapSearchOverlay
-            cctvOn={layers.cctv}
-            onToggleCctv={() => toggleLayer('cctv')}
+            layers={layers}
+            layerStatus={layerStatus}
+            onToggleLayer={toggleLayer}
             crimeOn={crimeLayerOpen}
             onOpenCrime={() => setCrimeLayerOpen((v) => !v)}
             onOpenInput={openRouteInput}
@@ -959,42 +970,40 @@ function HelpWriteForm({ onCancel, onSubmit }) {
   );
 }
 
-function FacilityPanel({ layers, onToggle }) {
+// 지도에 켜고 끌 수 있는 안전시설 — key는 markersApi.js MARKER_LAYERS와 같다
+const FACILITY_BUTTONS = [
+  { key: 'cctv', icon: Camera, title: 'CCTV 위치' },
+  { key: 'streetlight', icon: Lightbulb, title: '가로등(보안등) 위치' },
+  { key: 'safeHouse', icon: ShieldCheck, title: '여성안심지킴이집' },
+  { key: 'safetyBell', icon: Siren, title: '안심벨(비상벨) 위치' },
+];
+
+function FacilityPanel({ layers, layerStatus, onToggle }) {
   return (
     <div className="panelContent">
       <h1>지도</h1>
 
       <p className="subtitle">주변의 안전시설과 위험구간을 확인하세요.</p>
 
-      <button
-        className={layers.cctv ? 'facilityButton active' : 'facilityButton'}
-        onClick={() => onToggle('cctv')}
-      >
-        <Camera />
+      {FACILITY_BUTTONS.map((f) => {
+        const on = layers[f.key];
+        return (
+          <button
+            key={f.key}
+            className={on ? 'facilityButton active' : 'facilityButton'}
+            onClick={() => onToggle(f.key)}
+          >
+            <f.icon />
 
-        <div>
-          <strong>CCTV 위치</strong>
-          <span>{layers.cctv ? '표시 중 · 다시 눌러 숨기기' : '지도에 CCTV 표시'}</span>
-        </div>
-      </button>
-
-      <button className="facilityButton" disabled>
-        <Lightbulb />
-
-        <div>
-          <strong>가로등 위치</strong>
-          <span>준비 중</span>
-        </div>
-      </button>
-
-      <button className="facilityButton" disabled>
-        <ShieldCheck />
-
-        <div>
-          <strong>여성지킴이 귀갓길</strong>
-          <span>준비 중</span>
-        </div>
-      </button>
+            <div>
+              <strong>{f.title}</strong>
+              <span>
+                {on ? LAYER_STATUS_TEXT[layerStatus[f.key]] ?? '불러오는 중…' : '지도에 표시'}
+              </span>
+            </div>
+          </button>
+        );
+      })}
 
       <button className="facilityButton" disabled>
         <TriangleAlert />

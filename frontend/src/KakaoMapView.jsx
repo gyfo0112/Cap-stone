@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { MapPin } from 'lucide-react';
-import { useCctvLayer } from './useCctvLayer';
+import { useMarkerLayers } from './useMarkerLayers';
 
 // App.jsx의 메인 지도 + SosPage.jsx의 SOS 화면 지도가 함께 쓰는 카카오맵 컴포넌트.
 // 두 화면이 동시에 마운트되는 일이 없어(SOS는 전체화면 전환) id="map" 중복 걱정은 없다.
@@ -16,7 +16,7 @@ function MapPlaceholder({ text }) {
   );
 }
 
-export function MapView({ layers, location, pickMode, onCenterIdle }) {
+export function MapView({ layers, location, pickMode, onCenterIdle, onLayerStatus }) {
   const apiKey = import.meta.env.VITE_KAKAO_MAP_KEY;
   if (!apiKey) {
     return <MapPlaceholder text=".env.local 파일에 VITE_KAKAO_MAP_KEY를 설정하세요." />;
@@ -28,17 +28,18 @@ export function MapView({ layers, location, pickMode, onCenterIdle }) {
       location={location}
       pickMode={pickMode}
       onCenterIdle={onCenterIdle}
+      onLayerStatus={onLayerStatus}
     />
   );
 }
 
-function KakaoMap({ apiKey, layers, location, pickMode, onCenterIdle }) {
+function KakaoMap({ apiKey, layers, location, pickMode, onCenterIdle, onLayerStatus }) {
   const boxRef = useRef(null);
   const [error, setError] = useState('');
   const [map, setMap] = useState(null);
   const meOverlayRef = useRef(null);
 
-  useCctvLayer(map, layers.cctv);
+  useMarkerLayers(map, layers, onLayerStatus);
 
   // 지도에서 찍기 모드: 지도를 움직여 멈출 때마다(idle) 중심 좌표를 위로 올려준다.
   useEffect(() => {
