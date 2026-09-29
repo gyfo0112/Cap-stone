@@ -1,7 +1,14 @@
 // 경로 결과/상세에서 쓰는 mock 데이터 — 모바일(MobileFlow.jsx)과 데스크탑(App.jsx)
 // RoutePanel이 함께 쓰기 때문에 컴포넌트 파일이 아닌 별도 모듈로 둔다.
 // (컴포넌트 파일에 상수를 export하면 react-refresh 경고가 뜬다)
-import { Route, ShieldCheck, Sun, Moon, Smartphone } from 'lucide-react';
+import { Route, ShieldCheck, Sun, Moon, Smartphone, Home, Building2 } from 'lucide-react';
+
+// 집/회사 바로가기 (모바일 홈 카드·PC 경로설정 공용). 아직 사용자별 저장이 없어 예시 장소 —
+// 로그인·즐겨찾기 API가 붙으면 사용자가 지정한 장소로 바꾼다.
+export const QUICK_PLACES = [
+  { key: 'home', label: '집', icon: Home, name: '망원동 396-12 (집)' },
+  { key: 'work', label: '회사', icon: Building2, name: '강남 오피스 (회사)' },
+];
 
 export const ROUTE_OPTIONS = [
   { id: 'safe', name: '안전 우선 경로', score: 82, note: 'CCTV 12대 · 보안등 34개 · 대로변 위주', duration: 24, distance: 1.8 },

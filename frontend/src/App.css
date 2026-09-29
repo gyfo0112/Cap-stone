@@ -1375,3 +1375,12 @@ button {
   justify-content: center;
   cursor: pointer;
 }
+
+/* PC 경로설정 — 집/회사 바로가기 (모바일 mfQuickBtn 스타일 재사용) */
+.routeQuickRow {
+  margin: -12px 0 20px;
+}
+
+.routeQuickRow .mfQuickBtn {
+  cursor: pointer;
+}

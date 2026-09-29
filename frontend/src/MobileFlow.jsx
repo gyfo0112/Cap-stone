@@ -8,8 +8,6 @@ import {
   CircleCheck,
   TriangleAlert,
   ArrowUp,
-  Home,
-  Building2,
   Star,
   Crosshair,
   Users,
@@ -33,6 +31,7 @@ import {
   ROUTE_OPTIONS,
   PRIORITY_OPTIONS,
   THEME_OPTIONS,
+  QUICK_PLACES,
   SEGMENTS,
   GRADE_COLOR,
   GRADE_SOFT,
@@ -316,12 +315,11 @@ export function MainMapCard({ onOpenInput, locationLabel, lat, lng }) {
       </p>
 
       <div className="mfQuickRow">
-        <button className="mfQuickBtn" onClick={() => onOpenInput('망원동 396-12 (집)')}>
-          <Home size={16} /> 집
-        </button>
-        <button className="mfQuickBtn" onClick={() => onOpenInput('강남 오피스 (회사)')}>
-          <Building2 size={16} /> 회사
-        </button>
+        {QUICK_PLACES.map((q) => (
+          <button key={q.key} className="mfQuickBtn" onClick={() => onOpenInput(q.name)}>
+            <q.icon size={16} /> {q.label}
+          </button>
+        ))}
       </div>
 
       <button className="mfPrimaryBtn mfMainCta" onClick={() => onOpenInput('')}>

@@ -64,7 +64,15 @@ import {
   SosFab,
   SosOverlay,
 } from './MobileFlow';
-import { ROUTE_OPTIONS, PRIORITY_OPTIONS, THEME_OPTIONS, SEGMENTS, GRADE_COLOR, GRADE_SOFT } from './routeData';
+import {
+  ROUTE_OPTIONS,
+  PRIORITY_OPTIONS,
+  THEME_OPTIONS,
+  QUICK_PLACES,
+  SEGMENTS,
+  GRADE_COLOR,
+  GRADE_SOFT,
+} from './routeData';
 
 // 데스크탑 왼쪽 메뉴 — MobileTabBar의 TABS 배열과 같은 방식으로, 여기 하나만
 // 고치면 메뉴 추가/순서 변경이 되게 데이터로 관리한다.
@@ -508,6 +516,15 @@ function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
         <button className="swap" onClick={swap} aria-label="출발지/도착지 바꾸기">
           <ArrowUpDown size={18} />
         </button>
+      </div>
+
+      {/* 집/회사 바로가기 — 모바일 홈 카드와 같은 장소(routeData.js QUICK_PLACES), 누르면 바로 검색 */}
+      <div className="mfQuickRow routeQuickRow">
+        {QUICK_PLACES.map((q) => (
+          <button key={q.key} className="mfQuickBtn" onClick={() => searchRecent({ name: q.name, sub: '' })}>
+            <q.icon size={16} /> {q.label}
+          </button>
+        ))}
       </div>
 
       {showSuggestions && (
