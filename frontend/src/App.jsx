@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   MapPin,
   Bell,
@@ -18,6 +19,9 @@ import {
   Route,
   Users,
   ArrowUp,
+  ChevronLeft,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 import './App.css';
 import logo from './images/logo.png';
@@ -26,6 +30,17 @@ import SosPage from './SosPage';
 import { MapView } from './KakaoMapView';
 import { hasKakaoRestKey, searchPlaces } from './kakaoLocal';
 import { getContacts, addContact, removeContact } from './contacts';
+import {
+  MY_USER_UUID,
+  POST_TYPES,
+  getPosts,
+  addPost,
+  removePost,
+  getAcceptedIds,
+  acceptPost,
+  cancelAccept,
+  timeAgo,
+} from './posts';
 import { useIsMobile, scoreGrade } from './useIsMobile';
 import { useCurrentLocation } from './useCurrentLocation';
 import { useTheme } from './useTheme';
@@ -41,10 +56,11 @@ import {
   MapPickScreen,
   CrimeLayerScreen,
   SettingsScreen,
+  PriorityToggle,
   SosFab,
   SosOverlay,
 } from './MobileFlow';
-import { ROUTE_OPTIONS, PRIORITY_OPTIONS, SEGMENTS, GRADE_COLOR, GRADE_SOFT } from './routeData';
+import { ROUTE_OPTIONS, SEGMENTS, GRADE_COLOR, GRADE_SOFT } from './routeData';
 
 // 데스크탑 왼쪽 메뉴 — MobileTabBar의 TABS 배열과 같은 방식으로, 여기 하나만
 // 고치면 메뉴 추가/순서 변경이 되게 데이터로 관리한다.
@@ -674,12 +690,71 @@ function NavigationPanel({ onEnd }) {
   );
 }
 
+// 긴급도(post_type)별 카드 테두리/배지 색 — 기존 클래스 재사용
+const POST_TYPE_STYLE = {
+  일반: { border: 'yellowBorder', badge: 'yellowBadge' },
+  주의: { border: 'orangeBorder', badge: 'orangeBadge' },
+  긴급: { border: 'redBorder', badge: 'redBadge' },
+};
+
+// 모바일(도움요청 탭)과 데스크탑(도움요청 메뉴)이 함께 쓰는 패널.
+// 목록 → 글쓰기 화면 / 게시글 상세(수락·삭제) 모달.
 function HelpPanel() {
+  const [posts, setPosts] = useState(getPosts);
+  const [acceptedIds, setAcceptedIds] = useState(getAcceptedIds);
+  const [filter, setFilter] = useState('all'); // 'all' | 'mine'
+  const [writing, setWriting] = useState(false);
+  const [openId, setOpenId] = useState(null);
+
+  const isMine = (p) => p.user_uuid === MY_USER_UUID;
+  const visible = filter === 'mine' ? posts.filter(isMine) : posts;
+  const openPost = posts.find((p) => p.post_uuid === openId);
+
+  const deletePost = (p) => {
+    if (!window.confirm(`'${p.post_title}' 글을 삭제할까요?`)) return;
+    setPosts(removePost(p.post_uuid));
+    setAcceptedIds(getAcceptedIds());
+    setOpenId(null);
+  };
+
+  if (writing) {
+    return (
+      <HelpWriteForm
+        onCancel={() => setWriting(false)}
+        onSubmit={(post) => {
+          setPosts(addPost(post));
+          setFilter('all');
+          setWriting(false);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="panelContent">
       <h1>도움요청</h1>
 
       <p className="subtitle">주변에서 요청한 도움을 확인할 수 있습니다.</p>
+
+      <button className="searchRouteButton helpWriteButton" onClick={() => setWriting(true)}>
+        <Plus size={20} />
+        도움 요청 글쓰기
+      </button>
+
+      <div className="themeButtons helpTabs">
+        <button
+          className={filter === 'all' ? 'themeButton selected' : 'themeButton'}
+          onClick={() => setFilter('all')}
+        >
+          전체
+        </button>
+        <button
+          className={filter === 'mine' ? 'themeButton selected' : 'themeButton'}
+          onClick={() => setFilter('mine')}
+        >
+          내가 쓴 글
+        </button>
+      </div>
 
       <div className="helpLegend">
         <span>
@@ -698,34 +773,175 @@ function HelpPanel() {
         </span>
       </div>
 
-      <div className="requestCard orangeBorder">
+      {visible.length === 0 && (
+        <p className="settingsDescription">
+          {filter === 'mine' ? '아직 작성한 도움 요청이 없어요.' : '주변에 올라온 도움 요청이 없어요.'}
+        </p>
+      )}
+
+      {visible.map((p) => {
+        const style = POST_TYPE_STYLE[p.post_type] ?? POST_TYPE_STYLE.일반;
+        const mine = isMine(p);
+        return (
+          <div key={p.post_uuid} className={`requestCard ${style.border}`}>
+            <button className="requestCardMain" onClick={() => setOpenId(p.post_uuid)}>
+              <div className="requestHeader">
+                <strong>{p.post_title}</strong>
+                <span className={style.badge}>{p.post_type}</span>
+              </div>
+              <p>{p.body}</p>
+              <div className="requestInfo">
+                {mine ? '내가 쓴 글' : `약 ${p.distance ?? '-'}km`} · {timeAgo(p.created_at)}
+                {acceptedIds.includes(p.post_uuid) && <em className="requestAccepted"> · 수락함</em>}
+              </div>
+            </button>
+            {mine && (
+              <button className="requestDelete" onClick={() => deletePost(p)}>
+                <Trash2 size={14} />
+                삭제
+              </button>
+            )}
+          </div>
+        );
+      })}
+
+      {openPost && (
+        <HelpPostModal
+          post={openPost}
+          mine={isMine(openPost)}
+          accepted={acceptedIds.includes(openPost.post_uuid)}
+          onAccept={() => setAcceptedIds(acceptPost(openPost.post_uuid))}
+          onCancelAccept={() => setAcceptedIds(cancelAccept(openPost.post_uuid))}
+          onDelete={() => deletePost(openPost)}
+          onClose={() => setOpenId(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+// 요청 게시글 상세 — 남의 글이면 수락, 내 글이면 삭제
+function HelpPostModal({ post, mine, accepted, onAccept, onCancelAccept, onDelete, onClose }) {
+  const style = POST_TYPE_STYLE[post.post_type] ?? POST_TYPE_STYLE.일반;
+  // controlPanel이 자체 z-index 층을 만들어서, body로 빼야 지도까지 어둡게 덮인다
+  return createPortal(
+    <div className="helpModalScrim" onClick={onClose}>
+      <div
+        className="helpModal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="helpModalTitle"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="requestHeader">
-          <strong>귀갓길 동행이 필요해요</strong>
-          <span className="orangeBadge">주의</span>
+          <strong id="helpModalTitle">{post.post_title}</strong>
+          <span className={style.badge}>{post.post_type}</span>
+        </div>
+        <p className="helpModalBody">{post.body}</p>
+        <div className="requestInfo">
+          {mine ? '내가 쓴 글' : `약 ${post.distance ?? '-'}km`} · {timeAgo(post.created_at)}
         </div>
 
-        <p>성수역 2번 출구 근처</p>
-        <div className="requestInfo">약 0.8km · 5분 전</div>
+        {accepted && (
+          <p className="helpModalNotice">
+            <CircleCheck size={16} /> 수락한 요청이에요.
+          </p>
+        )}
+
+        <div className="helpModalActions">
+          <button className="mfOutlineBtn" onClick={onClose}>
+            닫기
+          </button>
+          {mine ? (
+            <button className="mfPrimaryBtn helpModalDanger" onClick={onDelete}>
+              삭제하기
+            </button>
+          ) : accepted ? (
+            <button className="mfOutlineBtn" onClick={onCancelAccept}>
+              수락 취소
+            </button>
+          ) : (
+            <button className="mfPrimaryBtn" onClick={onAccept}>
+              수락하기
+            </button>
+          )}
+        </div>
       </div>
+    </div>,
+    document.body,
+  );
+}
 
-      <div className="requestCard redBorder">
-        <div className="requestHeader">
-          <strong>긴급하게 도움이 필요합니다</strong>
-          <span className="redBadge">긴급</span>
+function HelpWriteForm({ onCancel, onSubmit }) {
+  const [title, setTitle] = useState('');
+  const [type, setType] = useState('일반');
+  const [body, setBody] = useState('');
+  const [error, setError] = useState('');
+
+  const submit = () => {
+    if (!title.trim()) return setError('제목을 입력해주세요.');
+    if (!body.trim()) return setError('위치와 상황을 입력해주세요.');
+    onSubmit({ post_title: title.trim(), post_type: type, body: body.trim() });
+  };
+
+  return (
+    <div className="panelContent">
+      <button className="login-back" onClick={onCancel}>
+        <ChevronLeft size={20} />
+        목록으로
+      </button>
+
+      <h1>도움 요청 글쓰기</h1>
+      <p className="subtitle">주변 이웃에게 필요한 도움을 알려주세요.</p>
+
+      <div className="helpForm">
+        <label className="helpField">
+          <span>제목</span>
+          <input
+            className="mfAddContactInput"
+            placeholder="귀갓길 동행이 필요해요"
+            maxLength={50}
+            value={title}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              setError('');
+            }}
+          />
+        </label>
+
+        <div className="helpField">
+          <span>긴급도</span>
+          <div className="themeButtons">
+            {POST_TYPES.map((t) => (
+              <button
+                key={t}
+                className={type === t ? 'themeButton selected' : 'themeButton'}
+                onClick={() => setType(t)}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <p>서울숲 인근 골목</p>
-        <div className="requestInfo">약 1.2km · 2분 전</div>
-      </div>
+        <label className="helpField">
+          <span>위치 · 상황</span>
+          <textarea
+            className="mfAddContactInput helpTextarea"
+            placeholder="성수역 2번 출구 근처, 골목이 어두워서 함께 걸어갈 분을 찾아요"
+            value={body}
+            onChange={(e) => {
+              setBody(e.target.value);
+              setError('');
+            }}
+          />
+        </label>
 
-      <div className="requestCard yellowBorder">
-        <div className="requestHeader">
-          <strong>무거운 짐 옮기는 것을 도와주세요</strong>
-          <span className="yellowBadge">일반</span>
-        </div>
+        {error && <p className="helpFormError">{error}</p>}
 
-        <p>왕십리역 근처</p>
-        <div className="requestInfo">약 1.5km · 12분 전</div>
+        <button className="searchRouteButton" onClick={submit}>
+          요청 올리기
+        </button>
       </div>
     </div>
   );
@@ -824,45 +1040,18 @@ function SettingsPanel({ routePriority, onRoutePriorityChange, theme, onThemeCha
       <div className="settingsCard">
         <h3>기본 안전 우선도</h3>
         <p className="settingsDescription">모든 경로 계산의 기본값으로 사용됩니다.</p>
-        <div className="themeButtons">
-          {PRIORITY_OPTIONS.map((p) => (
-            <button
-              key={p.key}
-              className={routePriority === p.key ? 'themeButton selected' : 'themeButton'}
-              onClick={() => onRoutePriorityChange(p.key)}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
+        <PriorityToggle value={routePriority} onChange={onRoutePriorityChange} />
       </div>
 
       <div className="settingsCard">
         <h3>보호자 연락처</h3>
 
-        <div className="guardianItem">
-          <div className="guardianAvatar">엄마</div>
-          <div className="guardianInfo">
-            <strong>김서연</strong>
-            <span>010-2841-XXXX</span>
-          </div>
-          <span className="guardianBadge">기본</span>
-        </div>
-        <div className="guardianDivider" />
-        <div className="guardianItem">
-          <div className="guardianAvatar">친구</div>
-          <div className="guardianInfo">
-            <strong>이지훈</strong>
-            <span>010-7745-XXXX</span>
-          </div>
-          <span className="guardianBadge">보조</span>
-        </div>
-
-        {contacts.map((c) => (
+        {contacts.length === 0 && <p className="settingsDescription">등록된 보호자가 없어요.</p>}
+        {contacts.map((c, i) => (
           <div key={c.tel_uuid}>
-            <div className="guardianDivider" />
+            {i > 0 && <div className="guardianDivider" />}
             <div className="guardianItem">
-              <div className="guardianAvatar">{c.tel_name[0]}</div>
+              <div className="guardianAvatar">{c.relation || c.tel_name[0]}</div>
               <div className="guardianInfo">
                 <strong>{c.tel_name}</strong>
                 <span>{c.tel_num}</span>

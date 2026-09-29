@@ -768,6 +768,141 @@ button {
   color: var(--mf-text-secondary);
 }
 
+/* 카드 전체를 누르면 상세(수락) 모달 — 삭제 버튼과 형제로 분리해 button 중첩을 피함 */
+.requestCardMain {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.requestAccepted {
+  font-style: normal;
+  font-weight: 700;
+  color: var(--mf-accent-text);
+}
+
+.requestDelete {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 10px 0 0 auto;
+  padding: 6px 10px;
+  border: 1px solid var(--mf-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--mf-danger-text);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.helpWriteButton {
+  margin: 0 0 14px;
+}
+
+.helpTabs {
+  margin-bottom: 14px;
+}
+
+.helpForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.helpField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.helpField > span {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--mf-text-secondary);
+}
+
+.helpTextarea {
+  height: 110px;
+  padding: 12px 14px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.helpFormError {
+  margin: -6px 0 0;
+  font-size: 13px;
+  color: var(--mf-danger-text);
+}
+
+.helpModalScrim {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(16, 20, 26, 0.5);
+}
+
+.helpModal {
+  width: 100%;
+  max-width: 420px;
+  padding: 22px;
+  border-radius: 18px;
+  background: var(--mf-surface);
+  color: var(--mf-text-primary);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+}
+
+.helpModal .requestHeader strong {
+  font-size: 17px;
+}
+
+.helpModalBody {
+  margin: 12px 0 8px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--mf-text-secondary);
+}
+
+.helpModalNotice {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--mf-surface-soft);
+  font-size: 12.5px;
+  color: var(--mf-accent-text);
+}
+
+.helpModalActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.helpModalActions > button {
+  flex: 1;
+  height: 48px;
+  border-radius: 12px;
+  box-shadow: none;
+  font-size: 15px;
+}
+
+.helpModalDanger {
+  background: #d93a41;
+}
+
 /* =========================
    공공시설
 ========================= */
@@ -1140,4 +1275,50 @@ button {
     display: none;
   }
 
+}
+
+/* =========================
+   다크모드 — 라이트용 연한(파스텔) 배경이 고정값으로 들어간 곳만 덮어쓴다.
+   흰 글자 + 밝은 칸이 섞여 고대비처럼 보이던 부분을 채도 낮은 반투명 톤으로.
+========================= */
+:root[data-theme='dark'] .menuItem.active {
+  background: var(--mf-accent-soft);
+  color: var(--mf-tab-active);
+}
+
+:root[data-theme='dark'] .activeOption,
+:root[data-theme='dark'] .facilityButton.active,
+:root[data-theme='dark'] .facilityButton:hover:not(:disabled) {
+  background: var(--mf-accent-soft);
+  color: var(--mf-text-primary);
+}
+
+:root[data-theme='dark'] .guardianAvatar {
+  background: var(--mf-accent-soft);
+  color: var(--mf-accent-text);
+}
+
+:root[data-theme='dark'] .blueSafety {
+  background: rgba(33, 125, 255, 0.14);
+}
+
+:root[data-theme='dark'] .yellowSafety {
+  background: rgba(239, 170, 22, 0.14);
+}
+
+:root[data-theme='dark'] .purpleSafety {
+  background: rgba(125, 69, 245, 0.16);
+}
+
+:root[data-theme='dark'] .communityCard {
+  background: rgba(255, 160, 60, 0.08);
+  border-color: rgba(255, 160, 60, 0.25);
+}
+
+:root[data-theme='dark'] .communityCard strong {
+  color: var(--mf-text-primary);
+}
+
+:root[data-theme='dark'] .searchRouteButton {
+  box-shadow: none;
 }

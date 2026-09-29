@@ -1,6 +1,7 @@
 // 경로 결과/상세에서 쓰는 mock 데이터 — 모바일(MobileFlow.jsx)과 데스크탑(App.jsx)
 // RoutePanel이 함께 쓰기 때문에 컴포넌트 파일이 아닌 별도 모듈로 둔다.
 // (컴포넌트 파일에 상수를 export하면 react-refresh 경고가 뜬다)
+import { Route, ShieldCheck } from 'lucide-react';
 
 export const ROUTE_OPTIONS = [
   { id: 'safe', name: '안전 우선 경로', score: 82, note: 'CCTV 12대 · 보안등 34개 · 대로변 위주', duration: 24, distance: 1.8 },
@@ -9,8 +10,8 @@ export const ROUTE_OPTIONS = [
 
 // 기본 안전 우선도 — key가 ROUTE_OPTIONS의 id와 같아서 고른 값이 곧 기본 선택 경로가 된다.
 export const PRIORITY_OPTIONS = [
-  { key: 'shortest', label: '거리 최우선' },
-  { key: 'safe', label: '안전 최우선' },
+  { key: 'shortest', label: '거리 최우선', icon: Route },
+  { key: 'safe', label: '안전 최우선', icon: ShieldCheck },
 ];
 
 export const SEGMENTS = [

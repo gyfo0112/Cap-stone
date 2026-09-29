@@ -32,6 +32,7 @@ import { coordToAddress, hasKakaoRestKey, searchPlaces } from './kakaoLocal';
 import { ROUTE_OPTIONS, PRIORITY_OPTIONS, SEGMENTS, GRADE_COLOR, GRADE_SOFT } from './routeData';
 import { getContacts, addContact, removeContact } from './contacts';
 import { getFavorites, addFavorite, removeFavoriteByName } from './favorites';
+import { getRecents, addRecent, removeRecent, clearRecents } from './recents';
 import './MobileFlow.css';
 
 // 안전점수 배지 — 화면 여러 곳(메인카드/최근검색/대안경로)에서 재사용.
@@ -292,14 +293,13 @@ export function MainMapCard({ onOpenInput, locationLabel }) {
 
 /* ---------- 3. 경로 입력 ---------- */
 
-const RECENTS = [
-  { name: '연남동 501-9', sub: '서울 마포구 연남로 · 3시간 전', score: 82 },
-  { name: '홍대입구역 2번출구', sub: '서울 마포구 양화로 · 어제', score: 76 },
-  { name: '망원동 396-12 (집)', sub: '즐겨찾기', score: 84 },
-  { name: '상수동 골목시장', sub: '서울 마포구 와우산로 · 3일 전', score: 58 },
-];
-
-export function RouteInputScreen({ initialDestination, originLabel, onBack, onPickOnMap, onSelect }) {
+export function RouteInputScreen({ initialDestination, originLabel, onBack, onPickOnMap, onSelect: goToResult }) {
+  const [recents, setRecents] = useState(getRecents);
+  // 어디서 고르든(검색결과/즐겨찾기/최근/Enter) 최근 검색에 남긴 뒤 결과로 이동
+  const onSelect = (name, sub) => {
+    addRecent({ name, sub });
+    goToResult(name);
+  };
   const [destination, setDestination] = useState(initialDestination || '');
   const [places, setPlaces] = useState(null); // 마지막으로 완료된 검색 결과
   const [placesQuery, setPlacesQuery] = useState(''); // places가 어떤 검색어의 결과인지
@@ -344,7 +344,7 @@ export function RouteInputScreen({ initialDestination, originLabel, onBack, onPi
     };
   }, [query, canSearch]);
 
-  const filtered = query ? RECENTS.filter((r) => r.name.includes(query)) : RECENTS;
+  const filtered = query ? recents.filter((r) => r.name.includes(query)) : recents;
   const resultsReady = showingSearch && !searching && placesQuery === query;
 
   return (
@@ -391,7 +391,7 @@ export function RouteInputScreen({ initialDestination, originLabel, onBack, onPi
                 const fav = isFavorite(p.name);
                 return (
                   <div className="mfRecentRow" key={p.id}>
-                    <button className="mfRecentRowMain" onClick={() => onSelect(p.name)}>
+                    <button className="mfRecentRowMain" onClick={() => onSelect(p.name, p.address)}>
                       <div className="mfRecentInfo">
                         <strong>{p.name}</strong>
                         <span>{p.address}</span>
@@ -441,20 +441,38 @@ export function RouteInputScreen({ initialDestination, originLabel, onBack, onPi
         </>
       ) : (
         <>
-          <h3 className="mfSectionLabel">{query ? '검색 결과' : '최근 검색'}</h3>
+          <div className="mfSectionHeader">
+            <h3 className="mfSectionLabel">{query ? '검색 결과' : '최근 검색'}</h3>
+            {!query && recents.length > 0 && (
+              <button className="mfSectionAction" onClick={() => setRecents(clearRecents())}>
+                전체 삭제
+              </button>
+            )}
+          </div>
           <div className="mfRecentList">
             {filtered.map((r) => (
-              <button key={r.name} className="mfRecentRow" onClick={() => onSelect(r.name)}>
-                <div className="mfRecentInfo">
-                  <strong>{r.name}</strong>
-                  <span>{r.sub}</span>
-                </div>
-                <ScoreBadge score={r.score} size="sm" />
-              </button>
+              <div className="mfRecentRow" key={r.name}>
+                <button className="mfRecentRowMain" onClick={() => onSelect(r.name, r.sub)}>
+                  <div className="mfRecentInfo">
+                    <strong>{r.name}</strong>
+                    {r.sub && <span>{r.sub}</span>}
+                  </div>
+                </button>
+                {r.score && <ScoreBadge score={r.score} size="sm" />}
+                <button
+                  className="mfContactRemove"
+                  onClick={() => setRecents(removeRecent(r.name))}
+                  aria-label={`${r.name} 최근 검색 삭제`}
+                >
+                  <X size={14} />
+                </button>
+              </div>
             ))}
             {filtered.length === 0 && (
               <p className="mfEmptyHint">
-                일치하는 검색 결과가 없어요. Enter를 누르면 입력한 위치로 길찾기를 시작합니다.
+                {query
+                  ? '일치하는 검색 결과가 없어요. Enter를 누르면 입력한 위치로 길찾기를 시작합니다.'
+                  : '최근 검색한 장소가 없어요.'}
               </p>
             )}
           </div>
@@ -610,7 +628,7 @@ function RouteResultBody({
         <div className={expanded ? 'mfCollapsible' : 'mfCollapsible collapsed'}>
           <div className="mfCollapsibleInner">
             <div className="mfSliderBlock">
-              <PrioritySegment value={routePriority} onChange={onRoutePriorityChange} />
+              <PriorityToggle value={routePriority} onChange={onRoutePriorityChange} />
               <div className="mfSliderFooter">
                 <span className="mfSliderValue">시간대</span>
                 <div className="mfToggleBg mfToggleBgCompact">
@@ -960,11 +978,6 @@ export function CrimeLayerScreen() {
 
 /* ---------- 8. 설정 ---------- */
 
-const GUARDIANS = [
-  { relation: '엄마', name: '김서연', phone: '010-2841-XXXX', tag: '기본' },
-  { relation: '친구', name: '이지훈', phone: '010-7745-XXXX', tag: '보조' },
-];
-
 const THEME_OPTIONS = [
   { key: 'light', label: '라이트' },
   { key: 'dark', label: '다크' },
@@ -977,15 +990,19 @@ const NOTIF_ITEMS = [
   { key: 'arrival', title: '보호자 도착 알림', desc: '목적지 도착 시 보호자에게 자동 전송' },
 ];
 
-function PrioritySegment({ value, onChange }) {
+// 데스크탑 설정(App.jsx)에서도 같은 모양을 쓰도록 export
+export function PriorityToggle({ value, onChange }) {
   return (
-    <div className="mfSegment">
+    <div className="mfPriorityToggle" role="radiogroup" aria-label="기본 안전 우선도">
       {PRIORITY_OPTIONS.map((p) => (
         <button
           key={p.key}
-          className={value === p.key ? 'mfSegmentItem active' : 'mfSegmentItem'}
+          role="radio"
+          aria-checked={value === p.key}
+          className={value === p.key ? 'mfPriorityItem active' : 'mfPriorityItem'}
           onClick={() => onChange(p.key)}
         >
+          <p.icon size={16} />
           {p.label}
         </button>
       ))}
@@ -1035,24 +1052,15 @@ export function SettingsScreen({ routePriority, onRoutePriorityChange, theme, on
       <div className="mfSettingsCard">
         <strong>기본 안전 우선도</strong>
         <p>모든 경로 계산의 기본값으로 사용됩니다.</p>
-        <PrioritySegment value={routePriority} onChange={onRoutePriorityChange} />
+        <PriorityToggle value={routePriority} onChange={onRoutePriorityChange} />
       </div>
 
       <div className="mfSettingsCard">
         <strong>보호자 연락처</strong>
-        {GUARDIANS.map((g) => (
-          <div className="mfContactRow" key={g.name}>
-            <span className="mfContactAvatar">{g.relation}</span>
-            <div className="mfContactInfo">
-              <strong>{g.name}</strong>
-              <span>{g.phone}</span>
-            </div>
-            <span className="mfContactTag">{g.tag}</span>
-          </div>
-        ))}
+        {contacts.length === 0 && <p className="mfEmptyHint">등록된 보호자가 없어요.</p>}
         {contacts.map((c) => (
           <div className="mfContactRow" key={c.tel_uuid}>
-            <span className="mfContactAvatar">{c.tel_name[0]}</span>
+            <span className="mfContactAvatar">{c.relation || c.tel_name[0]}</span>
             <div className="mfContactInfo">
               <strong>{c.tel_name}</strong>
               <span>{c.tel_num}</span>
