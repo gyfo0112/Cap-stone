@@ -1040,7 +1040,6 @@ export function SettingsScreen({ safetyWeight, onSafetyWeightChange, theme, onTh
         />
         <div className="mfSliderLabels">
           <span>거리 최우선</span>
-          <span>균형 (기본)</span>
           <span>안전 최우선</span>
         </div>
       </div>

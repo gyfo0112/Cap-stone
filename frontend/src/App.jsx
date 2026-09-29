@@ -830,7 +830,6 @@ function SettingsPanel({ safetyWeight, onSafetyWeightChange, theme, onThemeChang
         />
         <div className="rangeLabels">
           <span>거리 최우선</span>
-          <span>균형 (기본)</span>
           <span>안전 최우선</span>
         </div>
       </div>
