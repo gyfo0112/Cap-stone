@@ -28,9 +28,11 @@ import { SettingsScreen } from './pages/settings/SettingsScreen';
 import { SosFab, SosOverlay } from './pages/sos/SosScreen';
 import './styles/MobileFlow.css';
 
-function App() {
+// startMenu: AppRouter.jsx가 주소(/map, /route, /help, /settings)에 맞춰 넘겨주는 '처음 열 메뉴'.
+// 들어온 뒤의 메뉴 이동은 지금처럼 상태값으로 한다(주소는 바꾸지 않음).
+function App({ startMenu = 'map' }) {
   const [theme, setTheme] = useTheme();
-  const [menu, setMenu] = useState('map');
+  const [menu, setMenu] = useState(startMenu);
   const [navigationActive, setNavigationActive] = useState(false);
 
   // 메뉴를 바꾸면 진행 중이던 길 안내는 접어둔다 (frontend-junwoo의 handleMenuChange와 동일)
@@ -68,9 +70,10 @@ function App() {
   };
 
   // 모바일 하단 탭: 지도 / 경로 / 도움요청 / 설정 (SOS는 탭이 아니라 중앙 FAB)
-  const [mobileTab, setMobileTab] = useState('map');
+  const [mobileTab, setMobileTab] = useState(startMenu);
   // 경로 탭 안에서의 하위 흐름: 지도 하단시트 -> 경로입력 -> 경로결과 -> 경로상세
-  const [mobileScreen, setMobileScreen] = useState(null); // null | 'input' | 'result' | 'detail'
+  // /route로 들어오면 모바일은 경로 탭을 누른 것과 같이 경로 입력 화면부터
+  const [mobileScreen, setMobileScreen] = useState(startMenu === 'route' ? 'input' : null); // null | 'input' | 'result' | 'detail'
   const [sosOpen, setSosOpen] = useState(false);
   const [crimeLayerOpen, setCrimeLayerOpen] = useState(false);
   const [destination, setDestination] = useState('');

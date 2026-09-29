@@ -1,9 +1,13 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, UserRound, LockKeyhole, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import './LoginPage.css';
 import logo from '../../images/logo.png';
 
+// 앱 안에서 열면 onBack(이전 화면으로), 주소(/login)로 바로 들어오면 메인(/)으로 돌아간다
 function LoginPage({ onBack }) {
+  const navigate = useNavigate();
+  const goBack = onBack ?? (() => navigate('/'));
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
   const [keepLogin, setKeepLogin] = useState(false);
@@ -26,12 +30,12 @@ function LoginPage({ onBack }) {
   return (
     <div className="login-page">
       <div className="login-container">
-        <button className="login-back" onClick={onBack}>
+        <button className="login-back" onClick={goBack}>
           <ChevronLeft size={20} />
           뒤로
         </button>
 
-        <button className="login-logo" onClick={onBack}>
+        <button className="login-logo" onClick={goBack}>
           <img src={logo} alt="친절한 이웃 로고" />
 
           <span>

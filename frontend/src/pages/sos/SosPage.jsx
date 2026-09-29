@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import './SosPage.css';
 import { MapView } from '../../components/KakaoMapView';
@@ -6,7 +7,10 @@ import { MapView } from '../../components/KakaoMapView';
 // SOS 상황에서는 주변 CCTV·안심벨·안심지킴이집 위치가 바로 보이는 게 유용해서 기본으로 켜둔다.
 const SOS_LAYERS = { cctv: true, safetyBell: true, safeHouse: true };
 
+// 앱 안에서 열면 onCancel(이전 화면으로), 주소(/sos)로 바로 들어오면 메인(/)으로 돌아간다
 function SosPage({ onCancel, location }) {
+  const navigate = useNavigate();
+  const goBack = onCancel ?? (() => navigate('/'));
   const [counting, setCounting] = useState(false);
   const [count, setCount] = useState(3);
 
@@ -23,7 +27,7 @@ function SosPage({ onCancel, location }) {
       setCount(3);
 
       // 메인 화면으로 돌아가기
-      onCancel();
+      goBack();
 
       return;
     }
@@ -71,7 +75,7 @@ function SosPage({ onCancel, location }) {
   return (
     <div className="sos-page">
       <div className="sos-left">
-        <button type="button" className="sosBackButton" onClick={onCancel}>
+        <button type="button" className="sosBackButton" onClick={goBack}>
           <ChevronLeft size={18} />
           돌아가기
         </button>
