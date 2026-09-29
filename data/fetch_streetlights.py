@@ -25,22 +25,27 @@ DEFAULT_OUT = ROOT.parent / "자료" / "데이터파일" / "전국보안등정�
 API_URL = "https://api.data.go.kr/openapi/tn_pubr_public_scrty_lmp_api"
 PAGE_SIZE = 1000  # API 최대값
 
-# API 영문 필드 -> 포털 CSV 한글 헤더 (순서도 포털 CSV와 같게)
+# API 필드 -> 포털 CSV 한글 헤더 (순서도 포털 CSV와 같게).
+# 실제 응답은 camelCase(latitude 등)로 오고, 포털 문서에는 LATITUDE 식으로 적혀 있어 둘 다 받는다.
 FIELDS = [
-    ("LMP_LC_NM", "보안등위치명"),
-    ("INSTALLATION_CO", "설치개수"),
-    ("RDNMADR", "소재지도로명주소"),
-    ("LNMADR", "소재지지번주소"),
-    ("LATITUDE", "위도"),
-    ("LONGITUDE", "경도"),
-    ("INSTALLATION_YEAR", "설치연도"),
-    ("INSTALLATION_TYPE", "설치형태"),
-    ("PHONE_NUMBER", "관리기관전화번호"),
-    ("INSTITUTION_NM", "관리기관명"),
-    ("REFERENCE_DATE", "데이터기준일자"),
-    ("instt_code", "제공기관코드"),
-    ("instt_nm", "제공기관명"),
+    (("lmpLcNm", "LMP_LC_NM"), "보안등위치명"),
+    (("installationCo", "INSTALLATION_CO"), "설치개수"),
+    (("rdnmadr", "RDNMADR"), "소재지도로명주소"),
+    (("lnmadr", "LNMADR"), "소재지지번주소"),
+    (("latitude", "LATITUDE"), "위도"),
+    (("longitude", "LONGITUDE"), "경도"),
+    (("installationYear", "INSTALLATION_YEAR"), "설치연도"),
+    (("installationType", "INSTALLATION_TYPE"), "설치형태"),
+    (("phoneNumber", "PHONE_NUMBER"), "관리기관전화번호"),
+    (("institutionNm", "INSTITUTION_NM"), "관리기관명"),
+    (("referenceDate", "REFERENCE_DATE"), "데이터기준일자"),
+    (("insttCode", "instt_code"), "제공기관코드"),
+    (("insttNm", "instt_nm"), "제공기관명"),
 ]
+
+
+def field(item: dict, names: tuple) -> str:
+    return next((item[n] for n in names if item.get(n) not in (None, "")), "")
 
 
 def fetch_page(key: str, page: int) -> dict:
@@ -56,10 +61,11 @@ def fetch_page(key: str, page: int) -> dict:
             except json.JSONDecodeError:
                 # 인증키 오류 등은 JSON이 아니라 XML 에러로 온다
                 sys.exit(f"API 오류 응답:\n{text[:500]}")
-            header = data["response"]["header"]
+            data = data.get("response", data)  # 실제 응답엔 response 래퍼가 없다
+            header = data["header"]
             if header.get("resultCode") not in ("00", "0"):
                 sys.exit(f"API 오류: {header}")
-            return data["response"]["body"]
+            return data["body"]
         except OSError as err:  # 네트워크 일시 오류는 잠깐 쉬고 다시
             print(f"  {page}페이지 재시도 {attempt + 1}/3: {err}")
             time.sleep(3 * (attempt + 1))
@@ -91,7 +97,7 @@ def main() -> None:
         for page in range(1, pages + 1):
             body = first if page == 1 else fetch_page(key, page)
             for item in items_of(body):
-                writer.writerow([item.get(en, "") for en, _ in FIELDS])
+                writer.writerow([field(item, names) for names, _ in FIELDS])
                 written += 1
             if page % 50 == 0 or page == pages:
                 print(f"  {page:,}/{pages:,}페이지 · {written:,}건")
