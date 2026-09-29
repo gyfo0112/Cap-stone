@@ -248,8 +248,7 @@
   font-weight: 700;
 }
 
-.login-links span,
-.login-footer span {
+.login-links span {
   width: 1px;
   height: 13px;
 
@@ -269,22 +268,13 @@
   color: var(--mf-text-tertiary);
 }
 
-.login-footer button {
-  border: none;
-  background: transparent;
-
-  font-size: 12px;
-  color: var(--mf-text-tertiary);
-
-  cursor: pointer;
-}
 
 .login-footer p {
   width: 100%;
 
   text-align: center;
 
-  margin-top: 5px;
+  margin: 0;
 
   font-size: 12px;
   color: var(--mf-text-muted);

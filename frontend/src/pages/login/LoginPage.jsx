@@ -106,13 +106,7 @@ function LoginPage({ onBack }) {
         </div>
 
         <div className="login-footer">
-          <button>이용약관</button>
-          <span></span>
-          <button>개인정보처리방침</button>
-          <span></span>
-          <button>고객센터</button>
-
-          <p>© 친절한 이웃</p>
+          <p>친절한 이웃</p>
         </div>
       </div>
     </div>
