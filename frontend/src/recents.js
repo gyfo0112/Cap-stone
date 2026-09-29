@@ -23,10 +23,13 @@ function save(list) {
   return list;
 }
 
-// 같은 장소를 다시 고르면 맨 위로 올린다.
+// 같은 장소를 다시 고르면 맨 위로 올린다. 주소 없이 다시 검색해도(직접 입력+Enter)
+// 예전에 저장된 주소·점수는 유지한다.
 export function addRecent({ name, sub = '' }) {
-  const rest = getRecents().filter((r) => r.name !== name);
-  return save([{ name, sub }, ...rest].slice(0, MAX));
+  const list = getRecents();
+  const prev = list.find((r) => r.name === name);
+  const rest = list.filter((r) => r.name !== name);
+  return save([{ ...prev, name, sub: sub || prev?.sub || '' }, ...rest].slice(0, MAX));
 }
 
 export function removeRecent(name) {

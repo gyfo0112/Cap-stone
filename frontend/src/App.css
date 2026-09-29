@@ -1322,3 +1322,56 @@ button {
 :root[data-theme='dark'] .searchRouteButton {
   box-shadow: none;
 }
+
+/* PC 경로설정 — 최근 검색 (모바일과 같은 recents.js 저장소) */
+.recentSearches {
+  margin-bottom: 8px;
+}
+
+.recentSearchesHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.recentClearAll {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--mf-text-tertiary);
+  cursor: pointer;
+}
+
+.recentRow {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--mf-border-soft);
+}
+
+.recentRow:last-child {
+  border-bottom: 0;
+}
+
+.recentRow .searchSuggestionItem {
+  flex: 1;
+  min-width: 0;
+  border-bottom: 0;
+  cursor: pointer;
+}
+
+.recentRemove {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  margin-right: 6px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--mf-text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}

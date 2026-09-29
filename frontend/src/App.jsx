@@ -22,6 +22,7 @@ import {
   ChevronLeft,
   Plus,
   Trash2,
+  X,
 } from 'lucide-react';
 import './App.css';
 import logo from './images/logo.png';
@@ -31,6 +32,7 @@ import { MapView } from './KakaoMapView';
 import { LAYER_STATUS_TEXT } from './markersApi';
 import { hasKakaoRestKey, searchPlaces } from './kakaoLocal';
 import { getContacts, addContact, removeContact } from './contacts';
+import { getRecents, addRecent, removeRecent, clearRecents } from './recents';
 import {
   MY_USER_UUID,
   POST_TYPES,
@@ -411,13 +413,18 @@ function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
   const [resultsReady, setResultsReady] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
   const [notice, setNotice] = useState('');
+  // 최근 검색 — 모바일 경로설정 화면과 같은 저장소(recents.js)라 PC·모바일 기록이 공유된다
+  const [recents, setRecents] = useState(getRecents);
+  // 추천 목록에서 고른 장소 — 고른 뒤엔 목록을 다시 띄우지 않고, 최근 검색에 주소를 같이 남긴다
+  const [pickedPlace, setPickedPlace] = useState(null);
 
   const query = destination.trim();
   const canSearch = hasKakaoRestKey();
+  const showSuggestions = query && canSearch && pickedPlace?.name !== query;
 
   // 실제 카카오 장소 검색 (모바일 경로설정 화면과 동일한 방식)
   useEffect(() => {
-    if (!query || !canSearch) return undefined;
+    if (!showSuggestions) return undefined;
     let cancelled = false;
     const timer = setTimeout(() => {
       setSearching(true);
@@ -430,10 +437,11 @@ function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [query, canSearch]);
+  }, [query, showSuggestions]);
 
-  const pickPlace = (name) => {
-    setDestination(name);
+  const pickPlace = (place) => {
+    setDestination(place.name);
+    setPickedPlace(place);
     setPlaces([]);
   };
 
@@ -444,15 +452,23 @@ function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
     setPlaces([]);
   };
 
-  const runSearch = () => {
-    if (!query) {
+  const runSearch = (name = query) => {
+    if (!name) {
       setNotice('도착지를 입력해주세요.');
       return;
     }
     setNotice('');
+    setRecents(addRecent({ name, sub: pickedPlace?.name === name ? pickedPlace.address : '' }));
     setSelectedRouteId(ROUTE_MODES.find((m) => m.id === selectedMode).route);
     setResultsReady(true);
     setShowDetail(false);
+  };
+
+  // 최근 검색을 누르면 도착지에 넣고 바로 경로 검색
+  const searchRecent = (r) => {
+    setDestination(r.name);
+    setPickedPlace({ name: r.name, address: r.sub });
+    runSearch(r.name);
   };
 
   const selectedRoute = ROUTE_OPTIONS.find((r) => r.id === selectedRouteId) ?? ROUTE_OPTIONS[0];
@@ -494,7 +510,7 @@ function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
         </button>
       </div>
 
-      {query && canSearch && (
+      {showSuggestions && (
         <div className="searchSuggestions">
           {searching && <div className="searchSuggestionEmpty">검색 중…</div>}
           {!searching && places.length === 0 && (
@@ -502,11 +518,45 @@ function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
           )}
           {!searching &&
             places.map((p) => (
-              <button key={p.id} className="searchSuggestionItem" onClick={() => pickPlace(p.name)}>
+              <button key={p.id} className="searchSuggestionItem" onClick={() => pickPlace(p)}>
                 <strong>{p.name}</strong>
                 <span>{p.address}</span>
               </button>
             ))}
+        </div>
+      )}
+
+      {!query && (
+        <div className="recentSearches">
+          <div className="recentSearchesHeader">
+            <h3 className="sectionTitle">최근 검색</h3>
+            {recents.length > 0 && (
+              <button className="recentClearAll" onClick={() => setRecents(clearRecents())}>
+                전체 삭제
+              </button>
+            )}
+          </div>
+          {recents.length === 0 ? (
+            <p className="searchSuggestionEmpty">최근 검색한 장소가 없어요.</p>
+          ) : (
+            <div className="searchSuggestions">
+              {recents.map((r) => (
+                <div className="recentRow" key={r.name}>
+                  <button className="searchSuggestionItem" onClick={() => searchRecent(r)}>
+                    <strong>{r.name}</strong>
+                    {r.sub && <span>{r.sub}</span>}
+                  </button>
+                  <button
+                    className="recentRemove"
+                    onClick={() => setRecents(removeRecent(r.name))}
+                    aria-label={`${r.name} 최근 검색 삭제`}
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -526,7 +576,7 @@ function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
         ))}
       </div>
 
-      <button className="searchRouteButton" onClick={runSearch}>
+      <button className="searchRouteButton" onClick={() => runSearch()}>
         <Search size={22} />
         경로 검색하기
       </button>
