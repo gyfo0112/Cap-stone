@@ -36,7 +36,8 @@ public class RouteService {
     private static final double MARGIN_M = 60;               // 경로 둘레로 시설을 읽어 올 여유
     private static final double WALK_METERS_PER_SECOND = 1.3; // 직선 추정 때의 보행 속도
     private static final int MAX_PATH_POINTS = 400;          // 응답에 싣는 경로 좌표 수 상한
-    private static final double MIN_SEGMENT_M = 30;          // 이보다 짧은 구간은 앞 구간에 합친다
+    private static final double MIN_SEGMENT_M = 50;          // 이보다 짧은 구간(횡단보도·연결로 등)은 이웃 구간에 합친다
+    private static final String GENERIC_ROAD = "보행자도로";    // TMAP 이 길 이름을 안 주거나 일반 보행로일 때 쓰는 이름
     private static final long CACHE_MS = 10 * 60 * 1000L;    // TMAP 응답은 10분 동안 재사용(무료 호출 한도 아끼기)
     private static final int CACHE_MAX = 200;
 
@@ -213,22 +214,70 @@ public class RouteService {
             }
             path.addAll(path.isEmpty() ? part : part.subList(1, part.size()));
 
-            String name = properties.get("name") instanceof String s && !s.isBlank() ? s.trim() : "골목길";
-            Seg last = segs.isEmpty() ? null : segs.get(segs.size() - 1);
-            if (last != null && (last.name().equals(name) || RouteScorer.lengthM(part) < MIN_SEGMENT_M)) {
-                List<RouteScorer.Point> merged = new ArrayList<>(last.path());
-                merged.addAll(part.subList(1, part.size()));
-                segs.set(segs.size() - 1, new Seg(last.name(), merged));
-            } else {
-                segs.add(new Seg(name, part));
-            }
+            String name = properties.get("name") instanceof String s && !s.isBlank() ? s.trim() : GENERIC_ROAD;
+            segs.add(new Seg(name, part));
         }
         if (path.size() < 2) {
             return null;
         }
         double distance = totalDistance > 0 ? totalDistance : RouteScorer.lengthM(path);
         int time = totalTime > 0 ? totalTime : (int) Math.round(distance / WALK_METERS_PER_SECOND);
-        return new Candidate(path, distance, time, segs, "tmap");
+        return new Candidate(path, distance, time, tidySegments(segs), "tmap");
+    }
+
+    // TMAP 은 횡단보도·연결로마다 조각을 내서 같은 길이 "큰길-보행로-큰길-보행로"처럼 잘게 쪼개져 온다.
+    // 같은 이름이 이어지면 합치고, MIN_SEGMENT_M 보다 짧은 조각은 이웃 조각에 합쳐 구간 수를 줄인다.
+    static List<Seg> tidySegments(List<Seg> raw) {
+        List<Seg> segs = mergeSameName(raw);
+        boolean changed = true;
+        while (changed && segs.size() > 1) {
+            changed = false;
+            for (int i = 0; i < segs.size(); i++) {
+                if (RouteScorer.lengthM(segs.get(i).path()) >= MIN_SEGMENT_M) {
+                    continue;
+                }
+                // 짧은 조각은 더 긴 쪽 이웃에 붙인다(처음·끝이면 하나뿐인 이웃)
+                int target;
+                if (i == 0) {
+                    target = 1;
+                } else if (i == segs.size() - 1) {
+                    target = i - 1;
+                } else {
+                    target = RouteScorer.lengthM(segs.get(i - 1).path()) >= RouteScorer.lengthM(segs.get(i + 1).path()) ? i - 1 : i + 1;
+                }
+                Seg short_ = segs.get(i);
+                Seg neighbor = segs.get(target);
+                Seg joined = target < i
+                        ? new Seg(neighbor.name(), joinPaths(neighbor.path(), short_.path()))
+                        : new Seg(neighbor.name(), joinPaths(short_.path(), neighbor.path()));
+                segs.set(target, joined);
+                segs.remove(i);
+                segs = mergeSameName(segs);
+                changed = true;
+                break;
+            }
+        }
+        return segs;
+    }
+
+    private static List<Seg> mergeSameName(List<Seg> segs) {
+        List<Seg> out = new ArrayList<>();
+        for (Seg seg : segs) {
+            Seg last = out.isEmpty() ? null : out.get(out.size() - 1);
+            if (last != null && last.name().equals(seg.name())) {
+                out.set(out.size() - 1, new Seg(last.name(), joinPaths(last.path(), seg.path())));
+            } else {
+                out.add(seg);
+            }
+        }
+        return out;
+    }
+
+    // 앞 조각의 끝과 뒤 조각의 처음이 같은 점이면 한 번만 넣고 이어 붙인다
+    private static List<RouteScorer.Point> joinPaths(List<RouteScorer.Point> a, List<RouteScorer.Point> b) {
+        List<RouteScorer.Point> joined = new ArrayList<>(a);
+        joined.addAll(a.get(a.size() - 1).equals(b.get(0)) ? b.subList(1, b.size()) : b);
+        return joined;
     }
 
     // 직선 추정 — TMAP 을 쓸 수 없을 때. 300m 넘으면 3구간으로 나눠 구간별 점수를 보여준다.

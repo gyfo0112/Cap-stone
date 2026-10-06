@@ -48,7 +48,7 @@ class RouteServiceTest {
         assertEquals(4, c.path().size());        // 이어지는 점(중복)은 한 번만: A-B-C-D
         assertEquals(2, c.segs().size());        // 서교로(합침) + 이름 없는 길
         assertEquals("서교로", c.segs().get(0).name());
-        assertEquals("골목길", c.segs().get(1).name());
+        assertEquals("보행자도로", c.segs().get(1).name()); // 이름이 비어 오면 일반 보행로로 본다
         assertEquals(37.5, c.path().get(0).lat());
         assertEquals(126.9, c.path().get(0).lng()); // 좌표는 [경도, 위도] 순서로 온다
     }
@@ -76,5 +76,33 @@ class RouteServiceTest {
         assertNull(RouteService.parseTmap(null));
         assertNull(RouteService.parseTmap(Map.of()));
         assertNull(RouteService.parseTmap(Map.of("features", List.of(point("출발")))));
+    }
+
+    // 실제 TMAP 응답(서울역→시청)처럼 큰길 사이에 짧은 보행로·횡단보도 조각이 끼어 오는 경우
+    @Test
+    void 실제처럼_잘게_쪼개진_구간은_큰길_중심으로_정리된다() {
+        String[] names = {"보행자도로", "보행자도로", "보행자도로", "퇴계로", "보행자도로", "퇴계로", "보행자도로", "보행자도로", "보행자도로", "퇴계로",
+                "세종대로", "보행자도로", "보행자도로", "보행자도로", "세종대로", "보행자도로", "세종대로", "보행자도로", "세종대로", "보행자도로",
+                "보행자도로", "소공로", "을지로", "보행자도로", "보행자도로"};
+        int[] meters = {22, 32, 28, 114, 23, 18, 7, 19, 19, 11, 502, 38, 16, 42, 375, 15, 64, 19, 14, 33, 67, 24, 111, 15, 16};
+        List<RouteScorer.Point> whole = new java.util.ArrayList<>();
+        List<RouteService.Seg> raw = new java.util.ArrayList<>();
+        double lat = 37.55;
+        for (int i = 0; i < names.length; i++) {
+            List<RouteScorer.Point> part = List.of(new RouteScorer.Point(lat, 126.97), new RouteScorer.Point(lat + meters[i] / 111320.0, 126.97));
+            raw.add(new RouteService.Seg(names[i], part));
+            lat += meters[i] / 111320.0;
+        }
+        double rawTotal = raw.stream().mapToDouble(sg -> RouteScorer.lengthM(sg.path())).sum();
+
+        List<RouteService.Seg> tidy = RouteService.tidySegments(raw);
+
+        double tidyTotal = tidy.stream().mapToDouble(sg -> RouteScorer.lengthM(sg.path())).sum();
+        assertEquals(rawTotal, tidyTotal, 1);                                   // 길이는 그대로
+        assertTrue(tidy.size() <= 7, "구간 수: " + tidy.size());
+        assertTrue(tidy.stream().allMatch(sg -> RouteScorer.lengthM(sg.path()) >= 50), "50m 미만 구간이 남음");
+        // 중간에 96m 보행로가 끼어 세종대로는 두 구간이 되지만, 잔 조각 없이 합쳐서 큰길 길이가 거의 그대로 남는다
+        double sejong = tidy.stream().filter(sg -> sg.name().equals("세종대로")).mapToDouble(sg -> RouteScorer.lengthM(sg.path())).sum();
+        assertTrue(sejong >= 950, "세종대로 합계: " + sejong);
     }
 }

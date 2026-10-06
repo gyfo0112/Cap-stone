@@ -43,7 +43,7 @@
 - 실패: `400` 위도·경도 범위 오류 / 출발지=도착지(10m 이내) / 10km 초과
 
 ### 점수 계산 (RouteScorer)
-경로를 20m 간격 지점으로 나누고, 지점마다 반경 30m 안에 시설이 있는지 본다. 종류별 "시설이 가까운 지점 비율"의 가중 평균(낮: CCTV 45 · 보안등 40 · 도움시설 15 / 밤: CCTV 30 · 보안등 55 · 도움시설 15). 도움시설(안심지킴이집·안심벨)은 지점의 25%만 덮어도 만점. DB 에 그 종류가 하나도 없으면 그 종류는 빼고 계산한다.
+경로를 20m 간격 지점으로 나누고, 지점마다 반경 50m 안에 시설이 있는지 본다(서울 CCTV 71,134대로 도심·주택가 5곳을 재서 정한 값: 30m는 커버율 9~30%라 거의 다 위험, 50m는 21~63%로 지역 차이가 보인다). 종류별 "시설이 가까운 지점 비율"의 가중 평균(낮: CCTV 45 · 보안등 40 · 도움시설 15 / 밤: CCTV 30 · 보안등 55 · 도움시설 15). 도움시설(안심지킴이집·안심벨)은 지점의 25%만 덮어도 만점. DB 에 그 종류가 하나도 없으면 그 종류는 빼고 계산한다.
 
 ### TMAP 설정
 - 환경변수 `TMAP_APP_KEY` (또는 `tmap.app-key` 설정)에 TMAP 앱 키를 넣는다. **코드·저장소에 키를 적지 않는다.**
@@ -52,10 +52,10 @@
 
 ## 2. 장소 안전점수 `GET /api/safety-score`
 
-`latitude`, `longitude`, (선택) `time` → 장소 주변 ±100m 를 50m 격자로 훑어(반경 60m) 계산.
+`latitude`, `longitude`, (선택) `time` → 장소 주변 ±100m 를 50m 격자로 훑어(반경 80m) 계산.
 
 ```json
-{ "score": 24, "grade": "위험", "score_available": true, "radius_m": 60, "note": "CCTV 6대 · 보안등 13개", "counts": { "CCTV": 6, "SECURITY_LIGHT": 13, "SAFE_HOUSE": 0, "EMERGENCY_BELL": 0 } }
+{ "score": 24, "grade": "위험", "score_available": true, "radius_m": 80, "note": "CCTV 6대 · 보안등 13개", "counts": { "CCTV": 6, "SECURITY_LIGHT": 13, "SAFE_HOUSE": 0, "EMERGENCY_BELL": 0 } }
 ```
 
 ## 3. 주변 시설 개수 `GET /api/markers/nearby-count`

@@ -85,4 +85,15 @@ class RouteScorerTest {
                 RouteScorer.describe(Map.of(RouteScorer.CCTV, 12, RouteScorer.SECURITY_LIGHT, 34, RouteScorer.SAFE_HOUSE, 1, RouteScorer.EMERGENCY_BELL, 0)));
         assertTrue(RouteScorer.describe(Map.of()).contains("없어요"));
     }
+
+    @Test
+    void 격자_칸보다_큰_반경도_빠짐없이_찾는다() {
+        // 55m 떨어진 시설: 반경 60m 안이니 찾아야 한다 (격자 한 칸은 35~44m)
+        Point p = new Point(37.5, 127.0);
+        var east = new RouteScorer.MarkerIndex(Map.of(RouteScorer.CCTV, List.of(new Point(37.5, 127.0 + 55 / M_PER_DEG_LNG))));
+        var north = new RouteScorer.MarkerIndex(Map.of(RouteScorer.CCTV, List.of(new Point(37.5 + 55 / 111320.0, 127.0))));
+        assertEquals(1, RouteScorer.score(List.of(p), east, false, RouteScorer.PLACE_RADIUS_M).counts().get(RouteScorer.CCTV));
+        assertEquals(1, RouteScorer.score(List.of(p), north, false, RouteScorer.PLACE_RADIUS_M).counts().get(RouteScorer.CCTV));
+        assertEquals(0, RouteScorer.score(List.of(p), east, false, 50).counts().get(RouteScorer.CCTV));
+    }
 }
