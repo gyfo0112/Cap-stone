@@ -1,13 +1,18 @@
 package com.safetymap.safetymap.service;
 
+import com.safetymap.safetymap.dto.UserPublicDto;
 import com.safetymap.safetymap.dto.UserRegisterDto;
+import com.safetymap.safetymap.dto.UserTelListDto;
 import com.safetymap.safetymap.dto.UserTelRegisterDto;
 import com.safetymap.safetymap.entity.UserTel;
 import com.safetymap.safetymap.entity.Users;
 import com.safetymap.safetymap.repository.UserTelRepository;
 import com.safetymap.safetymap.repository.UsersRepository;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.UUID;
 
@@ -47,5 +52,27 @@ public class UserService {
         userTel.setTel_type(dto.getTel_type());
 
         userTelRepository.save(userTel);
+    }
+
+    // 유저 정보 로드
+    public UserPublicDto getUserInfo(String user_uuid) {
+        Users dto = usersRepository.findByUser_uuid(user_uuid).orElseThrow();
+        return new UserPublicDto(dto.getUser_uuid(), dto.getUser_name(), dto.getUser_id(), dto.getUser_pw(), dto.getInfo());
+    }
+
+    // 유저 uuid 기반 전화번호 리턴
+    public Slice<UserTelListDto> getTelList(String user_uuid) {
+        Slice<UserTel> list = userTelRepository.findAllByUser_User_uuid(user_uuid);
+
+        return list.map(userTel -> {
+            UserTelListDto dto = new UserTelListDto(
+                    userTel.getTel_uuid(),
+                    userTel.getUser().getUser_uuid(),
+                    userTel.getTel_num(),
+                    userTel.getTel_name(),
+                    userTel.getTel_type()
+            );
+            return dto;
+        });
     }
 }
