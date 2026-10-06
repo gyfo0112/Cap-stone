@@ -2,13 +2,11 @@ package com.safetymap.safetymap.controller;
 
 import com.safetymap.safetymap.dto.MarkerPublicDto;
 import com.safetymap.safetymap.service.MarkerService;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
+// 지도 마커 조회. 로그인 없이 쓸 수 있다 (SecurityConfig 에서 GET /api/markers/** 공개)
 @RestController
 @RequestMapping("/api/markers")
 public class MarkerController {
@@ -19,32 +17,23 @@ public class MarkerController {
         this.markerService = markerService;
     }
 
-    // 지도 범위 안의 마커 목록 보기
+    // 지도 범위 안의 마커 목록 (marker_type 을 주면 그 종류만)
     @GetMapping
-    public ResponseEntity<?> markerList(@RequestParam("min_latitude") double min_latitude,
-                                        @RequestParam("max_latitude") double max_latitude,
-                                        @RequestParam("min_longitude") double min_longitude,
-                                        @RequestParam("max_longitude") double max_longitude,
-                                        @RequestParam(name = "marker_type", required = false) String marker_type) {
+    public List<MarkerPublicDto> markerList(@RequestParam("min_latitude") double min_latitude,
+                                            @RequestParam("max_latitude") double max_latitude,
+                                            @RequestParam("min_longitude") double min_longitude,
+                                            @RequestParam("max_longitude") double max_longitude,
+                                            @RequestParam(name = "marker_type", required = false) String marker_type) {
 
-        if (min_latitude > max_latitude || min_longitude > max_longitude) {
-            return ResponseEntity.badRequest().body(Map.of("message", "지도 범위가 올바르지 않습니다"));
-        }
-
-        List<MarkerPublicDto> list = markerService.getMarkersInBounds(min_latitude, max_latitude, min_longitude, max_longitude, marker_type);
-
-        return ResponseEntity.ok(list);
+        // 범위가 잘못됐거나 해당하는 마커가 없으면 빈 목록 반환
+        return markerService.getMarkersInBounds(min_latitude, max_latitude, min_longitude, max_longitude, marker_type);
     }
 
-    // 마커 1개 보기
+    // 마커 1개
     @GetMapping("/{marker_uuid}")
-    public ResponseEntity<?> markerDetail(@PathVariable("marker_uuid") String marker_uuid) {
-        MarkerPublicDto dto = markerService.getMarker(marker_uuid);
+    public MarkerPublicDto markerDetail(@PathVariable("marker_uuid") String marker_uuid) {
 
-        if (dto == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "마커를 찾을 수 없습니다"));
-        }
-
-        return ResponseEntity.ok(dto);
+        // 없는 마커면 빈 응답(null) 반환
+        return markerService.getMarker(marker_uuid);
     }
 }
