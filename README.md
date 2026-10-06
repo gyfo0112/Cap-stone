@@ -69,6 +69,35 @@ public ResponseEntity<?> postUpload(Authentication authentication, @RequestBody 
 5. `user_tel.tel_num` 이 전체에서 unique 라, 다른 회원이 이미 등록한 번호는 409 가 납니다.
 6. `UserController` 의 `GET /login`(템플릿 반환)은 손대지 않았습니다.
 
+## 추가: 실시간 위치 공유 (10-06)
+
+보호자와 보호 대상 계정을 연결 코드로 잇고, 보호 대상의 위치를 보호자에게 보여주는 기능입니다. 로컬에서 `bash test_links.sh` 로 43개 항목을 확인했습니다.
+
+| 폴더 | 파일 | 구분 | 역할 |
+|---|---|---|---|
+| `entity` | `Users` | **공용 파일 수정** | 계정 구분 `role` 컬럼 추가 (`guardian` / `protected`) |
+| `entity` | `UserLink`, `LinkInvite`, `UserLocation` | 새 파일 | 연결, 연결 코드, 마지막 위치 (테이블 3개가 새로 생김) |
+| `repository` | `UserLinkRepository`, `LinkInviteRepository`, `UserLocationRepository` | 새 파일 | 위 세 테이블 조회 |
+| `service` | `LinkService` | 새 파일 | 코드 발급 · 연결 · 공유 켜기/끄기 · 권한 · 해제 · 위치 저장 |
+| `controller` | `LinkController` | 새 파일 | `/api/invites`, `/api/links`, `/api/location` |
+| `dto` | `Link*Dto`, `LocationRequestDto` | 새 파일 | 요청 · 응답 모양 |
+| `dto` · `service` · `controller` | `UserRegisterDto`, `UserInfoDto`, `UserService`, `UserApiController` | 수정 | 가입 요청과 회원 응답에 `role` 추가 |
+
+| 기능 | 주소 | 누가 |
+|---|---|---|
+| 연결 코드 발급 | `POST /api/invites` | 보호 대상 |
+| 코드로 연결 | `POST /api/links/accept` | 보호자 |
+| 연결 목록 | `GET /api/links` | 둘 다 (보호자에게만 상대 위치) |
+| 공유 켜기/끄기 | `PATCH /api/links/{link_id}/sharing` | 보호자는 항상, 보호 대상은 허용받았을 때만 |
+| 끄기 권한 부여 | `PATCH /api/links/{link_id}/permission` | 보호자 |
+| 연결 해제 | `DELETE /api/links/{link_id}` | 보호자 |
+| 위치 올리기 | `PUT /api/location` | 보호 대상 |
+
+- 요청 · 응답 예시와 규칙은 `API_links_location.md` 에 있습니다.
+- DB: `user_link`, `link_invite`, `user_location` 테이블과 `users.role` 컬럼이 서버를 켤 때 자동으로 만들어집니다 (`ddl-auto=update`). 따로 실행할 SQL 은 없습니다.
+- 조장님 확인: 공용 엔티티 `Users` 에 컬럼을 추가했고 테이블 3개가 늘었습니다 (ERD 변경). 위치는 회원당 마지막 1건만 저장합니다.
+- 프론트의 위치 공유 화면은 아직 브라우저 저장 방식이라, 이 API 로 바꾸는 프론트 작업이 따로 필요합니다.
+
 ## 들어 있지 않은 것
 
 - 프론트 연결 파일(`frontend/src/api/usersApi.js`, `data/auth.js` 등)은 이 브랜치에 없습니다. 화면이 이 API 를 부르게 하려면 프론트 쪽 수정이 따로 필요합니다.
