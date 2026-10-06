@@ -1,13 +1,17 @@
-// 실시간 위치 공유 mock — 보호자(guardian, 그룹장)와 보호 대상(protected: 자녀·노약자) 계정을 연결하고,
+// 실시간 위치 공유 — 보호자(guardian, 그룹장)와 보호 대상(protected: 자녀·노약자) 계정을 연결하고,
 // 기본적으로 보호자만 공유를 켜고 끌 수 있다. 보호자가 canToggle 권한을 허용한 연결에서만 보호 대상도 켜고 끌 수 있다.
-// 같은 브라우저의 다른 탭끼리는 localStorage 이벤트로 실시간처럼 동작한다.
-// 서버가 생기면 아래 함수 본문을 API(+WebSocket/SSE)로 바꾸고, 화면은 그대로 쓴다.
+// VITE_USE_BACKEND=true면 백엔드(/api/invites · /api/links · /api/location, 권한은 서버가 검사),
+// 아니면 같은 브라우저의 다른 탭끼리 localStorage 이벤트로 실시간처럼 동작하는 mock.
+// 화면이 쓰는 함수(createInvite · acceptInvite · setSharing · setPermission · removeLink · publishLocation)는
+// 두 모드 모두 Promise를 돌려주고, 연결 항목(conn)을 받는다 — mock은 conn.otherId, 백엔드는 conn.linkId 를 쓴다.
+import { USE_BACKEND, api } from '../api/http';
 import { lookupAccount } from './auth';
 
 const LINKS_KEY = 'mf-links'; // [{ guardianId, protectedId, sharing, canToggle, changedBy }]
 const LOCATIONS_KEY = 'mf-live-locations'; // { [protectedId]: { lat, lng, ts } }
 const INVITES_KEY = 'mf-invites'; // [{ code, protectedId, expires }]
 const EVENT = 'mf-sharing-change';
+export const SHARING_EVENT = EVENT; // 바뀌었으니 다시 불러오라는 신호(탭 사이·백엔드 모드 새로고침 겸용)
 const INVITE_TTL = 10 * 60 * 1000; // 연결 코드는 10분 동안만 유효
 
 // 시연용: 기본 보호자(test1234) ↔ 기본 보호 대상(child1234)은 처음부터 연결(공유는 꺼진 상태)
@@ -50,7 +54,7 @@ function requireRole(actor, role, message) {
 }
 
 // 보호 대상이 연결 코드(6자리)를 만든다 — 보호자가 이 코드를 입력하면 연결된다. 새 코드를 만들면 이전 코드는 무효.
-export function createInvite(actor) {
+function mockCreateInvite(actor) {
   requireRole(actor, 'protected', '보호 대상 계정만 연결 코드를 만들 수 있어요.');
   const code = String(Math.floor(100000 + Math.random() * 900000));
   const expires = Date.now() + INVITE_TTL;
@@ -60,7 +64,7 @@ export function createInvite(actor) {
 }
 
 // 보호자가 코드를 입력해 보호 대상과 연결한다. 연결 직후 공유는 꺼진 상태(보호자가 켠다).
-export function acceptInvite(actor, code) {
+function mockAcceptInvite(actor, code) {
   requireRole(actor, 'guardian', '보호자 계정만 연결할 수 있어요.');
   const invites = read(INVITES_KEY, []);
   const invite = invites.find((i) => i.code === code.trim());
@@ -81,7 +85,7 @@ const isMine = (actor, otherId) => (l) =>
     : l.protectedId === actor.userId && l.guardianId === otherId;
 
 // 공유 켜기/끄기 — 보호자는 자기 연결에서 언제나 가능. 보호 대상은 보호자가 허용(canToggle)한 연결에서만 가능.
-export function setSharing(actor, otherId, on) {
+function mockSetSharing(actor, otherId, on) {
   if (!actor) throw new Error('로그인이 필요해요.');
   const links = readLinks();
   const link = links.find(isMine(actor, otherId));
@@ -93,7 +97,7 @@ export function setSharing(actor, otherId, on) {
 }
 
 // 보호 대상에게 공유 켜기/끄기 권한을 주거나 거둔다 — 보호자(그룹장)만 가능. 거두면 보호 대상의 스위치가 사라진다.
-export function setPermission(actor, protectedId, allowed) {
+function mockSetPermission(actor, protectedId, allowed) {
   requireRole(actor, 'guardian', '권한은 보호자만 줄 수 있어요.');
   const links = readLinks();
   const link = links.find(isMine(actor, protectedId));
@@ -102,7 +106,7 @@ export function setPermission(actor, protectedId, allowed) {
 }
 
 // 연결 끊기 — 보호자만 가능(보호 대상이 마음대로 끊어 공유를 피하지 못하게)
-export function removeLink(actor, protectedId) {
+function mockRemoveLink(actor, protectedId) {
   requireRole(actor, 'guardian', '연결 해제는 보호자만 할 수 있어요.');
   write(
     LINKS_KEY,
@@ -111,7 +115,7 @@ export function removeLink(actor, protectedId) {
 }
 
 // 보호 대상의 기기가 현재 위치를 올린다 — 공유가 켜진 연결이 하나라도 있을 때만 저장
-export function publishLocation(actor, lat, lng) {
+function mockPublishLocation(actor, lat, lng) {
   requireRole(actor, 'protected', '보호 대상 계정만 위치를 올릴 수 있어요.');
   if (!readLinks().some((l) => l.protectedId === actor.userId && l.sharing)) return;
   write(LOCATIONS_KEY, { ...read(LOCATIONS_KEY, {}), [actor.userId]: { lat, lng, ts: Date.now() } });
@@ -133,3 +137,54 @@ export function describeLinks(user, { links, locations }) {
       location: user.role === 'guardian' && l.sharing ? locations[l.protectedId] ?? null : null,
     }));
 }
+
+// ---- 백엔드(/api) 연결 ----
+// 서버 응답(내 계정 기준 "상대" 정보) → 화면용 연결 항목. 위치는 보호자이고 공유 중일 때만 값이 온다.
+export async function fetchConnections() {
+  const links = await api('GET', '/api/links');
+  return links.map((l) => ({
+    otherId: l.user_id,
+    linkId: l.link_id,
+    name: l.user_name,
+    sharing: l.sharing,
+    canToggle: Boolean(l.can_toggle),
+    changedBy: l.changed_by ?? undefined,
+    location: l.latitude != null ? { lat: l.latitude, lng: l.longitude, ts: l.updated_at } : null,
+  }));
+}
+
+// 서버에 바꾼 뒤에는 화면이 바로 새 상태를 다시 불러오게 신호를 보낸다
+async function changed(promise) {
+  const result = await promise;
+  window.dispatchEvent(new Event(EVENT));
+  return result;
+}
+
+// ---- 화면이 쓰는 함수: 모드에 따라 백엔드 또는 mock ----
+export async function createInvite(actor) {
+  if (!USE_BACKEND) return mockCreateInvite(actor);
+  const r = await api('POST', '/api/invites');
+  return { code: r.code, expires: r.expires_at };
+}
+
+export const acceptInvite = (actor, code) =>
+  USE_BACKEND ? changed(api('POST', '/api/links/accept', { code: code.trim() })) : Promise.resolve(mockAcceptInvite(actor, code));
+
+export const setSharing = (actor, conn, on) =>
+  USE_BACKEND
+    ? changed(api('PATCH', `/api/links/${conn.linkId}/sharing`, { on }))
+    : Promise.resolve(mockSetSharing(actor, conn.otherId, on));
+
+export const setPermission = (actor, conn, allowed) =>
+  USE_BACKEND
+    ? changed(api('PATCH', `/api/links/${conn.linkId}/permission`, { can_toggle: allowed }))
+    : Promise.resolve(mockSetPermission(actor, conn.otherId, allowed));
+
+export const removeLink = (actor, conn) =>
+  USE_BACKEND ? changed(api('DELETE', `/api/links/${conn.linkId}`)) : Promise.resolve(mockRemoveLink(actor, conn.otherId));
+
+// 보호 대상 기기가 현재 위치를 올린다(서버는 공유가 켜진 연결이 있을 때만 저장하고 saved:false 를 돌려준다)
+export const publishLocation = (actor, lat, lng) =>
+  USE_BACKEND
+    ? api('PUT', '/api/location', { latitude: lat, longitude: lng })
+    : Promise.resolve(mockPublishLocation(actor, lat, lng));

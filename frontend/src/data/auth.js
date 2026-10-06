@@ -105,19 +105,8 @@ async function mockResetPassword(info, newPassword) {
 }
 
 // ---- 백엔드(/api/users) 연결 ----
-// 백엔드 users에는 아직 역할(role) 컬럼이 없어서, 가입할 때 고른 역할은 이 브라우저에만 기억한다(기본 보호자).
-const ROLES_KEY = 'mf-roles';
-const readRoles = () => {
-  try {
-    return JSON.parse(localStorage.getItem(ROLES_KEY)) ?? {};
-  } catch {
-    return {};
-  }
-};
-const roleOf = (userId) => readRoles()[userId] ?? 'guardian';
-
 // 백엔드 회원 응답 → 프론트 세션. 휴대폰 번호는 백엔드의 info 컬럼에 들어 있다
-const toSession = (u) => ({ userId: u.user_id, name: u.user_name, phone: u.info ?? '', role: roleOf(u.user_id) });
+const toSession = (u) => ({ userId: u.user_id, name: u.user_name, phone: u.info ?? '', role: u.role ?? 'guardian' });
 
 function writeSession(session, keep) {
   sessionStorage.removeItem(SESSION_KEY);
@@ -129,8 +118,8 @@ function writeSession(session, keep) {
 const apiInfo = ({ userId, name, phone }) => ({ user_id: userId, user_name: name.trim(), info: phone });
 
 async function apiSignup({ userId, password, name, phone, role = 'guardian' }) {
-  await api('POST', '/api/users/signup', { user_id: userId, user_pw: password, user_name: name.trim(), info: phone });
-  localStorage.setItem(ROLES_KEY, JSON.stringify({ ...readRoles(), [userId]: role }));
+  // role(guardian | protected)은 서버가 저장하고, 로그인·me 응답에 실려 와서 다른 기기에서도 유지된다
+  await api('POST', '/api/users/signup', { user_id: userId, user_pw: password, user_name: name.trim(), info: phone, role });
 }
 
 async function apiLogin(userId, password, keep) {

@@ -47,9 +47,9 @@ function GuardianView({ user, connections }) {
   const [error, setError] = useState('');
 
   // 권한 검사는 data/sharing.js가 하고, 화면은 실패 메시지만 보여준다
-  const run = (action) => {
+  const run = async (action) => {
     try {
-      action();
+      await action();
       setError('');
       return true;
     } catch (e) {
@@ -76,14 +76,14 @@ function GuardianView({ user, connections }) {
               aria-checked={c.sharing}
               aria-label={`${c.name} 위치 공유`}
               className={c.sharing ? 'toggleSwitch on' : 'toggleSwitch'}
-              onClick={() => run(() => setSharing(user, c.otherId, !c.sharing))}
+              onClick={() => run(() => setSharing(user, c, !c.sharing))}
             >
               <span />
             </button>
             <button
               className="shareRemove"
               aria-label={`${c.name} 연결 해제`}
-              onClick={() => window.confirm(`${c.name}님과의 연결을 해제할까요?`) && run(() => removeLink(user, c.otherId))}
+              onClick={() => window.confirm(`${c.name}님과의 연결을 해제할까요?`) && run(() => removeLink(user, c))}
             >
               <X size={15} />
             </button>
@@ -92,7 +92,7 @@ function GuardianView({ user, connections }) {
             <input
               type="checkbox"
               checked={c.canToggle}
-              onChange={(e) => run(() => setPermission(user, c.otherId, e.target.checked))}
+              onChange={(e) => run(() => setPermission(user, c, e.target.checked))}
             />
             <span>{c.name}님이 직접 공유를 켜고 끌 수 있게 허용</span>
           </label>
@@ -108,12 +108,12 @@ function GuardianView({ user, connections }) {
           aria-label="연결 코드"
           value={code}
           onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-          onKeyDown={(e) => e.key === 'Enter' && code && run(() => acceptInvite(user, code)) && setCode('')}
+          onKeyDown={async (e) => e.key === 'Enter' && code && (await run(() => acceptInvite(user, code))) && setCode('')}
         />
         <button
           className="shareAddButton"
           disabled={code.length !== 6}
-          onClick={() => run(() => acceptInvite(user, code)) && setCode('')}
+          onClick={async () => (await run(() => acceptInvite(user, code))) && setCode('')}
         >
           <Plus size={16} /> 연결
         </button>
@@ -129,23 +129,16 @@ function ProtectedView({ user, connections }) {
   const left = invite ? invite.expires - now : 0;
   const [error, setError] = useState('');
 
-  const run = (action) => {
+  const run = async (action) => {
     try {
-      action();
+      await action();
       setError('');
     } catch (e) {
       setError(e.message);
     }
   };
 
-  const makeCode = () => {
-    try {
-      setInvite(createInvite(user));
-      setError('');
-    } catch (e) {
-      setError(e.message);
-    }
-  };
+  const makeCode = () => run(async () => setInvite(await createInvite(user)));
 
   return (
     <>
@@ -167,7 +160,7 @@ function ProtectedView({ user, connections }) {
                 aria-checked={c.sharing}
                 aria-label={`${c.name}에게 위치 공유`}
                 className={c.sharing ? 'toggleSwitch on' : 'toggleSwitch'}
-                onClick={() => run(() => setSharing(user, c.otherId, !c.sharing))}
+                onClick={() => run(() => setSharing(user, c, !c.sharing))}
               >
                 <span />
               </button>
