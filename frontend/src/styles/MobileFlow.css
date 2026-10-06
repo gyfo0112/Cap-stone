@@ -1744,3 +1744,18 @@
     animation: none;
   }
 }
+
+/* 로그인 후 계정 카드 — 눌러서 이동하는 카드가 아니라 로그아웃 버튼만 둔다 */
+.mfAccountIn {
+  cursor: default;
+}
+
+.mfAccountIn .mfOutlineBtn {
+  flex-shrink: 0;
+  height: 34px;
+  padding: 0 14px;
+}
+
+.mfPrimaryBtn:disabled {
+  opacity: 0.5;
+}

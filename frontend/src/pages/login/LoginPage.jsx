@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, UserRound, LockKeyhole, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+import { ChevronLeft, UserRound, ShieldCheck } from 'lucide-react';
+import { login } from '../../data/auth';
+import { AuthField, PasswordField } from './AuthLayout';
 import './LoginPage.css';
 import logo from '../../images/logo.png';
 
@@ -11,20 +13,19 @@ function LoginPage({ onBack }) {
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
   const [keepLogin, setKeepLogin] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleLogin = () => {
-    if (!userId.trim()) {
-      alert('아이디를 입력해주세요.');
+  const handleLogin = async () => {
+    if (!userId.trim() || !password) {
+      setError(!userId.trim() ? '아이디를 입력해주세요.' : '비밀번호를 입력해주세요.');
       return;
     }
-
-    if (!password.trim()) {
-      alert('비밀번호를 입력해주세요.');
-      return;
+    try {
+      await login(userId.trim(), password, keepLogin);
+      goBack();
+    } catch (e) {
+      setError(e.message);
     }
-
-    alert('로그인 기능은 나중에 서버와 연결하면 됩니다.');
   };
 
   return (
@@ -53,44 +54,28 @@ function LoginPage({ onBack }) {
             </div>
           </div>
 
-          <div className="login-input-box">
-            <UserRound size={21} />
+          <AuthField
+            icon={<UserRound size={21} />}
+            placeholder="아이디"
+            autoComplete="username"
+            value={userId}
+            onChange={(e) => {
+              setUserId(e.target.value);
+              setError('');
+            }}
+          />
 
-            <input
-              type="text"
-              placeholder="아이디 또는 이메일"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-            />
-          </div>
-
-          <div className="login-input-box">
-            <LockKeyhole size={21} />
-
-            <input
-              type={showPassword ? 'text' : 'password'}
-              placeholder="비밀번호"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleLogin();
-                }
-              }}
-            />
-
-            {/* 비밀번호 보기/숨기기 — 누르는 동안 입력창 포커스가 빠지지 않게 mousedown 기본동작을 막는다 */}
-            <button
-              type="button"
-              className="password-toggle"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => setShowPassword((v) => !v)}
-              aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
-              aria-pressed={showPassword}
-            >
-              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-            </button>
-          </div>
+          <PasswordField
+            placeholder="비밀번호"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setError('');
+            }}
+            onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+            error={error}
+          />
 
           <div className="login-options">
             <label className="keep-login">

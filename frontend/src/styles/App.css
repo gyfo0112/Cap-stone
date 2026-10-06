@@ -134,6 +134,55 @@ button {
   gap: 20px;
 }
 
+/* 로그인 후 — 이름 + 로그아웃 */
+.sidebarUser {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebarUser .loginButton span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logoutLink {
+  align-self: flex-start;
+  border: 0;
+  background: transparent;
+  padding: 4px 13px 4px 48px;
+  font-size: 13px;
+  color: var(--mf-text-muted);
+  cursor: pointer;
+}
+
+.logoutLink:hover {
+  color: var(--mf-text-primary);
+}
+
+.accountItem {
+  padding: 0;
+}
+
+.accountButton {
+  flex-shrink: 0;
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--mf-border);
+  border-radius: 10px;
+  background: var(--mf-surface);
+  color: var(--mf-text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.accountButton:hover {
+  color: var(--mf-text-primary);
+}
+
 .emergencyButton {
   border: 0;
 
@@ -1490,4 +1539,95 @@ button {
 .locationClear:hover {
   background: var(--mf-border);
   color: var(--mf-text-primary);
+}
+
+/* PC 경로설정 — 즐겨찾기 */
+.routeDropLabel {
+  padding: 10px 16px 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--mf-text-muted);
+}
+
+.routeDropStar.active {
+  color: #f5a524;
+}
+
+/* 집/회사 바로가기 — 주소를 정한 뒤엔 오른쪽에 연필(변경) 버튼 */
+.quickItem {
+  flex: 1;
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+
+.quickEdit {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--mf-border);
+  border-radius: 14px;
+  background: var(--mf-surface);
+  color: var(--mf-text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.quickEdit:hover {
+  color: var(--mf-text-primary);
+}
+
+.quickPlaceInput {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 14px;
+}
+
+.quickSuggest {
+  max-height: 220px;
+  overflow-y: auto;
+  margin-top: 8px;
+}
+
+.quickSuggest button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 6px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  text-align: left;
+  color: var(--mf-text-primary);
+  cursor: pointer;
+}
+
+.quickSuggest button:hover {
+  background: var(--mf-surface-soft);
+}
+
+.quickSuggest svg {
+  flex-shrink: 0;
+  color: var(--mf-text-muted);
+}
+
+.quickSuggest span {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.quickSuggest small {
+  font-size: 12px;
+  color: var(--mf-text-muted);
+}
+
+/* 키보드로 이동할 때 현재 위치가 보이게 */
+button:focus-visible,
+[role='button']:focus-visible {
+  outline: 2px solid #2f82f5;
+  outline-offset: 2px;
 }

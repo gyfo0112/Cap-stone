@@ -10,12 +10,15 @@ import {
   PersonStanding,
   Search,
   ShieldCheck,
+  Star,
   TriangleAlert,
   X,
 } from 'lucide-react';
 import { hasKakaoRestKey, searchPlaces } from '../../api/kakaoLocal';
 import { addRecent, clearRecents, getRecents, removeRecent } from '../../data/recents';
-import { GRADE_COLOR, GRADE_SOFT, QUICK_PLACES, ROUTE_OPTIONS, SEGMENTS } from '../../data/routeData';
+import { GRADE_COLOR, GRADE_SOFT, ROUTE_OPTIONS, SEGMENTS } from '../../data/routeData';
+import { QuickPlaces } from '../../components/QuickPlaces';
+import { addFavorite, getFavorites, removeFavoriteByName } from '../../data/favorites';
 import { scoreGrade } from '../../hooks/useIsMobile';
 
 // 데스크탑의 3개 "경로 옵션" 버튼을 mock 대안 경로 2개(safe/shortest) 중 하나에 매핑한다.
@@ -51,6 +54,15 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
   const [notice, setNotice] = useState('');
   // 최근 검색 — 모바일 경로설정 화면과 같은 저장소(recents.js)라 PC·모바일 기록이 공유된다
   const [recents, setRecents] = useState(getRecents);
+  // 즐겨찾기 — 모바일 경로설정 화면과 같은 저장소(favorites.js). 검색 추천의 별표로 추가/해제
+  const [favorites, setFavorites] = useState(getFavorites);
+  const isFavorite = (name) => favorites.some((f) => f.marker_name === name);
+  const toggleFavorite = (place) =>
+    setFavorites(
+      isFavorite(place.name)
+        ? removeFavoriteByName(place.name)
+        : addFavorite({ marker_name: place.name, latitude: place.lat, longitude: place.lng }),
+    );
   // 추천 목록에서 고른 장소 — 고른 뒤엔 목록을 다시 띄우지 않고, 최근 검색에 주소를 같이 남긴다
   const [pickedPlace, setPickedPlace] = useState(null);
 
@@ -155,6 +167,7 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
             <input
               ref={originInputRef}
               placeholder="출발지 입력"
+              aria-label="출발지 입력"
               value={origin}
               onFocus={() => setActiveField('origin')}
               onBlur={() => setActiveField(null)}
@@ -183,6 +196,7 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
             <input
               ref={destInputRef}
               placeholder="도착지 입력"
+              aria-label="도착지 입력"
               value={destination}
               onFocus={() => setActiveField('dest')}
               onBlur={() => setActiveField(null)}
@@ -218,13 +232,22 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
                 {!searching && places.length === 0 && <div className="routeDropEmpty">검색 결과가 없습니다</div>}
                 {!searching &&
                   places.map((p) => (
-                    <button key={p.id} className="routeDropItem" onClick={() => pickPlace(p)}>
-                      <MapPin size={18} className="routeDropIcon" />
-                      <span className="routeDropText">
-                        <strong>{p.name}</strong>
-                        <span>{p.address}</span>
-                      </span>
-                    </button>
+                    <div className="routeDropRow" key={p.id}>
+                      <button className="routeDropItem" onClick={() => pickPlace(p)}>
+                        <MapPin size={18} className="routeDropIcon" />
+                        <span className="routeDropText">
+                          <strong>{p.name}</strong>
+                          <span>{p.address}</span>
+                        </span>
+                      </button>
+                      <button
+                        className={isFavorite(p.name) ? 'routeDropRemove routeDropStar active' : 'routeDropRemove routeDropStar'}
+                        onClick={() => toggleFavorite(p)}
+                        aria-label={isFavorite(p.name) ? `${p.name} 즐겨찾기 해제` : `${p.name} 즐겨찾기 추가`}
+                      >
+                        <Star size={15} fill={isFavorite(p.name) ? 'currentColor' : 'none'} />
+                      </button>
+                    </div>
                   ))}
               </>
             ) : (
@@ -238,7 +261,32 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
                     </span>
                   </button>
                 )}
-                {recents.length === 0 && <div className="routeDropEmpty">최근 검색한 장소가 없어요.</div>}
+                {favorites.length > 0 && <div className="routeDropLabel">즐겨찾기</div>}
+                {favorites.map((f) => (
+                  <div className="routeDropRow" key={f.marker_uuid}>
+                    <button
+                      className="routeDropItem"
+                      onClick={() =>
+                        activeField === 'origin' ? pickOrigin(f.marker_name) : searchRecent({ name: f.marker_name, sub: '' })
+                      }
+                    >
+                      <Star size={18} className="routeDropIcon routeDropIconAccent" fill="currentColor" />
+                      <span className="routeDropText">
+                        <strong>{f.marker_name}</strong>
+                      </span>
+                    </button>
+                    <button
+                      className="routeDropRemove routeDropStar active"
+                      onClick={() => setFavorites(removeFavoriteByName(f.marker_name))}
+                      aria-label={`${f.marker_name} 즐겨찾기 해제`}
+                    >
+                      <Star size={15} fill="currentColor" />
+                    </button>
+                  </div>
+                ))}
+                {recents.length === 0 && favorites.length === 0 && (
+                  <div className="routeDropEmpty">최근 검색한 장소가 없어요.</div>
+                )}
                 {recents.map((r) => (
                   <div className="routeDropRow" key={r.name}>
                     <button
@@ -272,14 +320,8 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
         )}
       </div>
 
-      {/* 집/회사 바로가기 — 모바일 홈 카드와 같은 장소(routeData.js QUICK_PLACES), 누르면 바로 검색 */}
-      <div className="mfQuickRow routeQuickRow">
-        {QUICK_PLACES.map((q) => (
-          <button key={q.key} className="mfQuickBtn" onClick={() => searchRecent({ name: q.name, sub: '' })}>
-            <q.icon size={16} /> {q.label}
-          </button>
-        ))}
-      </div>
+      {/* 집/회사 바로가기 — 주소는 사용자가 정해 저장하고, 누르면 바로 검색 */}
+      <QuickPlaces className="routeQuickRow" onGo={(name, sub) => searchRecent({ name, sub })} />
 
       <h3 className="sectionTitle">경로 옵션</h3>
 

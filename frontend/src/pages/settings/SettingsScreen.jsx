@@ -8,6 +8,7 @@ import {
 import { ToggleGroup } from '../../components/ToggleGroup';
 import { addContact, getContacts, removeContact } from '../../data/contacts';
 import { PRIORITY_OPTIONS, THEME_OPTIONS } from '../../data/routeData';
+import { useAuth } from '../../hooks/useAuth';
 import { useStoredState } from '../../hooks/useStoredState';
 import { MobileHeader } from '../../components/layout/MobileHeader';
 
@@ -18,6 +19,7 @@ const NOTIF_ITEMS = [
 ];
 
 export function SettingsScreen({ routePriority, onRoutePriorityChange, theme, onThemeChange, onOpenLogin }) {
+  const { user, logout } = useAuth();
   const [notif, setNotif] = useStoredState('mf-notif', { zoneEntry: true, nightRecalc: true, arrival: false });
   const [contacts, setContacts] = useState(getContacts);
   const [addingContact, setAddingContact] = useState(false);
@@ -44,17 +46,32 @@ export function SettingsScreen({ routePriority, onRoutePriorityChange, theme, on
     <div className="mfScreen mfScreenTabbed">
       <MobileHeader title="설정" />
 
-      {/* 계정 카드 — 로그인 API가 붙으면 로그인 후엔 이름·아이디·로그아웃으로 바꾼다 */}
-      <button className="mfSettingsCard mfAccountCard" onClick={onOpenLogin}>
-        <span className="mfContactAvatar">
-          <UserRound size={20} />
-        </span>
-        <div className="mfContactInfo">
-          <strong>로그인하세요</strong>
-          <span>연락처·즐겨찾기를 안전하게 보관</span>
+      {/* 계정 카드 — 로그인 전엔 로그인 화면으로, 로그인 후엔 이름·아이디와 로그아웃 */}
+      {user ? (
+        <div className="mfSettingsCard mfAccountCard mfAccountIn">
+          <span className="mfContactAvatar">
+            <UserRound size={20} />
+          </span>
+          <div className="mfContactInfo">
+            <strong>{user.name}</strong>
+            <span>@{user.userId}</span>
+          </div>
+          <button className="mfOutlineBtn" onClick={logout}>
+            로그아웃
+          </button>
         </div>
-        <ChevronRight size={20} className="mfAccountChevron" />
-      </button>
+      ) : (
+        <button className="mfSettingsCard mfAccountCard" onClick={onOpenLogin}>
+          <span className="mfContactAvatar">
+            <UserRound size={20} />
+          </span>
+          <div className="mfContactInfo">
+            <strong>로그인하세요</strong>
+            <span>연락처·즐겨찾기를 안전하게 보관</span>
+          </div>
+          <ChevronRight size={20} className="mfAccountChevron" />
+        </button>
+      )}
 
       <div className="mfSettingsCard">
         <strong>기본 안전 우선도</strong>
@@ -88,12 +105,14 @@ export function SettingsScreen({ routePriority, onRoutePriorityChange, theme, on
             <input
               className="mfAddContactInput"
               placeholder="이름"
+              aria-label="이름"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
             />
             <input
               className="mfAddContactInput"
               placeholder="전화번호"
+              aria-label="전화번호"
               value={newPhone}
               onChange={(e) => setNewPhone(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && submitContact()}

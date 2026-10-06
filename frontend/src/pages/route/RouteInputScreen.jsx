@@ -80,6 +80,7 @@ export function RouteInputScreen({ initialDestination, originLabel, onBack, onPi
           <input
             className="mfOdInput"
             placeholder="어디로 갈까요?"
+            aria-label="어디로 갈까요?"
             value={destination}
             onChange={(e) => setDestination(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && destination && onSelect(destination)}

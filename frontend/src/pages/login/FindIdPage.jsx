@@ -1,14 +1,17 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, UserRound, Phone } from 'lucide-react';
-import { AuthLayout, AuthField } from './AuthLayout';
-import { formatPhone, PHONE_RE } from './phone';
+import { findIds } from '../../data/auth';
+import { AuthLayout, AuthField, AuthDone } from './AuthLayout';
+import { formatPhone, PHONE_RE } from './rules';
 
 function FindIdPage() {
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [tried, setTried] = useState(false);
+  const [notFound, setNotFound] = useState(false);
+  const [found, setFound] = useState(null); // 찾은 아이디(가린 형태) 목록
 
   const nameError = tried && !name.trim() && '이름을 입력해주세요.';
   const phoneError = tried && !PHONE_RE.test(phone) && '휴대폰 번호를 정확히 입력해주세요.';
@@ -16,8 +19,31 @@ function FindIdPage() {
   const submit = () => {
     setTried(true);
     if (!name.trim() || !PHONE_RE.test(phone)) return;
-    alert('아이디 찾기 기능은 나중에 서버와 연결하면 됩니다.');
+    const ids = findIds({ name, phone });
+    setNotFound(ids.length === 0);
+    if (ids.length) setFound(ids);
   };
+
+  if (found) {
+    return (
+      <AuthLayout icon={<Search size={26} />} title="아이디 찾기" desc="입력하신 정보로 가입된 아이디예요.">
+        <AuthDone title="아이디를 찾았어요">
+          <ul className="auth-found">
+            {found.map((id) => (
+              <li key={id}>{id}</li>
+            ))}
+          </ul>
+          <p className="auth-note">개인정보 보호를 위해 일부만 보여드려요.</p>
+        </AuthDone>
+        <button className="main-login-button auth-submit" onClick={() => navigate('/login')}>
+          로그인하기
+        </button>
+        <div className="login-links">
+          <button onClick={() => navigate('/find-password')}>비밀번호 찾기</button>
+        </div>
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout
@@ -29,7 +55,10 @@ function FindIdPage() {
         icon={<UserRound size={21} />}
         placeholder="이름"
         value={name}
-        onChange={(e) => setName(e.target.value)}
+        onChange={(e) => {
+          setName(e.target.value);
+          setNotFound(false);
+        }}
         error={nameError}
       />
       <AuthField
@@ -38,9 +67,12 @@ function FindIdPage() {
         inputMode="numeric"
         placeholder="휴대폰 번호 (010-0000-0000)"
         value={phone}
-        onChange={(e) => setPhone(formatPhone(e.target.value))}
+        onChange={(e) => {
+          setPhone(formatPhone(e.target.value));
+          setNotFound(false);
+        }}
         onKeyDown={(e) => e.key === 'Enter' && submit()}
-        error={phoneError}
+        error={phoneError || (notFound && '일치하는 계정을 찾을 수 없어요.')}
       />
 
       <button className="main-login-button auth-submit" onClick={submit}>

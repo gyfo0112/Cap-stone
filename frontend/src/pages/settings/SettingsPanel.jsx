@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import {
-  UserPlus,
-} from 'lucide-react';
+import { UserPlus, UserRound } from 'lucide-react';
 import { ToggleGroup } from '../../components/ToggleGroup';
 import { addContact, getContacts, removeContact } from '../../data/contacts';
 import { PRIORITY_OPTIONS, THEME_OPTIONS } from '../../data/routeData';
+import { useAuth } from '../../hooks/useAuth';
 import { useStoredState } from '../../hooks/useStoredState';
 
 const NOTIF_ITEMS = [
@@ -15,7 +14,8 @@ const NOTIF_ITEMS = [
 
 // 모바일 설정 화면과 내용은 같되, controlPanel 안에 들어가는 데스크탑 전용 레이아웃.
 // 보호자 연락처는 모바일과 완전히 같은 저장소(contacts.js/localStorage)를 그대로 쓴다.
-export function SettingsPanel({ routePriority, onRoutePriorityChange, theme, onThemeChange }) {
+export function SettingsPanel({ routePriority, onRoutePriorityChange, theme, onThemeChange, onOpenLogin }) {
+  const { user, logout } = useAuth();
   const [notif, setNotif] = useStoredState('mf-notif', { zoneEntry: true, nightRecalc: true, arrival: false });
   const [contacts, setContacts] = useState(getContacts);
   const [addingContact, setAddingContact] = useState(false);
@@ -41,6 +41,21 @@ export function SettingsPanel({ routePriority, onRoutePriorityChange, theme, onT
       <h1>설정</h1>
 
       <p className="subtitle">친절한 이웃의 설정을 변경할 수 있습니다.</p>
+
+      <div className="settingsCard">
+        <div className="guardianItem accountItem">
+          <div className="guardianAvatar">
+            <UserRound size={20} />
+          </div>
+          <div className="guardianInfo">
+            <strong>{user ? user.name : '로그인하세요'}</strong>
+            <span>{user ? `@${user.userId}` : '연락처·즐겨찾기를 안전하게 보관'}</span>
+          </div>
+          <button className="accountButton" onClick={user ? logout : onOpenLogin}>
+            {user ? '로그아웃' : '로그인'}
+          </button>
+        </div>
+      </div>
 
       <div className="settingsCard">
         <h3>기본 안전 우선도</h3>
@@ -78,12 +93,14 @@ export function SettingsPanel({ routePriority, onRoutePriorityChange, theme, onT
             <input
               className="addContactInput"
               placeholder="이름"
+              aria-label="이름"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
             />
             <input
               className="addContactInput"
               placeholder="전화번호"
+              aria-label="전화번호"
               value={newPhone}
               onChange={(e) => setNewPhone(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && submitContact()}

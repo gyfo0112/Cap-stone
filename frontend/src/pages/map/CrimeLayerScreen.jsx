@@ -84,6 +84,7 @@ export function CrimeLayerScreen() {
             max={100}
             value={opacity}
             onChange={(e) => setOpacity(Number(e.target.value))}
+            aria-label="레이어 투명도"
             className="mfSlider mfSliderNeutral"
             disabled={!enabled}
           />

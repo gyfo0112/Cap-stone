@@ -7,3 +7,8 @@ export function formatPhone(value) {
 }
 
 export const PHONE_RE = /^01\d-\d{3,4}-\d{4}$/;
+
+// 백엔드 user_pw 컬럼이 30자라 최대 30자로 맞춘다
+export const PW_MIN = 8;
+export const PW_MAX = 30;
+export const ID_RE = /^[a-zA-Z0-9]{4,20}$/;

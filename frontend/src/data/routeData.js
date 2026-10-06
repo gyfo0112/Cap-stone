@@ -3,11 +3,11 @@
 // (컴포넌트 파일에 상수를 export하면 react-refresh 경고가 뜬다)
 import { Route, ShieldCheck, Sun, Moon, Smartphone, Home, Building2 } from 'lucide-react';
 
-// 집/회사 바로가기 (모바일 홈 카드·PC 경로설정 공용). 아직 사용자별 저장이 없어 예시 장소 —
-// 로그인·즐겨찾기 API가 붙으면 사용자가 지정한 장소로 바꾼다.
+// 집/회사 바로가기 종류 (모바일 홈 카드·PC 경로설정 공용). 실제 주소는 사용자가 정해
+// components/QuickPlaces.jsx가 localStorage에 저장한다.
 export const QUICK_PLACES = [
-  { key: 'home', label: '집', icon: Home, name: '망원동 396-12 (집)' },
-  { key: 'work', label: '회사', icon: Building2, name: '강남 오피스 (회사)' },
+  { key: 'home', label: '집', icon: Home },
+  { key: 'work', label: '회사', icon: Building2 },
 ];
 
 export const ROUTE_OPTIONS = [

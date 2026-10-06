@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { countNearby } from '../../api/markersApi';
 import { ScoreBadge } from '../../components/ScoreBadge';
-import { QUICK_PLACES } from '../../data/routeData';
+import { QuickPlaces } from '../../components/QuickPlaces';
 
 // 실제 시각 기준으로 "주간/야간" 문구만 맞춤 — 안전점수 자체는 아직 mock.
 function timeOfDayLabel() {
@@ -47,13 +47,7 @@ export function MainMapCard({ onOpenInput, locationLabel, lat, lng }) {
         {timeOfDayLabel()} · {nearbyCaption}
       </p>
 
-      <div className="mfQuickRow">
-        {QUICK_PLACES.map((q) => (
-          <button key={q.key} className="mfQuickBtn" onClick={() => onOpenInput(q.name)}>
-            <q.icon size={16} /> {q.label}
-          </button>
-        ))}
-      </div>
+      <QuickPlaces onGo={(name) => onOpenInput(name)} />
 
       <button className="mfPrimaryBtn mfMainCta" onClick={() => onOpenInput('')}>
         안전 길찾기

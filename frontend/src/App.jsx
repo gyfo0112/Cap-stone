@@ -180,7 +180,7 @@ function App({ startMenu = 'map' }) {
                 lng={myLocation.lng}
               />
             )}
-            {mobileTab === 'help' && <HelpPanel />}
+            {mobileTab === 'help' && <HelpPanel onOpenLogin={() => setLoginOpen(true)} />}
           </>
         ) : (
           <>
@@ -196,7 +196,7 @@ function App({ startMenu = 'map' }) {
             {menu === 'route' && navigationActive && (
               <NavigationPanel onEnd={() => setNavigationActive(false)} />
             )}
-            {menu === 'help' && <HelpPanel />}
+            {menu === 'help' && <HelpPanel onOpenLogin={() => setLoginOpen(true)} />}
             {menu === 'map' && (
               <FacilityPanel layers={layers} layerStatus={layerStatus} onToggle={toggleLayer} />
             )}
@@ -206,6 +206,7 @@ function App({ startMenu = 'map' }) {
                 onRoutePriorityChange={setRoutePriority}
                 theme={theme}
                 onThemeChange={setTheme}
+                onOpenLogin={() => setLoginOpen(true)}
               />
             )}
           </>

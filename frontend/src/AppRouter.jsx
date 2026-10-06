@@ -1,6 +1,7 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import App from './App';
 import LoginPage from './pages/login/LoginPage';
+import NotFoundPage from './pages/NotFoundPage';
 import FindIdPage from './pages/login/FindIdPage';
 import FindPasswordPage from './pages/login/FindPasswordPage';
 import SignupPage from './pages/login/SignupPage';
@@ -25,8 +26,8 @@ export default function AppRouter() {
       <Route path="/find-password" element={<FindPasswordPage />} />
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/sos" element={<SosRoute />} />
-      {/* 목록에 없는 주소는 메인으로 */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* 목록에 없는 주소 */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

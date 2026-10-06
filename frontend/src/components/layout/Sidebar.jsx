@@ -1,5 +1,6 @@
 import { Bell, MapPin, Route, Settings, Siren, UserRound } from 'lucide-react';
 import logo from '../../images/logo.png';
+import { useAuth } from '../../hooks/useAuth';
 import { MobileTabBar } from './MobileTabBar';
 
 // 데스크탑 왼쪽 메뉴 — MobileTabBar의 TABS 배열과 같은 방식으로, 여기 하나만
@@ -15,6 +16,7 @@ const DESKTOP_MENU = [
 // 공통 레이아웃: PC에선 왼쪽 메뉴(헤더 역할), 모바일에선 같은 자리에 하단 탭바(푸터 역할).
 // 가운데 내용(pages/)만 바뀌고 이 틀은 모든 기능이 같이 쓴다.
 export function Sidebar({ isMobile, mobileTab, onSelectMobileTab, menu, onSelectMenu, onOpenSos, onOpenLogin }) {
+  const { user, logout } = useAuth();
   return (
     <aside className="sidebar">
       <div>
@@ -50,10 +52,22 @@ export function Sidebar({ isMobile, mobileTab, onSelectMobileTab, menu, onSelect
           도움 요청
         </button>
 
-        <button className="loginButton" onClick={onOpenLogin}>
-          <UserRound size={22} />
-          로그인
-        </button>
+        {user ? (
+          <div className="sidebarUser">
+            <div className="loginButton">
+              <UserRound size={22} />
+              <span>{user.name}</span>
+            </div>
+            <button className="logoutLink" onClick={logout}>
+              로그아웃
+            </button>
+          </div>
+        ) : (
+          <button className="loginButton" onClick={onOpenLogin}>
+            <UserRound size={22} />
+            로그인
+          </button>
+        )}
       </div>
     </aside>
   );
