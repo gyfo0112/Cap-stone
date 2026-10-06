@@ -11,12 +11,23 @@ async function hash(text) {
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
+// 시연·테스트용 기본 계정 (아이디 test1234 / 비밀번호 test1234) — 해시는 SHA-256
+const DEMO_ACCOUNT = {
+  userId: 'test1234',
+  name: '테스트',
+  phone: '010-0000-0000',
+  pwHash: '937e8d5fbb48bd4949536cd65b8d35c426b80d2f830c5c308e2cdec422ae2244',
+};
+
 function readAccounts() {
+  let stored = [];
   try {
-    return JSON.parse(localStorage.getItem(ACCOUNTS_KEY)) || [];
+    stored = JSON.parse(localStorage.getItem(ACCOUNTS_KEY)) || [];
   } catch {
-    return [];
+    /* 저장소를 못 읽으면 기본 계정만 */
   }
+  // 비밀번호 재설정 등으로 이미 저장돼 있으면 저장된 쪽을 쓴다
+  return stored.some((a) => sameId(a, DEMO_ACCOUNT.userId)) ? stored : [DEMO_ACCOUNT, ...stored];
 }
 
 const writeAccounts = (list) => localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(list));
