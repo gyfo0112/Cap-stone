@@ -1,7 +1,10 @@
 .login-page {
   width: 100%;
   box-sizing: border-box;
-  min-height: 100vh;
+  /* body가 overflow:hidden(지도 앱)이라 이 화면이 직접 스크롤을 맡는다 */
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
 
   display: flex;
   justify-content: center;
@@ -156,49 +159,6 @@
   accent-color: #2f82f5;
 }
 
-.security-button {
-  border: none;
-  background: transparent;
-
-  display: flex;
-  align-items: center;
-
-  gap: 8px;
-
-  color: var(--mf-text-secondary);
-
-  font-size: 14px;
-
-  cursor: pointer;
-}
-
-.security-toggle {
-  width: 38px;
-  height: 22px;
-
-  border-radius: 20px;
-
-  background: #b7bec8;
-
-  position: relative;
-}
-
-.security-toggle::after {
-  content: '';
-
-  position: absolute;
-
-  width: 16px;
-  height: 16px;
-
-  top: 3px;
-  left: 3px;
-
-  background: #fff;
-
-  border-radius: 50%;
-}
-
 .main-login-button {
   width: 100%;
   height: 60px;
@@ -248,8 +208,7 @@
   font-weight: 700;
 }
 
-.login-links span,
-.login-footer span {
+.login-links span {
   width: 1px;
   height: 13px;
 
@@ -269,22 +228,12 @@
   color: var(--mf-text-tertiary);
 }
 
-.login-footer button {
-  border: none;
-  background: transparent;
-
-  font-size: 12px;
-  color: var(--mf-text-tertiary);
-
-  cursor: pointer;
-}
-
 .login-footer p {
   width: 100%;
 
   text-align: center;
 
-  margin-top: 5px;
+  margin: 0;
 
   font-size: 12px;
   color: var(--mf-text-muted);
@@ -350,4 +299,104 @@
   .login-options {
     margin: 16px 2px;
   }
+}
+
+/* 비밀번호 보기/숨기기 (입력창 오른쪽 눈 아이콘) */
+.password-toggle {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--mf-text-tertiary);
+  cursor: pointer;
+}
+
+.password-toggle:hover {
+  color: var(--mf-text-primary);
+}
+
+/* 아이디 찾기 · 비밀번호 찾기 · 회원가입 */
+.auth-field {
+  margin-bottom: 14px;
+}
+
+.auth-field .login-input-box {
+  margin-bottom: 0;
+}
+
+.login-input-box.hasError {
+  border-color: #e5484d;
+}
+
+.auth-msg {
+  margin: 6px 4px 0;
+  font-size: 13px;
+  color: var(--mf-text-tertiary);
+}
+
+.auth-msg.error {
+  color: #e5484d;
+}
+
+.auth-submit {
+  margin-top: 8px;
+}
+
+.auth-plain {
+  width: auto !important;
+  height: auto !important;
+  background: transparent !important;
+  font-size: 14px;
+  color: var(--mf-text-tertiary);
+}
+
+/* 완료·결과 안내 (회원가입 완료, 찾은 아이디, 비밀번호 변경 완료) */
+.auth-done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 12px 0 20px;
+  color: #2f82f5;
+}
+
+.auth-done h2 {
+  margin: 14px 0 6px;
+  font-size: 20px;
+  color: var(--mf-text-primary);
+}
+
+.auth-done p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--mf-text-tertiary);
+}
+
+.auth-found {
+  list-style: none;
+  width: 100%;
+  margin: 12px 0 10px;
+  padding: 0;
+}
+
+.auth-found li {
+  padding: 14px 18px;
+  margin-bottom: 8px;
+  border: 1px solid var(--mf-border);
+  border-radius: 14px;
+  background: var(--mf-surface-soft);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--mf-text-primary);
+}
+
+.auth-note {
+  font-size: 13px !important;
 }

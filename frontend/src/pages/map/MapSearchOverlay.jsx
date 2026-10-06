@@ -6,7 +6,7 @@ import {
   ShieldCheck,
   TriangleAlert,
 } from 'lucide-react';
-import { LAYER_STATUS_TEXT, MARKER_LAYERS } from '../../api/markersApi.js';
+import { LAYER_STATUS_TEXT, MARKER_LAYERS } from '../../api/markersApi';
 
 // 지도 위 검색바 + 안전시설 오버레이 칩 (메인 지도 탭에서만 표시)
 // 안전시설 칩 key는 markersApi.js MARKER_LAYERS와 같다(색 점 = 지도 마커 색)

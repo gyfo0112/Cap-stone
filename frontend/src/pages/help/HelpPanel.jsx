@@ -6,7 +6,8 @@ import {
   Plus,
   Trash2,
 } from 'lucide-react';
-import { MY_USER_UUID, POST_TYPES, acceptPost, addPost, cancelAccept, getAcceptedIds, getPosts, removePost, timeAgo } from '../../data/posts.js';
+import { useAuth } from '../../hooks/useAuth';
+import { MY_USER_UUID, POST_TYPES, acceptPost, addPost, cancelAccept, getAcceptedIds, getPosts, removePost, timeAgo } from '../../data/posts';
 
 // 긴급도(post_type)별 카드 테두리/배지 색 — 기존 클래스 재사용
 const POST_TYPE_STYLE = {
@@ -17,7 +18,11 @@ const POST_TYPE_STYLE = {
 
 // 모바일(도움요청 탭)과 데스크탑(도움요청 메뉴)이 함께 쓰는 패널.
 // 목록 → 글쓰기 화면 / 게시글 상세(수락·삭제) 모달.
-export function HelpPanel() {
+export function HelpPanel({ onOpenLogin }) {
+  const { user } = useAuth();
+  const [loginPrompt, setLoginPrompt] = useState(false);
+  // 글쓰기·수락은 로그인한 사람만 — 아니면 로그인 안내를 띄운다
+  const requireLogin = (action) => () => (user ? action() : setLoginPrompt(true));
   const [posts, setPosts] = useState(getPosts);
   const [acceptedIds, setAcceptedIds] = useState(getAcceptedIds);
   const [filter, setFilter] = useState('all'); // 'all' | 'mine'
@@ -54,7 +59,7 @@ export function HelpPanel() {
 
       <p className="subtitle">주변에서 요청한 도움을 확인할 수 있습니다.</p>
 
-      <button className="searchRouteButton helpWriteButton" onClick={() => setWriting(true)}>
+      <button className="searchRouteButton helpWriteButton" onClick={requireLogin(() => setWriting(true))}>
         <Plus size={20} />
         도움 요청 글쓰기
       </button>
@@ -128,13 +133,50 @@ export function HelpPanel() {
           post={openPost}
           mine={isMine(openPost)}
           accepted={acceptedIds.includes(openPost.post_uuid)}
-          onAccept={() => setAcceptedIds(acceptPost(openPost.post_uuid))}
+          onAccept={requireLogin(() => setAcceptedIds(acceptPost(openPost.post_uuid)))}
           onCancelAccept={() => setAcceptedIds(cancelAccept(openPost.post_uuid))}
           onDelete={() => deletePost(openPost)}
           onClose={() => setOpenId(null)}
         />
       )}
+
+      {loginPrompt && (
+        <LoginRequiredModal
+          onClose={() => setLoginPrompt(false)}
+          onLogin={() => {
+            setLoginPrompt(false);
+            onOpenLogin();
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+// 로그인 안내 — 글쓰기·수락처럼 로그인이 필요한 동작에서 띄운다
+function LoginRequiredModal({ onClose, onLogin }) {
+  return createPortal(
+    <div className="helpModalScrim" onClick={onClose}>
+      <div
+        className="helpModal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="loginRequiredTitle"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <strong id="loginRequiredTitle">로그인이 필요해요</strong>
+        <p className="helpModalBody">도움 요청을 올리거나 수락하려면 먼저 로그인해주세요.</p>
+        <div className="helpModalActions">
+          <button className="mfOutlineBtn" onClick={onClose}>
+            닫기
+          </button>
+          <button className="mfPrimaryBtn" onClick={onLogin}>
+            로그인
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
   );
 }
 

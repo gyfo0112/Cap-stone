@@ -2,6 +2,7 @@ package com.safetymap.safetymap.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,39 +15,100 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-            .authorizeHttpRequests(auth -> auth
-                    // 로그인 없이 접근 가능한 공개 경로
-                    .requestMatchers(
-                            "/"
-                            // 이후 공개 웹 경로는 이렇게 추가할 수 있습니다
-                            // "/public/**",
-                            // "/css/**",
-                            // "/js/**",
-                            // "/images/**"
-                    ).permitAll()
-                    // 그 외 모든 경로는 로그인이 필요한 웹으로 처리됩니다
-                    .anyRequest().authenticated()
-            );
-            /*
-            // 로그인 페이지 지정
-            .formLogin(form -> form
-                    .loginPage("컨트롤러 폼 주소 지정")
-                    .loginProcessingUrl("컨트롤러 처리 주소 지정")
-                    .usernameParameter("아이디값")      //  세션엔 지정한 컬럼값(엔티티 기준)이 들어갑니다. id 혹은 uuid를 추천해요
-                    .passwordParameter("비밀번호값")
-                    .defaultSuccessUrl("/", true)   //  로그인 성공 시 이동할 페이지
-                    .permitAll()    // 접근 권한 지정 (permitAll은 공개)
-            )
-            //  로그아웃 페이지 지정
-            .logout(logout -> logout
-                    .logoutUrl("로그아웃 주소 지정")    //  로그아웃은 해당 주소 이동 시 자동 처리됨
-                    .logoutSuccessUrl("/")  // 로그아웃 성공 시 주소 지정
-                    .permitAll()
-            );
-            */
+
+                .authorizeHttpRequests(auth -> auth
+
+                        // =========================
+                        // React 페이지
+                        // =========================
+                        .requestMatchers(
+                                "/",
+                                "/map",
+                                "/route",
+                                "/help",
+                                "/settings",
+                                "/login",
+                                "/signup",
+                                "/sos"
+                        ).permitAll()
+
+                        // =========================
+                        // React 정적 리소스
+                        // =========================
+                        .requestMatchers(
+                                "/index.html",
+                                "/assets/**",
+                                "/favicon.ico",
+                                "/favicon.png"
+                        ).permitAll()
+
+                        // =========================
+                        // 로그인 없이 사용 가능한 API
+                        // =========================
+
+                        // 회원가입
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/users/signup"
+                        ).permitAll()
+
+                        // 지도 마커 조회
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/markers/**"
+                        ).permitAll()
+
+                        // =========================
+                        // 그 외 API는 로그인 필요
+                        // =========================
+                        .anyRequest().authenticated()
+                )
+
+                // =========================
+                // 로그인
+                // =========================
+                .formLogin(form -> form
+
+                        // React 로그인 페이지
+                        .loginPage("/login")
+
+                        // 로그인 폼이 POST할 주소
+                        .loginProcessingUrl("/login")
+
+                        // React form input name과 일치시켜야 함
+                        .usernameParameter("user_id")
+                        .passwordParameter("user_pw")
+
+                        // 로그인 성공
+                        .defaultSuccessUrl("/", true)
+
+                        // 로그인 실패
+                        .failureUrl("/login?error")
+
+                        .permitAll()
+                )
+
+                // =========================
+                // 로그아웃
+                // =========================
+                .logout(logout -> logout
+
+                        .logoutUrl("/logout")
+
+                        .logoutSuccessUrl("/")
+
+                        // 세션 제거
+                        .invalidateHttpSession(true)
+
+                        // 세션 쿠키 제거
+                        .deleteCookies("JSESSIONID")
+
+                        .permitAll()
+                );
 
         return http.build();
     }
+
 
     @Bean
     public PasswordEncoder passwordEncoder() {

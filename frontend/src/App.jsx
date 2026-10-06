@@ -1,36 +1,42 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 // 전역 스타일 — 기존과 같은 순서(App.css → 로그인/SOS → MobileFlow.css)로 불러온다
 import './styles/App.css';
-import LoginPage from './pages/login/LoginPage.jsx';
-import SosPage from './pages/sos/SosPage.jsx';
-import { MapView } from './components/KakaoMapView.jsx';
-import { useCurrentLocation } from './hooks/useCurrentLocation.js';
-import { useIsMobile } from './hooks/useIsMobile.js';
-import { useStoredState } from './hooks/useStoredState.js';
-import { useTheme } from './hooks/useTheme.js';
-import { Sidebar } from './components/layout/Sidebar.jsx';
-import { HelpPanel } from './pages/help/HelpPanel.jsx';
-import { CrimeLayerScreen } from './pages/map/CrimeLayerScreen.jsx';
-import { FacilityPanel } from './pages/map/FacilityPanel.jsx';
-import { MainMapCard } from './pages/map/MainMapCard.jsx';
-import { MapControls } from './pages/map/MapControls.jsx';
-import { MapSearchOverlay } from './pages/map/MapSearchOverlay.jsx';
-import { Onboarding } from './pages/onboarding/Onboarding.jsx';
-import { MapPickScreen } from './pages/route/MapPickScreen.jsx';
-import { NavigationPanel } from './pages/route/NavigationPanel.jsx';
-import { RouteDetailScreen } from './pages/route/RouteDetailScreen.jsx';
-import { RouteInputScreen } from './pages/route/RouteInputScreen.jsx';
-import { RoutePanel } from './pages/route/RoutePanel.jsx';
-import { RouteResultScreen } from './pages/route/RouteResultScreen.jsx';
-import { SettingsPanel } from './pages/settings/SettingsPanel.jsx';
-import { SettingsScreen } from './pages/settings/SettingsScreen.jsx';
-import { SosFab, SosOverlay } from './pages/sos/SosScreen.jsx';
+import LoginPage from './pages/login/LoginPage';
+import SosPage from './pages/sos/SosPage';
+import { MapView } from './components/KakaoMapView';
+import { useAuth } from './hooks/useAuth';
+import { useCurrentLocation } from './hooks/useCurrentLocation';
+import { useIsMobile } from './hooks/useIsMobile';
+import { useRouteSearch } from './hooks/useRouteSearch';
+import { useLocationBroadcast, useSharing } from './hooks/useSharing';
+import { useStoredState } from './hooks/useStoredState';
+import { useTheme } from './hooks/useTheme';
+import { ShareBanner } from './components/ShareBanner';
+import { Sidebar } from './components/layout/Sidebar';
+import { HelpPanel } from './pages/help/HelpPanel';
+import { CrimeLayerScreen } from './pages/map/CrimeLayerScreen';
+import { FacilityPanel } from './pages/map/FacilityPanel';
+import { MainMapCard } from './pages/map/MainMapCard';
+import { MapControls } from './pages/map/MapControls';
+import { MapSearchOverlay } from './pages/map/MapSearchOverlay';
+import { Onboarding } from './pages/onboarding/Onboarding';
+import { MapPickScreen } from './pages/route/MapPickScreen';
+import { NavigationPanel } from './pages/route/NavigationPanel';
+import { RouteDetailScreen } from './pages/route/RouteDetailScreen';
+import { RouteInputScreen } from './pages/route/RouteInputScreen';
+import { RoutePanel } from './pages/route/RoutePanel';
+import { RouteResultScreen } from './pages/route/RouteResultScreen';
+import { SettingsPanel } from './pages/settings/SettingsPanel';
+import { SettingsScreen } from './pages/settings/SettingsScreen';
+import { SosFab, SosOverlay } from './pages/sos/SosScreen';
 import './styles/MobileFlow.css';
 
-function App() {
+// startMenu: AppRouter.jsx가 주소(/map, /route, /help, /settings)에 맞춰 넘겨주는 '처음 열 메뉴'.
+// 들어온 뒤의 메뉴 이동은 지금처럼 상태값으로 한다(주소는 바꾸지 않음).
+function App({ startMenu = 'map' }) {
   const [theme, setTheme] = useTheme();
-  const [menu, setMenu] = useState('map');
+  const [menu, setMenu] = useState(startMenu);
   const [navigationActive, setNavigationActive] = useState(false);
 
   // 메뉴를 바꾸면 진행 중이던 길 안내는 접어둔다 (frontend-junwoo의 handleMenuChange와 동일)
@@ -51,6 +57,11 @@ function App() {
   // 실제 GPS 위치 + (REST 키 있으면) 주소. 실패해도 각 화면이 알아서 mock으로 대체.
   const myLocation = useCurrentLocation();
 
+  // 실시간 위치 공유 — 보호자는 보호 대상의 위치를 지도에 받고, 보호 대상은 공유가 켜진 동안 위치를 올린다
+  const { user } = useAuth();
+  const { liveFriends, sharingWith, shared } = useSharing(user);
+  useLocationBroadcast(user, shared);
+
   const [onboardingDone, setOnboardingDone] = useState(() => {
     try {
       return localStorage.getItem('safemap_onboarded') === '1';
@@ -68,12 +79,19 @@ function App() {
   };
 
   // 모바일 하단 탭: 지도 / 경로 / 도움요청 / 설정 (SOS는 탭이 아니라 중앙 FAB)
-  const [mobileTab, setMobileTab] = useState('map');
+  const [mobileTab, setMobileTab] = useState(startMenu);
   // 경로 탭 안에서의 하위 흐름: 지도 하단시트 -> 경로입력 -> 경로결과 -> 경로상세
-  const [mobileScreen, setMobileScreen] = useState(null); // null | 'input' | 'result' | 'detail'
+  // /route로 들어오면 모바일은 경로 탭을 누른 것과 같이 경로 입력 화면부터
+  const [mobileScreen, setMobileScreen] = useState(startMenu === 'route' ? 'input' : null); // null | 'input' | 'result' | 'detail'
   const [sosOpen, setSosOpen] = useState(false);
   const [crimeLayerOpen, setCrimeLayerOpen] = useState(false);
+  const [crimeEnabled, setCrimeEnabled] = useState(true);
+  const [crimeOpacity, setCrimeOpacity] = useState(0.65);
+  const [crimeStatus, setCrimeStatus] = useState('loading');
   const [destination, setDestination] = useState('');
+  const [destinationCoord, setDestinationCoord] = useState(null); // 도착지 좌표(알 때만) — 길찾기 서버 요청에 쓴다
+  const [routePath, setRoutePath] = useState(null); // PC 경로 패널이 고른 경로선
+  const [navRoute, setNavRoute] = useState(null); // PC 길 안내 중인 경로
   const [routePriority, setRoutePriority] = useStoredState('mf-route-priority', 'safe'); // 'safe' | 'shortest'
   // 일몰 이후 진입하면 기본값을 '야간'으로 시작 (README 스펙)
   const [timeMode, setTimeMode] = useState(() => {
@@ -81,6 +99,25 @@ function App() {
     return hour >= 19 || hour < 6 ? 'night' : 'now';
   });
   const [selectedRouteId, setSelectedRouteId] = useState('safe');
+  // 모바일 경로 결과·안내 화면이 쓰는 경로 검색 — 결과 화면에 있는 동안만 서버에 묻는다
+  const myLat = myLocation.lat;
+  const myLng = myLocation.lng;
+  const myAddress = myLocation.address;
+  const mobileRouteQuery = useMemo(
+    () =>
+      isMobile && (mobileScreen === 'result' || mobileScreen === 'detail') && destination
+        ? {
+            origin: { name: myAddress || '현재 위치', lat: myLat, lng: myLng },
+            destination: { name: destination, ...(destinationCoord ?? {}) },
+            timeMode,
+          }
+        : null,
+    [isMobile, mobileScreen, destination, destinationCoord, timeMode, myAddress, myLat, myLng],
+  );
+  const mobileRoutes = useRouteSearch(mobileRouteQuery);
+  const mobileSelectedRoute = mobileRoutes.routes?.find((r) => r.id === selectedRouteId) ?? mobileRoutes.routes?.[0] ?? null;
+  // 지도에 그릴 경로선 — 모바일은 경로 결과·안내 화면일 때, PC는 경로 메뉴일 때만
+  const drawnPath = isMobile ? (mobileSelectedRoute?.path ?? null) : menu === 'route' ? routePath : null;
   const [mapPickerOpen, setMapPickerOpen] = useState(false);
   const [pickCenter, setPickCenter] = useState(null);
   const onCenterIdle = useCallback((coord) => setPickCenter(coord), []);
@@ -97,9 +134,10 @@ function App() {
     setMapPickerOpen(true);
   };
 
-  const openRouteInput = (prefill) => {
+  const openRouteInput = (prefill, place) => {
     closeOverlays();
     setDestination(prefill);
+    setDestinationCoord(place?.lat != null ? { lat: place.lat, lng: place.lng } : null);
     setMobileTab('route');
     setMobileScreen('input');
   };
@@ -144,6 +182,13 @@ function App() {
   // 설정 중이던 값이 돌아왔을 때 그대로 남는다(SafetyMap/frontend 통합본 방식).
   const fullPageOpen = loginOpen || desktopSosOpen;
 
+  // 모바일은 공유 중 띠가 화면 맨 위를 차지하니, 그동안 화면들이 그만큼 아래로 내려오게 html에 표시를 단다
+  const mobileBannerOn = isMobile && !fullPageOpen && sharingWith.length > 0;
+  useEffect(() => {
+    document.documentElement.classList.toggle('hasShareBanner', mobileBannerOn);
+    return () => document.documentElement.classList.remove('hasShareBanner');
+  }, [mobileBannerOn]);
+
   // PC 가운데 정보 패널 접기 — 지도를 넓게 보고 싶을 때. 새로고침해도 유지.
   const [panelCollapsed, setPanelCollapsed] = useStoredState('mf-panel-collapsed', false);
   const collapsed = panelCollapsed && !isMobile;
@@ -177,7 +222,7 @@ function App() {
                 lng={myLocation.lng}
               />
             )}
-            {mobileTab === 'help' && <HelpPanel />}
+            {mobileTab === 'help' && <HelpPanel onOpenLogin={() => setLoginOpen(true)} />}
           </>
         ) : (
           <>
@@ -186,16 +231,27 @@ function App() {
             <div style={{ display: menu === 'route' && !navigationActive ? 'block' : 'none' }}>
               <RoutePanel
                 originLabel={myLocation.address}
+                originCoord={myLat != null ? { lat: myLat, lng: myLng } : null}
                 routePriority={routePriority}
-                onStartNavigation={() => setNavigationActive(true)}
+                onRoutePath={setRoutePath}
+                onStartNavigation={(route) => {
+                  setNavRoute(route);
+                  setNavigationActive(true);
+                }}
               />
             </div>
             {menu === 'route' && navigationActive && (
-              <NavigationPanel onEnd={() => setNavigationActive(false)} />
+              <NavigationPanel route={navRoute} onEnd={() => setNavigationActive(false)} />
             )}
-            {menu === 'help' && <HelpPanel />}
+            {menu === 'help' && <HelpPanel onOpenLogin={() => setLoginOpen(true)} />}
             {menu === 'map' && (
-              <FacilityPanel layers={layers} layerStatus={layerStatus} onToggle={toggleLayer} />
+              <>
+                <FacilityPanel layers={layers} layerStatus={layerStatus} onToggle={toggleLayer}
+                  crimeEnabled={crimeEnabled} onOpenCrime={() => setCrimeLayerOpen((v) => !v)} />
+                {crimeLayerOpen && <CrimeLayerScreen desktop enabled={crimeEnabled} opacity={crimeOpacity}
+                  status={crimeStatus} onEnabledChange={setCrimeEnabled} onOpacityChange={setCrimeOpacity}
+                  onClose={() => setCrimeLayerOpen(false)} />}
+              </>
             )}
             {menu === 'settings' && (
               <SettingsPanel
@@ -203,6 +259,7 @@ function App() {
                 onRoutePriorityChange={setRoutePriority}
                 theme={theme}
                 onThemeChange={setTheme}
+                onOpenLogin={() => setLoginOpen(true)}
               />
             )}
           </>
@@ -226,12 +283,26 @@ function App() {
         {!fullPageOpen && (
           <MapView
             layers={layers}
-            location={isMobile ? myLocation : null}
+            location={myLocation}
+            liveFriends={liveFriends}
+            routePath={drawnPath}
             pickMode={mapPickerOpen}
             onCenterIdle={onCenterIdle}
             onLayerStatus={onLayerStatus}
+            crimeEnabled={crimeEnabled}
+            crimeOpacity={crimeOpacity}
+            onCrimeStatus={setCrimeStatus}
           />
         )}
+        {crimeEnabled && !fullPageOpen && (
+          <div className="crimeAttribution">
+            <a href="https://www.safemap.go.kr/opna/data/dataViewRenew.do?objtId=205" target="_blank" rel="noreferrer">범죄주의구간 · 생활안전지도 / 경찰청</a>
+            <span>{crimeStatus === 'missing-key' ? '인증키 설정 필요' : crimeStatus === 'error' ? '불러오기 실패 · 설정 확인' : crimeStatus === 'zoom' ? '지도를 확대해 주세요' : crimeStatus === 'outside' ? '국내 제공 범위 밖' : crimeStatus === 'loading' ? '불러오는 중…' : '공공누리 제4유형'}</span>
+          </div>
+        )}
+        {!isMobile && <ShareBanner names={sharingWith} variant="desktop" />}
+        {/* PC: 지도 오른쪽 아래 현재 위치 버튼 (모바일은 아래쪽 시트 기준으로 따로 배치) */}
+        {!isMobile && !fullPageOpen && <MapControls desktop onLocate={myLocation.refresh} />}
       </main>
 
       {/* 모바일 전용: 지도 위 검색바+오버레이 칩+컨트롤 / 온보딩 / 경로 흐름 / SOS / 범죄레이어 / 설정 */}
@@ -241,7 +312,7 @@ function App() {
             layers={layers}
             layerStatus={layerStatus}
             onToggleLayer={toggleLayer}
-            crimeOn={crimeLayerOpen}
+            crimeOn={crimeEnabled}
             onOpenCrime={() => setCrimeLayerOpen((v) => !v)}
             onOpenInput={openRouteInput}
           />
@@ -257,8 +328,9 @@ function App() {
           originLabel={myLocation.address}
           onBack={closeRouteFlow}
           onPickOnMap={openMapPicker}
-          onSelect={(name) => {
+          onSelect={(name, coord) => {
             setDestination(name);
+            setDestinationCoord(coord ?? null);
             setSelectedRouteId(routePriority);
             setMobileScreen('result');
           }}
@@ -271,6 +343,7 @@ function App() {
           onCancel={() => setMapPickerOpen(false)}
           onConfirm={(name) => {
             setDestination(name);
+            setDestinationCoord(pickCenter);
             setMapPickerOpen(false);
             setSelectedRouteId(routePriority);
             setMobileScreen('result');
@@ -282,6 +355,9 @@ function App() {
         <RouteResultScreen
           destination={destination}
           originLabel={myLocation.address}
+          routes={mobileRoutes.routes}
+          loading={mobileRoutes.loading}
+          error={mobileRoutes.error}
           routePriority={routePriority}
           onRoutePriorityChange={(p) => {
             setRoutePriority(p);
@@ -297,7 +373,7 @@ function App() {
       )}
 
       {isMobile && onboardingDone && mobileScreen === 'detail' && (
-        <RouteDetailScreen onEnd={closeRouteFlow} />
+        <RouteDetailScreen route={mobileSelectedRoute} onEnd={closeRouteFlow} />
       )}
 
       {isMobile && onboardingDone && mobileTab === 'settings' && (
@@ -310,11 +386,14 @@ function App() {
         />
       )}
 
-      {isMobile && crimeLayerOpen && <CrimeLayerScreen />}
+      {isMobile && crimeLayerOpen && <CrimeLayerScreen enabled={crimeEnabled} opacity={crimeOpacity}
+        status={crimeStatus} onEnabledChange={setCrimeEnabled} onOpacityChange={setCrimeOpacity}
+        onClose={() => setCrimeLayerOpen(false)} />}
 
       {isMobile && onboardingDone && !sosOpen && <SosFab onOpen={() => setSosOpen(true)} />}
       {isMobile && sosOpen && <SosOverlay onClose={() => setSosOpen(false)} />}
     </div>
+    {mobileBannerOn && <ShareBanner names={sharingWith} variant="mobile" />}
     {loginOpen && <LoginPage onBack={() => setLoginOpen(false)} />}
     {desktopSosOpen && <SosPage onCancel={() => setDesktopSosOpen(false)} location={myLocation} />}
     </>

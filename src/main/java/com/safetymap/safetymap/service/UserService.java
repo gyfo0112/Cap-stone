@@ -1,9 +1,6 @@
 package com.safetymap.safetymap.service;
 
-import com.safetymap.safetymap.dto.UserPublicDto;
-import com.safetymap.safetymap.dto.UserRegisterDto;
-import com.safetymap.safetymap.dto.UserTelListDto;
-import com.safetymap.safetymap.dto.UserTelRegisterDto;
+import com.safetymap.safetymap.dto.*;
 import com.safetymap.safetymap.entity.UserTel;
 import com.safetymap.safetymap.entity.Users;
 import com.safetymap.safetymap.repository.UserTelRepository;
@@ -74,5 +71,28 @@ public class UserService {
             );
             return dto;
         });
+    }
+
+    // 비밀번호 변경 메서드. 비밀번호 확인과 불일치, 기존 비밀번호 불일치시 false반환, 정상의 경우 true 반환
+    public boolean changePassword(UserPasswordChangeDto dto, String user_uuid) {
+        Users user = usersRepository.findByUser_uuid(user_uuid).orElseThrow();
+
+        if(!dto.getNewPassword().equals(dto.getConfirmNewPassword())) {
+            return false;
+        }
+
+        if(passwordEncoder.matches(dto.getOldPassword(), user.getUser_pw())) {
+            user.setUser_pw(passwordEncoder.encode(dto.getNewPassword()));
+            usersRepository.save(user);
+            return true;
+        } else {
+            return false;
+        }
+
+    }
+
+    // 전화번호 삭제 메서드
+    public void deleteUserTel(String tel_uuid, String user_uuid) {
+        userTelRepository.deleteByUser_User_uuidAndTel_uuid(user_uuid, tel_uuid);
     }
 }

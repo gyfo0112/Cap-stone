@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { coordToAddress } from '../api/kakaoLocal.js';
+import { coordToAddress } from '../api/kakaoLocal';
 
 // 실제 GPS 위치 + (REST 키가 있으면) 주소까지 가져오는 훅.
 // 권한 거부/미지원/REST 키 없음 등 어떤 이유로 실패해도 status만 바뀌고

@@ -1,36 +1,42 @@
 import { useState } from 'react';
-import { ChevronLeft, UserRound, LockKeyhole, ShieldCheck } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronLeft, UserRound, ShieldCheck } from 'lucide-react';
+import { login } from '../../data/auth';
+import { AuthField, PasswordField } from './AuthLayout';
 import './LoginPage.css';
 import logo from '../../images/logo.png';
 
+// 앱 안에서 열면 onBack(이전 화면으로), 주소(/login)로 바로 들어오면 메인(/)으로 돌아간다
 function LoginPage({ onBack }) {
+  const navigate = useNavigate();
+  const goBack = onBack ?? (() => navigate('/'));
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
   const [keepLogin, setKeepLogin] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleLogin = () => {
-    if (!userId.trim()) {
-      alert('아이디를 입력해주세요.');
+  const handleLogin = async () => {
+    if (!userId.trim() || !password) {
+      setError(!userId.trim() ? '아이디를 입력해주세요.' : '비밀번호를 입력해주세요.');
       return;
     }
-
-    if (!password.trim()) {
-      alert('비밀번호를 입력해주세요.');
-      return;
+    try {
+      await login(userId.trim(), password, keepLogin);
+      goBack();
+    } catch (e) {
+      setError(e.message);
     }
-
-    alert('로그인 기능은 나중에 서버와 연결하면 됩니다.');
   };
 
   return (
     <div className="login-page">
       <div className="login-container">
-        <button className="login-back" onClick={onBack}>
+        <button className="login-back" onClick={goBack}>
           <ChevronLeft size={20} />
           뒤로
         </button>
 
-        <button className="login-logo" onClick={onBack}>
+        <button className="login-logo" onClick={goBack}>
           <img src={logo} alt="친절한 이웃 로고" />
 
           <span>
@@ -48,32 +54,28 @@ function LoginPage({ onBack }) {
             </div>
           </div>
 
-          <div className="login-input-box">
-            <UserRound size={21} />
+          <AuthField
+            icon={<UserRound size={21} />}
+            placeholder="아이디"
+            autoComplete="username"
+            value={userId}
+            onChange={(e) => {
+              setUserId(e.target.value);
+              setError('');
+            }}
+          />
 
-            <input
-              type="text"
-              placeholder="아이디 또는 이메일"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-            />
-          </div>
-
-          <div className="login-input-box">
-            <LockKeyhole size={21} />
-
-            <input
-              type="password"
-              placeholder="비밀번호"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleLogin();
-                }
-              }}
-            />
-          </div>
+          <PasswordField
+            placeholder="비밀번호"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setError('');
+            }}
+            onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+            error={error}
+          />
 
           <div className="login-options">
             <label className="keep-login">
@@ -85,11 +87,6 @@ function LoginPage({ onBack }) {
 
               <span>로그인 상태 유지</span>
             </label>
-
-            <button className="security-button">
-              IP 보안
-              <span className="security-toggle"></span>
-            </button>
           </div>
 
           <button className="main-login-button" onClick={handleLogin}>
@@ -97,22 +94,18 @@ function LoginPage({ onBack }) {
           </button>
 
           <div className="login-links">
-            <button>아이디 찾기</button>
+            <button onClick={() => navigate('/find-id')}>아이디 찾기</button>
             <span></span>
-            <button>비밀번호 찾기</button>
+            <button onClick={() => navigate('/find-password')}>비밀번호 찾기</button>
             <span></span>
-            <button className="signup-link">회원가입</button>
+            <button className="signup-link" onClick={() => navigate('/signup')}>
+              회원가입
+            </button>
           </div>
         </div>
 
         <div className="login-footer">
-          <button>이용약관</button>
-          <span></span>
-          <button>개인정보처리방침</button>
-          <span></span>
-          <button>고객센터</button>
-
-          <p>© 친절한 이웃</p>
+          <p>친절한 이웃</p>
         </div>
       </div>
     </div>

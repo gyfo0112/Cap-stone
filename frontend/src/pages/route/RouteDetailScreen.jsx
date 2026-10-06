@@ -5,10 +5,12 @@ import {
   TriangleAlert,
   Users,
 } from 'lucide-react';
-import { GRADE_COLOR, GRADE_SOFT, SEGMENTS } from '../../data/routeData.js';
-import { useSheetToggle } from '../../hooks/useSheetToggle.js';
+import { GRADE_COLOR, GRADE_SOFT } from '../../data/routeData';
+import { useSheetToggle } from '../../hooks/useSheetToggle';
 
-export function RouteDetailScreen({ onEnd }) {
+// route: 안내 중인 경로(구간 목록 포함) — 턴바이턴 안내 문구는 아직 예시다
+export function RouteDetailScreen({ route, onEnd }) {
+  const segments = route?.segments ?? [];
   const [sharing, setSharing] = useState(false);
   const [expanded, sheetHandlers] = useSheetToggle(true);
 
@@ -36,14 +38,14 @@ export function RouteDetailScreen({ onEnd }) {
           <h3 className="mfSectionLabel" style={{ margin: 0 }}>
             구간별 안전 요인
           </h3>
-          <span className="mfSegmentSummary">총 {SEGMENTS.length}구간 · 1.8km</span>
+          <span className="mfSegmentSummary">총 {segments.length}구간 · {route?.distance ?? '-'}km</span>
         </div>
 
         <div className={expanded ? 'mfCollapsible' : 'mfCollapsible collapsed'}>
           <div className="mfCollapsibleInner">
             <div className="mfSegmentList">
-              {SEGMENTS.map((s) => (
-                <div className="mfSegmentRow" key={s.name}>
+              {segments.map((s, i) => (
+                <div className="mfSegmentRow" key={`${s.name}-${i}`}>
                   <span className="mfSegmentBar" style={{ background: GRADE_COLOR[s.grade] }} />
                   <div
                     className="mfSegmentIcon"

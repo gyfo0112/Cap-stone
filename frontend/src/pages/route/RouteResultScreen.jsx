@@ -1,17 +1,15 @@
-import { useState, useEffect } from 'react';
 import {
   Moon,
   Sun,
 } from 'lucide-react';
-import { ScoreBadge } from '../../components/ScoreBadge.jsx';
-import { ToggleGroup } from '../../components/ToggleGroup.jsx';
-import { PRIORITY_OPTIONS, ROUTE_OPTIONS } from '../../data/routeData.js';
-import { useSheetToggle } from '../../hooks/useSheetToggle.js';
-import { MobileHeader } from '../../components/layout/MobileHeader.jsx';
+import { ScoreBadge } from '../../components/ScoreBadge';
+import { ToggleGroup } from '../../components/ToggleGroup';
+import { PRIORITY_OPTIONS } from '../../data/routeData';
+import { useSheetToggle } from '../../hooks/useSheetToggle';
+import { MobileHeader } from '../../components/layout/MobileHeader';
 
-// 목적지가 바뀔 때마다 이 컴포넌트 자체를 새로 마운트해서(key=destination)
-// "계산 중" 스켈레톤을 다시 보여준다 — 아직 실제 경로 API가 없어서 결과는
-// mock이지만, 붙일 때를 위해 로딩 자리는 미리 만들어 둔다.
+// 목적지가 바뀔 때마다 이 컴포넌트 자체를 새로 마운트한다(key=destination).
+// 경로는 App이 검색해서(routes/loading/error) 내려준다 — 계산 중에는 스켈레톤, 실패하면 오류 안내.
 export function RouteResultScreen(props) {
   return <RouteResultBody key={props.destination} {...props} />;
 }
@@ -19,6 +17,9 @@ export function RouteResultScreen(props) {
 function RouteResultBody({
   destination,
   originLabel,
+  routes,
+  loading,
+  error,
   routePriority,
   onRoutePriorityChange,
   timeMode,
@@ -28,16 +29,6 @@ function RouteResultBody({
   onBack,
   onStart,
 }) {
-  const selected = ROUTE_OPTIONS.find((r) => r.id === selectedRouteId) ?? ROUTE_OPTIONS[0];
-  const shortest = ROUTE_OPTIONS[ROUTE_OPTIONS.length - 1];
-  const timeDiff = selected.duration - shortest.duration;
-
-  const [ready, setReady] = useState(false);
-  useEffect(() => {
-    const timer = setTimeout(() => setReady(true), 550);
-    return () => clearTimeout(timer);
-  }, []);
-
   const [expanded, sheetHandlers] = useSheetToggle(true);
 
   const header = (
@@ -48,7 +39,22 @@ function RouteResultBody({
     />
   );
 
-  if (!ready) {
+  if (error) {
+    return (
+      <div className="mfRouteScreen">
+        {header}
+        <div className="mfRouteSheet">
+          <span className="mfGrabHandle" />
+          <p className="mfEmptyHint">{error}</p>
+          <button className="mfOutlineBtn mfMainCta" onClick={onBack}>
+            목적지 다시 고르기
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading || !routes) {
     return (
       <div className="mfRouteScreen">
         {header}
@@ -64,6 +70,10 @@ function RouteResultBody({
       </div>
     );
   }
+
+  const selected = routes.find((r) => r.id === selectedRouteId) ?? routes[0];
+  const shortest = routes.find((r) => r.id === 'shortest') ?? routes[routes.length - 1];
+  const timeDiff = selected.duration - shortest.duration;
 
   return (
     <div className="mfRouteScreen">
@@ -116,7 +126,7 @@ function RouteResultBody({
 
             <h3 className="mfSectionLabel">대안 경로</h3>
             <div className="mfRouteList">
-              {ROUTE_OPTIONS.map((r) => (
+              {routes.map((r) => (
                 <button
                   key={r.id}
                   className={r.id === selectedRouteId ? 'mfRouteOption selected' : 'mfRouteOption'}
@@ -135,7 +145,9 @@ function RouteResultBody({
               ))}
             </div>
 
-            <p className="mfEmptyHint">화면 확인용 예시 경로입니다. 실제 경로 계산은 서버 연결 후 반영됩니다.</p>
+            {selected.source === 'mock' && (
+              <p className="mfEmptyHint">화면 확인용 예시 경로입니다. 실제 경로 계산은 서버 연결 후 반영됩니다.</p>
+            )}
             <button className="mfPrimaryBtn mfMainCta" onClick={onStart}>
               안내 시작
             </button>

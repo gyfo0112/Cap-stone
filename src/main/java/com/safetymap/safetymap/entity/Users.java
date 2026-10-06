@@ -22,7 +22,7 @@ public class Users {
     private String user_id;
 
     //  일단 30으로넣어놨습니다
-    @Column(name = "user_pw", nullable = false, length = 30)
+    @Column(name = "user_pw", nullable = false, length = 100)
     private String user_pw;
 
 

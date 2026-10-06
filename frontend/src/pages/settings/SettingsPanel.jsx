@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import {
-  UserPlus,
-} from 'lucide-react';
-import { ToggleGroup } from '../../components/ToggleGroup.jsx';
-import { addContact, getContacts, removeContact } from '../../data/contacts.js';
-import { PRIORITY_OPTIONS, THEME_OPTIONS } from '../../data/routeData.js';
-import { useStoredState } from '../../hooks/useStoredState.js';
+import { UserPlus, UserRound } from 'lucide-react';
+import { RoleBadge } from '../../components/RoleBadge';
+import { LocationSharing } from '../../components/LocationSharing';
+import { ToggleGroup } from '../../components/ToggleGroup';
+import { PRIORITY_OPTIONS, THEME_OPTIONS } from '../../data/routeData';
+import { useAuth } from '../../hooks/useAuth';
+import { useContacts } from '../../hooks/useContacts';
+import { useStoredState } from '../../hooks/useStoredState';
 
 const NOTIF_ITEMS = [
   { key: 'zoneEntry', title: '위험 구간 진입 알림', desc: '주의구간 100m 이내 진입 시 진동' },
@@ -15,9 +16,10 @@ const NOTIF_ITEMS = [
 
 // 모바일 설정 화면과 내용은 같되, controlPanel 안에 들어가는 데스크탑 전용 레이아웃.
 // 보호자 연락처는 모바일과 완전히 같은 저장소(contacts.js/localStorage)를 그대로 쓴다.
-export function SettingsPanel({ routePriority, onRoutePriorityChange, theme, onThemeChange }) {
+export function SettingsPanel({ routePriority, onRoutePriorityChange, theme, onThemeChange, onOpenLogin }) {
+  const { user, logout } = useAuth();
   const [notif, setNotif] = useStoredState('mf-notif', { zoneEntry: true, nightRecalc: true, arrival: false });
-  const [contacts, setContacts] = useState(getContacts);
+  const { contacts, needLogin, error: contactError, add: addContact, remove: deleteContact } = useContacts();
   const [addingContact, setAddingContact] = useState(false);
   const [newName, setNewName] = useState('');
   const [newPhone, setNewPhone] = useState('');
@@ -25,11 +27,11 @@ export function SettingsPanel({ routePriority, onRoutePriorityChange, theme, onT
 
   const toggleNotif = (key) => setNotif((n) => ({ ...n, [key]: !n[key] }));
 
-  const submitContact = () => {
+  const submitContact = async () => {
     const tel_name = newName.trim();
     const tel_num = newPhone.trim();
     if (!tel_name || !tel_num) return;
-    setContacts(addContact({ tel_name, tel_num, tel_type: newType }));
+    if (!(await addContact({ tel_name, tel_num, tel_type: newType }))) return; // 실패하면 폼을 그대로 두고 오류 표시
     setNewName('');
     setNewPhone('');
     setNewType('보조');
@@ -43,15 +45,39 @@ export function SettingsPanel({ routePriority, onRoutePriorityChange, theme, onT
       <p className="subtitle">친절한 이웃의 설정을 변경할 수 있습니다.</p>
 
       <div className="settingsCard">
+        <div className="guardianItem accountItem">
+          <div className="guardianAvatar">
+            <UserRound size={20} />
+          </div>
+          <div className="guardianInfo">
+            <strong>
+              {user ? user.name : '로그인하세요'}
+              {user && <RoleBadge role={user.role} />}
+            </strong>
+            <span>{user ? `@${user.userId}` : '연락처·즐겨찾기를 안전하게 보관'}</span>
+          </div>
+          <button className="accountButton" onClick={user ? logout : onOpenLogin}>
+            {user ? '로그아웃' : '로그인'}
+          </button>
+        </div>
+      </div>
+
+      <div className="settingsCard">
+        <h3>{user?.role === 'protected' ? '내 위치 공유' : '실시간 위치 공유'}</h3>
+        <LocationSharing />
+      </div>
+
+      <div className="settingsCard">
         <h3>기본 안전 우선도</h3>
         <p className="settingsDescription">모든 경로 계산의 기본값으로 사용됩니다.</p>
         <ToggleGroup options={PRIORITY_OPTIONS} value={routePriority} onChange={onRoutePriorityChange} label="기본 안전 우선도" />
       </div>
 
       <div className="settingsCard">
-        <h3>보호자 연락처</h3>
+        <h3>{user?.role === 'guardian' ? '긴급 연락처' : '보호자 연락처'}</h3>
 
-        {contacts.length === 0 && <p className="settingsDescription">등록된 보호자가 없어요.</p>}
+        {needLogin && <p className="settingsDescription">로그인하면 보호자 연락처를 저장할 수 있어요.</p>}
+        {!needLogin && contacts.length === 0 && <p className="settingsDescription">등록된 보호자가 없어요.</p>}
         {contacts.map((c, i) => (
           <div key={c.tel_uuid}>
             {i > 0 && <div className="guardianDivider" />}
@@ -64,7 +90,7 @@ export function SettingsPanel({ routePriority, onRoutePriorityChange, theme, onT
               <span className="guardianBadge">{c.tel_type}</span>
               <button
                 className="guardianRemoveButton"
-                onClick={() => setContacts(removeContact(c.tel_uuid))}
+                onClick={() => deleteContact(c.tel_uuid)}
                 aria-label={`${c.tel_name} 연락처 삭제`}
               >
                 ×
@@ -73,17 +99,21 @@ export function SettingsPanel({ routePriority, onRoutePriorityChange, theme, onT
           </div>
         ))}
 
-        {addingContact ? (
+        {contactError && <p className="shareError">{contactError}</p>}
+
+        {needLogin ? null : addingContact ? (
           <div className="addContactForm">
             <input
               className="addContactInput"
               placeholder="이름"
+              aria-label="이름"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
             />
             <input
               className="addContactInput"
               placeholder="전화번호"
+              aria-label="전화번호"
               value={newPhone}
               onChange={(e) => setNewPhone(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && submitContact()}

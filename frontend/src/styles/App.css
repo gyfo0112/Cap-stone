@@ -36,8 +36,9 @@ button {
 .app {
   display: grid;
 
+  /* 좌측 메뉴 140px · 가운데 패널 370px — PC에선 화면 폭과 관계없이 고정 */
   grid-template-columns:
-    165px
+    140px
     370px
     1fr;
 
@@ -131,6 +132,55 @@ button {
   flex-direction: column;
 
   gap: 20px;
+}
+
+/* 로그인 후 — 이름 + 로그아웃 */
+.sidebarUser {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebarUser .loginButton span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logoutLink {
+  align-self: flex-start;
+  border: 0;
+  background: transparent;
+  padding: 4px 13px 4px 48px;
+  font-size: 13px;
+  color: var(--mf-text-muted);
+  cursor: pointer;
+}
+
+.logoutLink:hover {
+  color: var(--mf-text-primary);
+}
+
+.accountItem {
+  padding: 0;
+}
+
+.accountButton {
+  flex-shrink: 0;
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--mf-border);
+  border-radius: 10px;
+  background: var(--mf-surface);
+  color: var(--mf-text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.accountButton:hover {
+  color: var(--mf-text-primary);
 }
 
 .emergencyButton {
@@ -1162,19 +1212,10 @@ button {
 
 /* =========================
    반응형
-   - ≥1280px  데스크탑: 기본 그리드(위) 그대로
-   - 768~1279px 태블릿: 사이드바/패널 축소
-   - <768px   모바일: 풀스크린 지도 + 하단 시트 + 하단 탭바
+   - ≥768px  PC: 기본 그리드(위) 그대로 — 좌측 메뉴 140px, 가운데 패널 370px 고정
+             (예전엔 1280px 미만에서 패널이 340px로 줄었음)
+   - <768px  모바일: 풀스크린 지도 + 하단 시트 + 하단 탭바
 ========================= */
-
-@media (min-width: 768px) and (max-width: 1279.98px) {
-  .app {
-    grid-template-columns:
-      140px
-      340px
-      1fr;
-  }
-}
 
 @media (max-width: 767.98px) {
   .app {
@@ -1436,7 +1477,7 @@ button {
 }
 
 .app.panelCollapsed {
-  grid-template-columns: 165px 0 1fr;
+  grid-template-columns: 140px 0 1fr;
 }
 
 .app.panelCollapsed .controlPanel {
@@ -1472,14 +1513,433 @@ button {
   color: var(--mf-text-primary);
 }
 
-@media (min-width: 768px) and (max-width: 1279.98px) {
-  .app.panelCollapsed {
-    grid-template-columns: 140px 0 1fr;
-  }
-}
 
 @media (max-width: 767.98px) {
   .panelToggle {
     display: none;
   }
+}
+
+/* PC 경로설정 — 입력창 오른쪽 한 번에 지우기 ✕ (값이 있을 때만) */
+.locationClear {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--mf-track);
+  color: var(--mf-text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.locationClear:hover {
+  background: var(--mf-border);
+  color: var(--mf-text-primary);
+}
+
+/* PC 경로설정 — 즐겨찾기 */
+.routeDropLabel {
+  padding: 10px 16px 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--mf-text-muted);
+}
+
+.routeDropStar.active {
+  color: #f5a524;
+}
+
+/* 집/회사 바로가기 — 주소를 정한 뒤엔 오른쪽에 연필(변경) 버튼 */
+.quickItem {
+  flex: 1;
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+
+.quickEdit {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--mf-border);
+  border-radius: 14px;
+  background: var(--mf-surface);
+  color: var(--mf-text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.quickEdit:hover {
+  color: var(--mf-text-primary);
+}
+
+.quickPlaceInput {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 14px;
+}
+
+.quickSuggest {
+  max-height: 220px;
+  overflow-y: auto;
+  margin-top: 8px;
+}
+
+.quickSuggest button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 6px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  text-align: left;
+  color: var(--mf-text-primary);
+  cursor: pointer;
+}
+
+.quickSuggest button:hover {
+  background: var(--mf-surface-soft);
+}
+
+.quickSuggest svg {
+  flex-shrink: 0;
+  color: var(--mf-text-muted);
+}
+
+.quickSuggest span {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.quickSuggest small {
+  font-size: 12px;
+  color: var(--mf-text-muted);
+}
+
+/* 키보드로 이동할 때 현재 위치가 보이게 */
+button:focus-visible,
+[role='button']:focus-visible {
+  outline: 2px solid #2f82f5;
+  outline-offset: 2px;
+}
+
+/* 실시간 위치 공유 카드 (설정 화면 PC·모바일 공용) */
+.shareHint {
+  margin: 0 0 12px;
+  font-size: 12.5px;
+  color: var(--mf-text-tertiary);
+}
+
+.shareRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.shareItem + .shareItem {
+  border-top: 1px solid var(--mf-border-soft);
+}
+
+.shareOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 0 10px;
+  font-size: 12.5px;
+  color: var(--mf-text-tertiary);
+  cursor: pointer;
+}
+
+.shareOption input {
+  width: 16px;
+  height: 16px;
+  accent-color: #2f82f5;
+}
+
+.shareLockIcon {
+  flex-shrink: 0;
+  color: var(--mf-text-muted);
+}
+
+.shareInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.shareInfo strong {
+  font-size: 14px;
+}
+
+.shareStatus {
+  font-size: 12px;
+  color: var(--mf-text-muted);
+}
+
+.shareStatus.stale {
+  color: #d97706;
+  font-weight: 600;
+}
+
+.shareStatus.on {
+  color: #1f9d55;
+  font-weight: 600;
+}
+
+.shareRemove {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--mf-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.shareRemove:hover {
+  color: var(--mf-text-primary);
+}
+
+.shareLock {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 12px;
+  font-size: 12px;
+  color: var(--mf-text-muted);
+}
+
+.shareAdd {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.shareAdd .mfAddContactInput {
+  flex: 1;
+  min-width: 0;
+}
+
+.shareAddButton {
+  flex-shrink: 0;
+  height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 10px;
+  background: #2f82f5;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.shareAddButton:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.shareCodeButton {
+  width: 100%;
+}
+
+.shareCode {
+  margin: 12px 0 0;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--mf-surface-soft);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shareCode strong {
+  font-size: 26px;
+  letter-spacing: 6px;
+  color: var(--mf-text-primary);
+}
+
+.shareCode span {
+  font-size: 12px;
+  color: var(--mf-text-tertiary);
+}
+
+.shareError {
+  margin: 8px 2px 0;
+  font-size: 13px;
+  color: #e5484d;
+}
+
+/* 지도 위 보호 대상 위치 */
+.kakaoFriend {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateY(-50%);
+}
+
+.kakaoFriend span {
+  padding: 3px 9px;
+  border-radius: 99px;
+  background: #1f9d55;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(16, 24, 33, 0.25);
+}
+
+.kakaoFriend i {
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  border-radius: 50%;
+  background: #1f9d55;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 6px rgba(31, 157, 85, 0.2);
+}
+
+/* PC 경로설정 — 집/회사 아래 즐겨찾기 버튼과 목록 */
+.favToggle {
+  width: 100%;
+  height: 44px;
+  margin: -8px 0 20px;
+  border: 1px solid var(--mf-border);
+  border-radius: 14px;
+  background: var(--mf-surface);
+  color: var(--mf-text-secondary);
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.favToggle:hover {
+  color: var(--mf-text-primary);
+}
+
+.favToggle.open {
+  border-color: #f5a524;
+  color: #d97706;
+}
+
+.favList {
+  margin: -8px 0 20px;
+  border: 1px solid var(--mf-border);
+  border-radius: 14px;
+  background: var(--mf-surface);
+  overflow: hidden;
+}
+
+.favList .routeDropRow + .routeDropRow {
+  border-top: 1px solid var(--mf-border-soft);
+}
+
+/* 계정 구분 뱃지 (보호자 / 보호 대상) */
+.roleBadge {
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: var(--mf-accent-soft);
+  color: var(--mf-accent-text);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.roleBadge.protected {
+  background: rgba(31, 157, 85, 0.14);
+  color: #1f9d55;
+}
+
+.sidebarUserSub {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding-left: 48px; /* 이름 글자와 같은 세로줄에 맞춘다 */
+}
+
+.sidebarUserSub .roleBadge {
+  margin-left: 0;
+}
+
+.sidebarUserSub .logoutLink {
+  padding: 4px 0;
+}
+
+/* 보호 대상 계정: 내 위치가 공유되는 동안 계속 보이는 표시 */
+.shareBanner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #1f9d55;
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.shareBanner.desktop {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  z-index: 6;
+  transform: translateX(-50%);
+  padding: 7px 14px;
+  border-radius: 99px;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(16, 24, 33, 0.25);
+}
+
+.shareBanner.mobile {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 65; /* 길찾기·SOS 화면(50~60) 위에서도 항상 보이게 */
+  height: calc(28px + env(safe-area-inset-top));
+  padding: env(safe-area-inset-top) 12px 0;
+}
+
+/* 길찾기 경로의 출발(파랑)·도착(빨강) 점 */
+.kakaoRouteDot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow: 0 1px 5px rgba(16, 24, 33, 0.4);
+}
+
+.kakaoRouteDot.start {
+  background: #2f82f5;
+}
+
+.kakaoRouteDot.end {
+  background: #ff4b50;
 }

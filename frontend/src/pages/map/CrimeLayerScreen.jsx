@@ -1,96 +1,43 @@
-import { useState } from 'react';
-import {
-  TriangleAlert,
-} from 'lucide-react';
+import { TriangleAlert, X } from 'lucide-react';
 
-// 등급 10칸 색상은 기존 팔레트의 안전(초록)-주의(옐로우)-위험(레드) 세 축 사이를
-// 손으로 보간한 값 — 디자인 원본 팔레트를 그대로 쓰지 않고 우리 색으로 재구성.
-const CRIME_LEGEND = [
-  '#22a06b',
-  '#3aa966',
-  '#55b25c',
-  '#7ab84c',
-  '#a3b93c',
-  '#c9b02e',
-  '#dda32a',
-  '#e69126',
-  '#ec7a2a',
-  '#f34b52',
-];
+const STATUS_TEXT = {
+  loading: '범죄주의구간을 불러오는 중…',
+  ok: '현재 지도 범위의 공공데이터 이미지를 불러왔어요.',
+  'missing-key': '생활안전지도 인증키가 필요해요. frontend/.env.local에 SAFEMAP_SERVICE_KEY를 입력한 후 서버를 재시작해 주세요.',
+  error: '범죄정보를 불러오지 못했어요. 인증키, 범죄주의구간(전체) 활용 승인, 인터넷 연결을 확인한 후 지도를 움직이거나 표시를 껐다 켜 주세요.',
+  zoom: '범죄주의구간을 보려면 지도를 더 확대해 주세요.',
+  outside: '국내 공공데이터 제공 범위 안으로 지도를 이동해 주세요.',
+};
 
-// 범례 칸 배경(초록~빨강)에서 흰색/짙은색 중 대비가 더 큰 글자색을 고른다
-function legendTextColor(hex) {
-  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
-  const f = (v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
-  const L = 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
-  return 1.05 / (L + 0.05) > (L + 0.05) / 0.06 ? '#fff' : '#1c2027';
-}
-
-export function CrimeLayerScreen() {
-  const [enabled, setEnabled] = useState(true);
-  const [opacity, setOpacity] = useState(60);
-
+export function CrimeLayerScreen({ desktop = false, enabled, opacity, status, onEnabledChange, onOpacityChange, onClose }) {
   return (
-    <div className="mfRouteScreen">
-      <div className="mfRouteSheet">
-        <span className="mfGrabHandle" />
-
+    <section className={desktop ? 'crimePanelDesktop' : 'mfRouteScreen'} aria-label="범죄주의구간 설정">
+      <div className="mfRouteSheet crimeSheet">
+        {!desktop && <span className="mfGrabHandle" />}
         <div className="mfCrimeHeaderRow">
-          <div className="mfCrimeTopIcon">
-            <TriangleAlert size={18} />
-          </div>
-          <div className="mfCrimeTopText">
-            <strong>범죄주의구간</strong>
-            <span>경찰청 격자 WMS · 2026.08 기준</span>
-          </div>
-          <button
-            className={enabled ? 'mfSwitch on' : 'mfSwitch'}
-            onClick={() => setEnabled((v) => !v)}
-            aria-label="범죄주의구간 표시 토글"
-          >
-            <span />
-          </button>
+          <div className="mfCrimeTopIcon"><TriangleAlert size={18} /></div>
+          <div className="mfCrimeTopText"><strong>범죄주의구간</strong><span>생활안전지도 · 경찰청 제공</span></div>
+          <button className={enabled ? 'mfSwitch on' : 'mfSwitch'} onClick={() => onEnabledChange(!enabled)}
+            role="switch" aria-checked={enabled} aria-label="범죄주의구간 표시"><span /></button>
+          <button className="crimeClose" onClick={onClose} aria-label="범죄정보 설정 닫기"><X size={18} /></button>
         </div>
-
-        <div className={enabled ? 'mfCrimeBody' : 'mfCrimeBody mfCrimeBody--off'}>
-          <h3 className="mfSectionLabel">위험 등급 범례</h3>
-          <div className="mfLegend">
-            {CRIME_LEGEND.map((c, i) => (
-              <div key={c} className="mfLegendCell" style={{ background: c, color: legendTextColor(c) }}>
-                {i + 1}
-              </div>
-            ))}
+        <p className="crimeStatus" role="status">{enabled ? STATUS_TEXT[status] || STATUS_TEXT.loading : '범죄주의구간 표시가 꺼져 있어요.'}</p>
+        <div className="mfSliderHeaderRow">
+          <label className="mfSectionLabel" htmlFor="crime-opacity">범죄정보 진하기</label>
+          <span className="mfSliderValue">{Math.round(opacity * 100)}%</span>
+        </div>
+        <input id="crime-opacity" type="range" min={0} max={100} value={Math.round(opacity * 100)}
+          onChange={(e) => onOpacityChange(Number(e.target.value) / 100)}
+          className="mfSlider mfSliderNeutral" disabled={!enabled} />
+        <div className="crimeRiskLegend" role="img" aria-label="범죄주의구간 색상 안내: 연한 노랑은 안전, 가운데 주황은 주의, 진한 빨강은 위험">
+          <div className="crimeRiskGradient" aria-hidden="true" />
+          <div className="crimeRiskLabels" aria-hidden="true">
+            <span>안전</span>
+            <span>주의</span>
+            <span>위험</span>
           </div>
-          <p className="mfLegendCaption">1등급 안전 · 5·6등급 보통 · 10등급 위험</p>
-
-          <div className="mfCrimeAreaCard">
-            <span className="mfCrimeAreaDot" />
-            <div>
-              <strong>이 지역 8등급 · 주의</strong>
-              <p>
-                서교동 일부 격자는 야간 절도·폭력 신고가 마포구 평균보다 높습니다. 22시 이후
-                어울마당로 대로변 이용을 권장합니다.
-              </p>
-            </div>
-          </div>
-
-          <div className="mfSliderHeaderRow">
-            <h3 className="mfSectionLabel">레이어 투명도</h3>
-            <span className="mfSliderValue">{opacity}%</span>
-          </div>
-          <input
-            type="range"
-            min={0}
-            max={100}
-            value={opacity}
-            onChange={(e) => setOpacity(Number(e.target.value))}
-            className="mfSlider mfSliderNeutral"
-            disabled={!enabled}
-          />
         </div>
       </div>
-    </div>
+    </section>
   );
 }
-
-/* ---------- 8. 설정 ---------- */

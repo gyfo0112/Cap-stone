@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import {
   MapPin,
 } from 'lucide-react';
-import { coordToAddress, hasKakaoRestKey } from '../../api/kakaoLocal.js';
-import { MobileHeader } from '../../components/layout/MobileHeader.jsx';
+import { coordToAddress, hasKakaoRestKey } from '../../api/kakaoLocal';
+import { MobileHeader } from '../../components/layout/MobileHeader';
 
 // 지도 중심에 항상 고정된 핀을 두고, 사용자가 지도를 움직이면(idle) App에서
 // 내려주는 center로 역지오코딩해 주소를 보여준다. 확정하면 그 주소를 목적지로 씀.

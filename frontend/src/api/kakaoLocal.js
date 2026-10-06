@@ -21,18 +21,31 @@ export function hasKakaoRestKey() {
   return Boolean(REST_KEY);
 }
 
-// 키워드로 장소 검색 (카카오맵 검색과 동일한 결과)
+// 장소 + 주소 검색 — 카카오맵 검색창처럼 "세종대로 110" 같은 주소를 쳐도 결과가 나온다.
+// 키워드 검색만으로는 정확한 지번/도로명 주소가 안 잡혀서 주소 검색을 함께 불러 주소 결과를 앞에 둔다.
 export async function searchPlaces(query, { size = 8 } = {}) {
   const q = query?.trim();
   if (!q) return [];
-  const data = await kakaoGet('/v2/local/search/keyword.json', { query: q, size });
-  return (data.documents || []).map((d) => ({
+  const [keyword, address] = await Promise.all([
+    kakaoGet('/v2/local/search/keyword.json', { query: q, size }),
+    // 주소 검색이 실패해도(주소가 아닌 검색어 등) 장소 결과는 보여준다
+    kakaoGet('/v2/local/search/address.json', { query: q, size: 3 }).catch(() => ({ documents: [] })),
+  ]);
+  const addresses = (address.documents || []).map((d) => ({
+    id: `addr-${d.x},${d.y}`,
+    name: d.address_name,
+    address: d.road_address?.address_name || d.address?.address_name || '',
+    lat: Number(d.y),
+    lng: Number(d.x),
+  }));
+  const places = (keyword.documents || []).map((d) => ({
     id: d.id,
     name: d.place_name,
     address: d.road_address_name || d.address_name,
     lat: Number(d.y),
     lng: Number(d.x),
   }));
+  return [...addresses, ...places].slice(0, size);
 }
 
 // 좌표 -> 도로명/지번 주소 (현재 위치 표시용 리버스 지오코딩)

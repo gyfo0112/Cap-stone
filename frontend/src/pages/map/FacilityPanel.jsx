@@ -5,7 +5,7 @@ import {
   Siren,
   TriangleAlert,
 } from 'lucide-react';
-import { LAYER_STATUS_TEXT } from '../../api/markersApi.js';
+import { LAYER_STATUS_TEXT } from '../../api/markersApi';
 
 // 지도에 켜고 끌 수 있는 안전시설 — key는 markersApi.js MARKER_LAYERS와 같다
 const FACILITY_BUTTONS = [
@@ -15,7 +15,7 @@ const FACILITY_BUTTONS = [
   { key: 'safetyBell', icon: Siren, title: '안심벨(비상벨) 위치' },
 ];
 
-export function FacilityPanel({ layers, layerStatus, onToggle }) {
+export function FacilityPanel({ layers, layerStatus, onToggle, crimeEnabled, onOpenCrime }) {
   return (
     <div className="panelContent">
       <h1>지도</h1>
@@ -42,12 +42,12 @@ export function FacilityPanel({ layers, layerStatus, onToggle }) {
         );
       })}
 
-      <button className="facilityButton" disabled>
+      <button className={crimeEnabled ? "facilityButton active" : "facilityButton"} onClick={onOpenCrime}>
         <TriangleAlert />
 
         <div>
           <strong>범죄주의구간</strong>
-          <span>준비 중</span>
+          <span>{crimeEnabled ? "표시 중 · 진하기 / 설정" : "표시 설정 열기"}</span>
         </div>
       </button>
     </div>
