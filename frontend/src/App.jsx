@@ -229,12 +229,14 @@ function App({ startMenu = 'map' }) {
         {!fullPageOpen && (
           <MapView
             layers={layers}
-            location={isMobile ? myLocation : null}
+            location={myLocation}
             pickMode={mapPickerOpen}
             onCenterIdle={onCenterIdle}
             onLayerStatus={onLayerStatus}
           />
         )}
+        {/* PC: 지도 오른쪽 아래 현재 위치 버튼 (모바일은 아래쪽 시트 기준으로 따로 배치) */}
+        {!isMobile && !fullPageOpen && <MapControls desktop onLocate={myLocation.refresh} />}
       </main>
 
       {/* 모바일 전용: 지도 위 검색바+오버레이 칩+컨트롤 / 온보딩 / 경로 흐름 / SOS / 범죄레이어 / 설정 */}

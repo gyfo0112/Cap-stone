@@ -1287,6 +1287,14 @@
   gap: 10px;
 }
 
+/* PC — 지도 영역(.mapArea) 안 오른쪽 아래에 붙인다 */
+.mfMapControls.desktop {
+  position: absolute;
+  right: 20px;
+  bottom: 28px;
+  z-index: 5;
+}
+
 .mfMapControlBtn {
   width: 46px;
   height: 46px;
