@@ -1,22 +1,25 @@
 package com.safetymap.safetymap.dto;
 
 // 프론트에 돌려주는 회원 정보. 비밀번호(user_pw)는 절대 넣지 않는다
+// role: guardian(보호자) / protected(보호 대상)
 public class UserInfoDto {
 
     private String user_uuid;
     private String user_id;
     private String user_name;
     private String info;
+    private String role;
 
     public UserInfoDto() {
 
     }
 
-    public UserInfoDto(String user_uuid, String user_id, String user_name, String info) {
+    public UserInfoDto(String user_uuid, String user_id, String user_name, String info, String role) {
         this.user_uuid = user_uuid;
         this.user_id = user_id;
         this.user_name = user_name;
         this.info = info;
+        this.role = role;
     }
 
     public String getUser_uuid() {
@@ -49,5 +52,13 @@ public class UserInfoDto {
 
     public void setInfo(String info) {
         this.info = info;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 }
