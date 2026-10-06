@@ -1,7 +1,10 @@
 .login-page {
   width: 100%;
   box-sizing: border-box;
-  min-height: 100vh;
+  /* body가 overflow:hidden(지도 앱)이라 이 화면이 직접 스크롤을 맡는다 */
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
 
   display: flex;
   justify-content: center;
@@ -316,4 +319,76 @@
 
 .password-toggle:hover {
   color: var(--mf-text-primary);
+}
+
+/* 아이디 찾기 · 비밀번호 찾기 · 회원가입 */
+.auth-field {
+  margin-bottom: 14px;
+}
+
+.auth-field .login-input-box {
+  margin-bottom: 0;
+}
+
+.login-input-box.hasError {
+  border-color: #e5484d;
+}
+
+.auth-msg {
+  margin: 6px 4px 0;
+  font-size: 13px;
+  color: var(--mf-text-tertiary);
+}
+
+.auth-msg.error {
+  color: #e5484d;
+}
+
+.auth-submit {
+  margin-top: 8px;
+}
+
+.auth-plain {
+  width: auto !important;
+  height: auto !important;
+  background: transparent !important;
+  font-size: 14px;
+  color: var(--mf-text-tertiary);
+}
+
+.signup-agree {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 22px 0 14px;
+  padding: 16px 18px;
+  border: 1px solid var(--mf-border);
+  border-radius: 14px;
+}
+
+.signup-agree label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--mf-text-secondary);
+}
+
+.signup-agree input {
+  width: 17px;
+  height: 17px;
+  accent-color: #2f82f5;
+}
+
+.signup-agree-all {
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--mf-border);
+  font-weight: 700;
+  color: var(--mf-text-primary) !important;
+}
+
+.signup-agree-item em {
+  font-style: normal;
+  color: #2f82f5;
 }
