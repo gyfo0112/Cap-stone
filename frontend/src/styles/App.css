@@ -1926,3 +1926,20 @@ button:focus-visible,
   height: calc(28px + env(safe-area-inset-top));
   padding: env(safe-area-inset-top) 12px 0;
 }
+
+/* 길찾기 경로의 출발(파랑)·도착(빨강) 점 */
+.kakaoRouteDot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow: 0 1px 5px rgba(16, 24, 33, 0.4);
+}
+
+.kakaoRouteDot.start {
+  background: #2f82f5;
+}
+
+.kakaoRouteDot.end {
+  background: #ff4b50;
+}

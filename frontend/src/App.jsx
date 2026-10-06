@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 // 전역 스타일 — 기존과 같은 순서(App.css → 로그인/SOS → MobileFlow.css)로 불러온다
 import './styles/App.css';
@@ -8,6 +8,7 @@ import { MapView } from './components/KakaoMapView';
 import { useAuth } from './hooks/useAuth';
 import { useCurrentLocation } from './hooks/useCurrentLocation';
 import { useIsMobile } from './hooks/useIsMobile';
+import { useRouteSearch } from './hooks/useRouteSearch';
 import { useLocationBroadcast, useSharing } from './hooks/useSharing';
 import { useStoredState } from './hooks/useStoredState';
 import { useTheme } from './hooks/useTheme';
@@ -85,6 +86,9 @@ function App({ startMenu = 'map' }) {
   const [sosOpen, setSosOpen] = useState(false);
   const [crimeLayerOpen, setCrimeLayerOpen] = useState(false);
   const [destination, setDestination] = useState('');
+  const [destinationCoord, setDestinationCoord] = useState(null); // 도착지 좌표(알 때만) — 길찾기 서버 요청에 쓴다
+  const [routePath, setRoutePath] = useState(null); // PC 경로 패널이 고른 경로선
+  const [navRoute, setNavRoute] = useState(null); // PC 길 안내 중인 경로
   const [routePriority, setRoutePriority] = useStoredState('mf-route-priority', 'safe'); // 'safe' | 'shortest'
   // 일몰 이후 진입하면 기본값을 '야간'으로 시작 (README 스펙)
   const [timeMode, setTimeMode] = useState(() => {
@@ -92,6 +96,25 @@ function App({ startMenu = 'map' }) {
     return hour >= 19 || hour < 6 ? 'night' : 'now';
   });
   const [selectedRouteId, setSelectedRouteId] = useState('safe');
+  // 모바일 경로 결과·안내 화면이 쓰는 경로 검색 — 결과 화면에 있는 동안만 서버에 묻는다
+  const myLat = myLocation.lat;
+  const myLng = myLocation.lng;
+  const myAddress = myLocation.address;
+  const mobileRouteQuery = useMemo(
+    () =>
+      isMobile && (mobileScreen === 'result' || mobileScreen === 'detail') && destination
+        ? {
+            origin: { name: myAddress || '현재 위치', lat: myLat, lng: myLng },
+            destination: { name: destination, ...(destinationCoord ?? {}) },
+            timeMode,
+          }
+        : null,
+    [isMobile, mobileScreen, destination, destinationCoord, timeMode, myAddress, myLat, myLng],
+  );
+  const mobileRoutes = useRouteSearch(mobileRouteQuery);
+  const mobileSelectedRoute = mobileRoutes.routes?.find((r) => r.id === selectedRouteId) ?? mobileRoutes.routes?.[0] ?? null;
+  // 지도에 그릴 경로선 — 모바일은 경로 결과·안내 화면일 때, PC는 경로 메뉴일 때만
+  const drawnPath = isMobile ? (mobileSelectedRoute?.path ?? null) : menu === 'route' ? routePath : null;
   const [mapPickerOpen, setMapPickerOpen] = useState(false);
   const [pickCenter, setPickCenter] = useState(null);
   const onCenterIdle = useCallback((coord) => setPickCenter(coord), []);
@@ -108,9 +131,10 @@ function App({ startMenu = 'map' }) {
     setMapPickerOpen(true);
   };
 
-  const openRouteInput = (prefill) => {
+  const openRouteInput = (prefill, place) => {
     closeOverlays();
     setDestination(prefill);
+    setDestinationCoord(place?.lat != null ? { lat: place.lat, lng: place.lng } : null);
     setMobileTab('route');
     setMobileScreen('input');
   };
@@ -204,12 +228,17 @@ function App({ startMenu = 'map' }) {
             <div style={{ display: menu === 'route' && !navigationActive ? 'block' : 'none' }}>
               <RoutePanel
                 originLabel={myLocation.address}
+                originCoord={myLat != null ? { lat: myLat, lng: myLng } : null}
                 routePriority={routePriority}
-                onStartNavigation={() => setNavigationActive(true)}
+                onRoutePath={setRoutePath}
+                onStartNavigation={(route) => {
+                  setNavRoute(route);
+                  setNavigationActive(true);
+                }}
               />
             </div>
             {menu === 'route' && navigationActive && (
-              <NavigationPanel onEnd={() => setNavigationActive(false)} />
+              <NavigationPanel route={navRoute} onEnd={() => setNavigationActive(false)} />
             )}
             {menu === 'help' && <HelpPanel onOpenLogin={() => setLoginOpen(true)} />}
             {menu === 'map' && (
@@ -247,6 +276,7 @@ function App({ startMenu = 'map' }) {
             layers={layers}
             location={myLocation}
             liveFriends={liveFriends}
+            routePath={drawnPath}
             pickMode={mapPickerOpen}
             onCenterIdle={onCenterIdle}
             onLayerStatus={onLayerStatus}
@@ -280,8 +310,9 @@ function App({ startMenu = 'map' }) {
           originLabel={myLocation.address}
           onBack={closeRouteFlow}
           onPickOnMap={openMapPicker}
-          onSelect={(name) => {
+          onSelect={(name, coord) => {
             setDestination(name);
+            setDestinationCoord(coord ?? null);
             setSelectedRouteId(routePriority);
             setMobileScreen('result');
           }}
@@ -294,6 +325,7 @@ function App({ startMenu = 'map' }) {
           onCancel={() => setMapPickerOpen(false)}
           onConfirm={(name) => {
             setDestination(name);
+            setDestinationCoord(pickCenter);
             setMapPickerOpen(false);
             setSelectedRouteId(routePriority);
             setMobileScreen('result');
@@ -305,6 +337,9 @@ function App({ startMenu = 'map' }) {
         <RouteResultScreen
           destination={destination}
           originLabel={myLocation.address}
+          routes={mobileRoutes.routes}
+          loading={mobileRoutes.loading}
+          error={mobileRoutes.error}
           routePriority={routePriority}
           onRoutePriorityChange={(p) => {
             setRoutePriority(p);
@@ -320,7 +355,7 @@ function App({ startMenu = 'map' }) {
       )}
 
       {isMobile && onboardingDone && mobileScreen === 'detail' && (
-        <RouteDetailScreen onEnd={closeRouteFlow} />
+        <RouteDetailScreen route={mobileSelectedRoute} onEnd={closeRouteFlow} />
       )}
 
       {isMobile && onboardingDone && mobileTab === 'settings' && (

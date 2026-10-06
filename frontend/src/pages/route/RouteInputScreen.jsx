@@ -14,9 +14,9 @@ import { MobileHeader } from '../../components/layout/MobileHeader';
 export function RouteInputScreen({ initialDestination, originLabel, onBack, onPickOnMap, onSelect: goToResult }) {
   const [recents, setRecents] = useState(getRecents);
   // 어디서 고르든(검색결과/즐겨찾기/최근/Enter) 최근 검색에 남긴 뒤 결과로 이동
-  const onSelect = (name, sub) => {
-    addRecent({ name, sub });
-    goToResult(name);
+  const onSelect = (name, sub, coord) => {
+    addRecent({ name, sub, ...(coord ?? {}) });
+    goToResult(name, coord);
   };
   const [destination, setDestination] = useState(initialDestination || '');
   const [places, setPlaces] = useState(null); // 마지막으로 완료된 검색 결과
@@ -103,7 +103,7 @@ export function RouteInputScreen({ initialDestination, originLabel, onBack, onPi
                 const fav = isFavorite(p.name);
                 return (
                   <div className="mfRecentRow" key={p.id}>
-                    <button className="mfRecentRowMain" onClick={() => onSelect(p.name, p.address)}>
+                    <button className="mfRecentRowMain" onClick={() => onSelect(p.name, p.address, { lat: p.lat, lng: p.lng })}>
                       <div className="mfRecentInfo">
                         <strong>{p.name}</strong>
                         <span>{p.address}</span>
@@ -135,7 +135,7 @@ export function RouteInputScreen({ initialDestination, originLabel, onBack, onPi
             )}
             {favorites.map((f) => (
               <div className="mfRecentRow" key={f.marker_uuid}>
-                <button className="mfRecentRowMain" onClick={() => onSelect(f.marker_name)}>
+                <button className="mfRecentRowMain" onClick={() => onSelect(f.marker_name, '', { lat: f.latitude, lng: f.longitude })}>
                   <div className="mfRecentInfo">
                     <strong>{f.marker_name}</strong>
                   </div>
@@ -164,7 +164,7 @@ export function RouteInputScreen({ initialDestination, originLabel, onBack, onPi
           <div className="mfRecentList">
             {filtered.map((r) => (
               <div className="mfRecentRow" key={r.name}>
-                <button className="mfRecentRowMain" onClick={() => onSelect(r.name, r.sub)}>
+                <button className="mfRecentRowMain" onClick={() => onSelect(r.name, r.sub, r.lat != null ? { lat: r.lat, lng: r.lng } : undefined)}>
                   <div className="mfRecentInfo">
                     <strong>{r.name}</strong>
                     {r.sub && <span>{r.sub}</span>}

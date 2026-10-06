@@ -16,10 +16,11 @@ import {
 } from 'lucide-react';
 import { hasKakaoRestKey, searchPlaces } from '../../api/kakaoLocal';
 import { addRecent, clearRecents, getRecents, removeRecent } from '../../data/recents';
-import { GRADE_COLOR, GRADE_SOFT, ROUTE_OPTIONS, SEGMENTS } from '../../data/routeData';
+import { GRADE_COLOR, GRADE_SOFT } from '../../data/routeData';
 import { QuickPlaces } from '../../components/QuickPlaces';
 import { useFavorites } from '../../hooks/useFavorites';
-import { scoreGrade } from '../../hooks/useIsMobile';
+import { ScoreBadge } from '../../components/ScoreBadge';
+import { useRouteSearch } from '../../hooks/useRouteSearch';
 
 // 데스크탑의 3개 "경로 옵션" 버튼을 mock 대안 경로 2개(safe/shortest) 중 하나에 매핑한다.
 // "도보 전용"은 두 경로 모두 도보라 딱 맞는 대응이 없어 안전 우선 경로로 눌러뒀다.
@@ -29,7 +30,7 @@ const ROUTE_MODES = [
   { id: 'walk', route: 'safe', icon: PersonStanding, label: '도보 전용', desc: '걸어가는 경로' },
 ];
 
-export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
+export function RoutePanel({ originLabel, originCoord, routePriority, onStartNavigation, onRoutePath }) {
   const [origin, setOrigin] = useState(originLabel || '현재 위치');
   // 이 패널이 항상 마운트돼 있어서(탭 전환에도 검색상태 유지) 첫 렌더 시점엔
   // GPS 주소가 아직 안 왔을 수 있다 — 사용자가 직접 수정하기 전까지는 계속 따라간다.
@@ -49,7 +50,9 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
     setSelectedMode(routePriority);
   }
   const [selectedRouteId, setSelectedRouteId] = useState(routePriority);
-  const [resultsReady, setResultsReady] = useState(false);
+  // 경로 검색 — 검색 버튼을 누를 때마다 새 query를 만들고, 결과·로딩·오류는 훅이 알려준다
+  const [searchQuery, setSearchQuery] = useState(null);
+  const { routes, loading: routeLoading, error: routeError } = useRouteSearch(searchQuery);
   const [showDetail, setShowDetail] = useState(false);
   const [notice, setNotice] = useState('');
   // 최근 검색 — 모바일 경로설정 화면과 같은 저장소(recents.js)라 PC·모바일 기록이 공유된다
@@ -142,28 +145,43 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
     setPlaces([]);
   };
 
-  const runSearch = (name = query) => {
+  const runSearch = (name = query, known = {}) => {
     if (!name) {
       setNotice('도착지를 입력해주세요.');
       return;
     }
+    if (!origin.trim()) {
+      setNotice('출발지를 입력해주세요.');
+      return;
+    }
     setNotice('');
     closeDropdown();
-    setRecents(addRecent({ name, sub: pickedPlace?.name === name ? pickedPlace.address : '' }));
+    // 좌표를 아는 장소(카카오 검색 결과·즐겨찾기·최근 검색)는 좌표까지 같이 보낸다. 이름만 있으면 서버 쪽에서 카카오로 찾는다.
+    const picked = pickedPlace?.name === name ? pickedPlace : known;
+    const destCoord = picked.lat != null ? { lat: picked.lat, lng: picked.lng } : {};
+    const originPart = !originTouched.current
+      ? { name: origin, ...(originCoord ?? {}) } // 아직 현재 위치를 따라가는 중
+      : { name: origin, ...(pickedOrigin?.name === origin && pickedOrigin.lat != null ? { lat: pickedOrigin.lat, lng: pickedOrigin.lng } : {}) };
+    setRecents(addRecent({ name, sub: pickedPlace?.name === name ? pickedPlace.address : known.sub ?? '', ...destCoord }));
     setSelectedRouteId(ROUTE_MODES.find((m) => m.id === selectedMode).route);
-    setResultsReady(true);
+    // nonce를 올려서 같은 조건을 다시 눌러도 새로 검색한다
+    setSearchQuery((prev) => ({ origin: originPart, destination: { name, ...destCoord }, timeMode: 'now', nonce: (prev?.nonce ?? 0) + 1 }));
     setShowDetail(false);
   };
 
   // 최근 검색을 누르면 도착지에 넣고 바로 경로 검색
   const searchRecent = (r) => {
     setDestination(r.name);
-    setPickedPlace({ name: r.name, address: r.sub });
-    runSearch(r.name);
+    setPickedPlace({ name: r.name, address: r.sub, lat: r.lat, lng: r.lng });
+    runSearch(r.name, r);
   };
 
-  const selectedRoute = ROUTE_OPTIONS.find((r) => r.id === selectedRouteId) ?? ROUTE_OPTIONS[0];
-  const grade = scoreGrade(selectedRoute.score);
+  const selectedRoute = routes ? (routes.find((r) => r.id === selectedRouteId) ?? routes[0]) : null;
+
+  // 지도에 그릴 경로선 — 고른 경로가 바뀌거나 검색이 시작돼 결과가 사라지면 갱신한다
+  useEffect(() => {
+    onRoutePath?.(selectedRoute?.path ?? null);
+  }, [selectedRoute, onRoutePath]);
 
   return (
     <div className="panelContent">
@@ -333,7 +351,7 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
       </div>
 
       {/* 집/회사 바로가기 — 주소는 사용자가 정해 저장하고, 누르면 바로 검색 */}
-      <QuickPlaces className="routeQuickRow" onGo={(name, sub) => searchRecent({ name, sub })} />
+      <QuickPlaces className="routeQuickRow" onGo={(name, sub, place) => searchRecent({ name, sub, lat: place?.lat, lng: place?.lng })} />
 
       {/* 즐겨찾기 — 모바일 경로 입력 화면의 "즐겨찾기" 버튼과 같은 목록. 누르면 바로 길찾기, 별표로 해제 */}
       <button
@@ -391,14 +409,13 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
         경로 검색하기
       </button>
       {(notice || favError) && <p className="routeNotice">{notice || favError}</p>}
+      {routeLoading && <p className="routeNotice">경로를 찾는 중…</p>}
+      {routeError && <p className="routeNotice">{routeError}</p>}
 
-      {resultsReady && (
+      {selectedRoute && (
         <div className="routeResultCard">
           <div className="routeResultHeader">
-            <div className="mfScoreBadge mfScoreBadge--lg" style={{ '--tone': grade.color, '--tone-soft': grade.soft }}>
-              <strong>{selectedRoute.score}</strong>
-              <span>{grade.label}</span>
-            </div>
+            <ScoreBadge score={selectedRoute.score} size="lg" />
             <div>
               <strong>
                 {selectedRoute.distance}km · 도보 {selectedRoute.duration}분
@@ -408,28 +425,23 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
           </div>
 
           <div className="mfRouteList">
-            {ROUTE_OPTIONS.map((r) => {
-              const g = scoreGrade(r.score);
-              return (
-                <button
-                  key={r.id}
-                  className={r.id === selectedRouteId ? 'mfRouteOption selected' : 'mfRouteOption'}
-                  onClick={() => setSelectedRouteId(r.id)}
-                >
-                  <div className="mfScoreBadge mfScoreBadge--sm" style={{ '--tone': g.color, '--tone-soft': g.soft }}>
-                    <strong>{r.score}</strong>
-                  </div>
-                  <div>
-                    <strong>{r.name}</strong>
-                    <span>{r.note}</span>
-                  </div>
-                  <div className="mfRouteMeta">
-                    <strong>{r.duration}분</strong>
-                    <span>{r.distance}km</span>
-                  </div>
-                </button>
-              );
-            })}
+            {routes.map((r) => (
+              <button
+                key={r.id}
+                className={r.id === selectedRoute.id ? 'mfRouteOption selected' : 'mfRouteOption'}
+                onClick={() => setSelectedRouteId(r.id)}
+              >
+                <ScoreBadge score={r.score} size="sm" />
+                <div>
+                  <strong>{r.name}</strong>
+                  <span>{r.note}</span>
+                </div>
+                <div className="mfRouteMeta">
+                  <strong>{r.duration}분</strong>
+                  <span>{r.distance}km</span>
+                </div>
+              </button>
+            ))}
           </div>
 
           <button className="mfOutlineBtn routeDetailToggle" onClick={() => setShowDetail((v) => !v)}>
@@ -438,8 +450,8 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
 
           {showDetail && (
             <div className="mfSegmentList">
-              {SEGMENTS.map((s) => (
-                <div className="mfSegmentRow" key={s.name}>
+              {selectedRoute.segments.map((s, i) => (
+                <div className="mfSegmentRow" key={`${s.name}-${i}`}>
                   <span className="mfSegmentBar" style={{ background: GRADE_COLOR[s.grade] }} />
                   <div
                     className="mfSegmentIcon"
@@ -466,7 +478,11 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
             </div>
           )}
 
-          <button className="mfPrimaryBtn startNavigationButton" onClick={onStartNavigation}>
+          {selectedRoute.source === 'mock' && (
+            <p className="mfEmptyHint">화면 확인용 예시 경로입니다. 실제 경로 계산은 서버 연결 후 반영됩니다.</p>
+          )}
+
+          <button className="mfPrimaryBtn startNavigationButton" onClick={() => onStartNavigation(selectedRoute)}>
             안내 시작
           </button>
         </div>

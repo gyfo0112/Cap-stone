@@ -28,7 +28,7 @@ export function QuickPlaces({ onGo, className = '' }) {
             <div className="quickItem" key={q.key}>
               <button
                 className="mfQuickBtn"
-                onClick={() => (place ? onGo(place.name, place.address) : setEditing(q))}
+                onClick={() => (place ? onGo(place.name, place.address, place) : setEditing(q))}
                 title={place?.name}
               >
                 {place ? <q.icon size={16} /> : <Plus size={16} />}
@@ -90,8 +90,8 @@ function QuickPlaceEditor({ label, current, onSave, onClose }) {
   // 저장 버튼/Enter: 검색 중이면 기다리고, 결과가 있으면 첫 결과, 없으면 입력한 글자 그대로
   const submit = () => {
     if (!query || !ready) return;
-    if (showSearch && places[0]) onSave({ name: places[0].name, address: places[0].address });
-    else onSave({ name: query, address: current?.name === query ? current.address : '' });
+    if (showSearch && places[0]) onSave({ name: places[0].name, address: places[0].address, lat: places[0].lat, lng: places[0].lng });
+    else onSave(current?.name === query ? current : { name: query, address: '' });
   };
 
   return createPortal(
@@ -120,7 +120,7 @@ function QuickPlaceEditor({ label, current, onSave, onClose }) {
             {ready && places.length === 0 && <p className="mfEmptyHint">검색 결과가 없어요. 저장하면 입력한 글자 그대로 저장돼요.</p>}
             {ready &&
               places.map((p) => (
-                <button key={p.id} onClick={() => onSave({ name: p.name, address: p.address })}>
+                <button key={p.id} onClick={() => onSave({ name: p.name, address: p.address, lat: p.lat, lng: p.lng })}>
                   <MapPin size={16} />
                   <span>
                     <strong>{p.name}</strong>

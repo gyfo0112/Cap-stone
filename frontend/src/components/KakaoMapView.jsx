@@ -17,7 +17,7 @@ function MapPlaceholder({ text }) {
   );
 }
 
-export function MapView({ layers, location, liveFriends, pickMode, onCenterIdle, onLayerStatus }) {
+export function MapView({ layers, location, liveFriends, routePath, pickMode, onCenterIdle, onLayerStatus }) {
   const apiKey = import.meta.env.VITE_KAKAO_MAP_KEY;
   if (!apiKey) {
     return <MapPlaceholder text=".env.local 파일에 VITE_KAKAO_MAP_KEY를 설정하세요." />;
@@ -28,6 +28,7 @@ export function MapView({ layers, location, liveFriends, pickMode, onCenterIdle,
       layers={layers}
       location={location}
       liveFriends={liveFriends}
+      routePath={routePath}
       pickMode={pickMode}
       onCenterIdle={onCenterIdle}
       onLayerStatus={onLayerStatus}
@@ -35,12 +36,13 @@ export function MapView({ layers, location, liveFriends, pickMode, onCenterIdle,
   );
 }
 
-function KakaoMap({ apiKey, layers, location, liveFriends = NO_FRIENDS, pickMode, onCenterIdle, onLayerStatus }) {
+function KakaoMap({ apiKey, layers, location, liveFriends = NO_FRIENDS, routePath, pickMode, onCenterIdle, onLayerStatus }) {
   const boxRef = useRef(null);
   const [error, setError] = useState('');
   const [map, setMap] = useState(null);
   const meOverlayRef = useRef(null);
   const friendOverlaysRef = useRef(new Map()); // 보호 대상 id → 지도 위 표시
+  const routeLayerRef = useRef(null); // 길찾기 경로선과 출발·도착 점
 
   // 지도 영역 크기가 바뀌면(PC 정보 패널 접기/펴기, 창 크기 변경) 카카오맵은 스스로 다시 그리지
   // 않아 빈 공간이 생긴다 — 크기 변화를 감지해 relayout 해준다.
@@ -82,6 +84,48 @@ function KakaoMap({ apiKey, layers, location, liveFriends = NO_FRIENDS, pickMode
       meOverlayRef.current.setPosition(pos);
     }
   }, [map, location]);
+
+  // 길찾기 결과 경로선 + 출발(파랑)·도착(빨강) 점. 경로가 바뀌면 그 경로가 한눈에 보이게 지도를 맞춘다.
+  // routePath = [[위도, 경도], …], 없으면(null) 지운다.
+  useEffect(() => {
+    if (!map) return undefined;
+    const { kakao } = window;
+    const layer = routeLayerRef.current;
+    if (layer) {
+      layer.line.setMap(null);
+      layer.dots.forEach((d) => d.setMap(null));
+      routeLayerRef.current = null;
+    }
+    if (!routePath || routePath.length < 2) return undefined;
+
+    const points = routePath.map(([lat, lng]) => new kakao.maps.LatLng(lat, lng));
+    const line = new kakao.maps.Polyline({
+      path: points,
+      strokeWeight: 7,
+      strokeColor: '#2f82f5',
+      strokeOpacity: 0.9,
+      strokeStyle: 'solid',
+    });
+    line.setMap(map);
+    const dot = (point, className) => {
+      const el = document.createElement('div');
+      el.className = className;
+      const overlay = new kakao.maps.CustomOverlay({ position: point, content: el, zIndex: 8 });
+      overlay.setMap(map);
+      return overlay;
+    };
+    routeLayerRef.current = {
+      line,
+      dots: [dot(points[0], 'kakaoRouteDot start'), dot(points[points.length - 1], 'kakaoRouteDot end')],
+    };
+
+    const bounds = new kakao.maps.LatLngBounds();
+    points.forEach((pt) => bounds.extend(pt));
+    // 모바일은 위(헤더)와 아래(경로 시트)가 지도를 가리니 그만큼 여백을 둔다
+    const mobile = window.innerWidth < 768;
+    map.setBounds(bounds, mobile ? 100 : 60, 40, mobile ? 380 : 60, 40);
+    return undefined;
+  }, [map, routePath]);
 
   // 위치 공유 중인 보호 대상(보호자 화면) — 이름표 달린 초록 점. 처음 나타날 때만 그쪽으로 지도를 옮긴다.
   useEffect(() => {
