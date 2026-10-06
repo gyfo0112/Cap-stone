@@ -1,5 +1,6 @@
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
+import { safemapPlugin } from './server/safemap.mjs'
 import process from 'node:process'
 
 // `npm run build:spring` → 스프링 프로젝트(SafetyMap)의 static 폴더로 바로 빌드한다.
@@ -10,7 +11,7 @@ const SPRING_STATIC_DIR =
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
-  plugins: [react()],
+  plugins: [react(), safemapPlugin(loadEnv(mode, process.cwd(), '').SAFEMAP_SERVICE_KEY || process.env.SAFEMAP_SERVICE_KEY || '')],
   build: mode === 'spring' ? { outDir: SPRING_STATIC_DIR, emptyOutDir: true } : {},
   // 스프링에 같이 올리는 빌드는 항상 실제 백엔드(/api)를 쓴다 — Vercel 시연 빌드는 mock
   define: mode === 'spring' ? { 'import.meta.env.VITE_USE_BACKEND': '"true"' } : {},

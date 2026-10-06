@@ -85,6 +85,9 @@ function App({ startMenu = 'map' }) {
   const [mobileScreen, setMobileScreen] = useState(startMenu === 'route' ? 'input' : null); // null | 'input' | 'result' | 'detail'
   const [sosOpen, setSosOpen] = useState(false);
   const [crimeLayerOpen, setCrimeLayerOpen] = useState(false);
+  const [crimeEnabled, setCrimeEnabled] = useState(true);
+  const [crimeOpacity, setCrimeOpacity] = useState(0.65);
+  const [crimeStatus, setCrimeStatus] = useState('loading');
   const [destination, setDestination] = useState('');
   const [destinationCoord, setDestinationCoord] = useState(null); // 도착지 좌표(알 때만) — 길찾기 서버 요청에 쓴다
   const [routePath, setRoutePath] = useState(null); // PC 경로 패널이 고른 경로선
@@ -242,7 +245,13 @@ function App({ startMenu = 'map' }) {
             )}
             {menu === 'help' && <HelpPanel onOpenLogin={() => setLoginOpen(true)} />}
             {menu === 'map' && (
-              <FacilityPanel layers={layers} layerStatus={layerStatus} onToggle={toggleLayer} />
+              <>
+                <FacilityPanel layers={layers} layerStatus={layerStatus} onToggle={toggleLayer}
+                  crimeEnabled={crimeEnabled} onOpenCrime={() => setCrimeLayerOpen((v) => !v)} />
+                {crimeLayerOpen && <CrimeLayerScreen desktop enabled={crimeEnabled} opacity={crimeOpacity}
+                  status={crimeStatus} onEnabledChange={setCrimeEnabled} onOpacityChange={setCrimeOpacity}
+                  onClose={() => setCrimeLayerOpen(false)} />}
+              </>
             )}
             {menu === 'settings' && (
               <SettingsPanel
@@ -280,7 +289,16 @@ function App({ startMenu = 'map' }) {
             pickMode={mapPickerOpen}
             onCenterIdle={onCenterIdle}
             onLayerStatus={onLayerStatus}
+            crimeEnabled={crimeEnabled}
+            crimeOpacity={crimeOpacity}
+            onCrimeStatus={setCrimeStatus}
           />
+        )}
+        {crimeEnabled && !fullPageOpen && (
+          <div className="crimeAttribution">
+            <a href="https://www.safemap.go.kr/opna/data/dataViewRenew.do?objtId=205" target="_blank" rel="noreferrer">범죄주의구간 · 생활안전지도 / 경찰청</a>
+            <span>{crimeStatus === 'missing-key' ? '인증키 설정 필요' : crimeStatus === 'error' ? '불러오기 실패 · 설정 확인' : crimeStatus === 'zoom' ? '지도를 확대해 주세요' : crimeStatus === 'outside' ? '국내 제공 범위 밖' : crimeStatus === 'loading' ? '불러오는 중…' : '공공누리 제4유형'}</span>
+          </div>
         )}
         {!isMobile && <ShareBanner names={sharingWith} variant="desktop" />}
         {/* PC: 지도 오른쪽 아래 현재 위치 버튼 (모바일은 아래쪽 시트 기준으로 따로 배치) */}
@@ -294,7 +312,7 @@ function App({ startMenu = 'map' }) {
             layers={layers}
             layerStatus={layerStatus}
             onToggleLayer={toggleLayer}
-            crimeOn={crimeLayerOpen}
+            crimeOn={crimeEnabled}
             onOpenCrime={() => setCrimeLayerOpen((v) => !v)}
             onOpenInput={openRouteInput}
           />
@@ -368,7 +386,9 @@ function App({ startMenu = 'map' }) {
         />
       )}
 
-      {isMobile && crimeLayerOpen && <CrimeLayerScreen />}
+      {isMobile && crimeLayerOpen && <CrimeLayerScreen enabled={crimeEnabled} opacity={crimeOpacity}
+        status={crimeStatus} onEnabledChange={setCrimeEnabled} onOpacityChange={setCrimeOpacity}
+        onClose={() => setCrimeLayerOpen(false)} />}
 
       {isMobile && onboardingDone && !sosOpen && <SosFab onOpen={() => setSosOpen(true)} />}
       {isMobile && sosOpen && <SosOverlay onClose={() => setSosOpen(false)} />}
