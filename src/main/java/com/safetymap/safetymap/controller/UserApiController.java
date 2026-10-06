@@ -61,6 +61,10 @@ public class UserApiController {
             return ResponseEntity.badRequest().body(Map.of("message", "비밀번호는 4자 이상 50자 이하여야 합니다"));
         }
 
+        if (dto.getRole() != null && !dto.getRole().isBlank() && !userService.isValidRole(dto.getRole())) {
+            return ResponseEntity.badRequest().body(Map.of("message", "role은 guardian 또는 protected 여야 합니다"));
+        }
+
         if (userService.existsUserId(dto.getUser_id())) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", "이미 사용 중인 아이디입니다"));
         }
