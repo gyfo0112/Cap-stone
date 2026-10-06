@@ -30,6 +30,11 @@ public class Users {
     private String info;
 
 
+    // 계정 구분: guardian(보호자) / protected(보호 대상). 비어 있으면 guardian 으로 본다
+    @Column(name = "role", length = 20)
+    private String role;
+
+
     public int getIdx() { return idx; }
     public void setIdx(int idx) { this.idx = idx; }
 
@@ -47,4 +52,7 @@ public class Users {
 
     public String getInfo() { return info; }
     public void setInfo(String info) { this.info = info; }
+
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
 }
