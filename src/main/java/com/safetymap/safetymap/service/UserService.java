@@ -18,6 +18,10 @@ import java.util.UUID;
 @Service
 public class UserService {
 
+    // 계정 구분 값. 가입할 때 정하고, 위치 공유에서 "누가 무엇을 할 수 있는지"의 기준이 된다
+    public static final String ROLE_GUARDIAN = "guardian";
+    public static final String ROLE_PROTECTED = "protected";
+
     private final UsersRepository usersRepository;
     private final UserTelRepository userTelRepository;
     private final PasswordEncoder passwordEncoder;
@@ -46,10 +50,38 @@ public class UserService {
         user.setUser_id(dto.getUser_id().trim());
         user.setUser_pw(passwordEncoder.encode(dto.getUser_pw()));
         user.setInfo(dto.getInfo());
+        user.setRole(isValidRole(dto.getRole()) ? dto.getRole().trim() : ROLE_GUARDIAN);
 
         usersRepository.save(user);
 
         return toUserInfoDto(user);
+    }
+
+    // 가입할 때 받을 수 있는 계정 구분 값인지 확인
+    public boolean isValidRole(String role) {
+        if (role == null) {
+            return false;
+        }
+
+        return ROLE_GUARDIAN.equals(role.trim()) || ROLE_PROTECTED.equals(role.trim());
+    }
+
+    // 회원의 계정 구분 (예전에 가입해 값이 비어 있으면 guardian. 회원이 없으면 null)
+    public String getRole(String user_uuid) {
+        Users user = getUserEntity(user_uuid);
+        if (user == null) {
+            return null;
+        }
+
+        return roleOf(user);
+    }
+
+    public String roleOf(Users user) {
+        if (ROLE_PROTECTED.equals(user.getRole())) {
+            return ROLE_PROTECTED;
+        }
+
+        return ROLE_GUARDIAN;
     }
 
     // 로그인 확인 (아이디가 없거나 비밀번호가 틀리면 null)
@@ -223,7 +255,8 @@ public class UserService {
                 user.getUser_uuid(),
                 user.getUser_id(),
                 user.getUser_name(),
-                user.getInfo()
+                user.getInfo(),
+                roleOf(user)
         );
     }
 
