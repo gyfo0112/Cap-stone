@@ -17,10 +17,11 @@
 | 본인 확인 | `POST /api/users/verify` | 불필요 | `{user_id, user_name, info}` | 200 + message | 400 / 404 일치하는 계정 없음 |
 | 비밀번호 재설정 | `POST /api/users/reset-password` | 불필요 | `{user_id, user_name, info, user_pw}` | 200 + message | 400 / 404 |
 
-회원 응답: `{ "user_uuid": "...", "user_id": "minseok", "user_name": "오민석", "info": null }` (비밀번호는 내보내지 않음)
+회원 응답: `{ "user_uuid": "...", "user_id": "minseok", "user_name": "오민석", "info": "010-1234-5678", "role": "guardian" }` (비밀번호는 내보내지 않음)
 
 - `info` 에는 **휴대폰 번호**를 넣는다 (프론트 회원가입 화면의 휴대폰 번호). 아이디 찾기·본인 확인은 이름 + `info` 로 대조하며, 하이픈은 있어도 없어도 같게 본다
 - 아이디 찾기 응답 예: `["mi******"]` (앞 2글자만 보임)
+- `role` 은 계정 구분: `guardian`(보호자, 기본값) 또는 `protected`(보호 대상). 가입 요청에 넣을 수 있고, 가입 · 로그인 · 내 정보 응답에 들어 있다. 자세한 내용은 `API_links_location.md`
 - `user_id` 30자 이하, `user_name` 50자 이하, `user_pw` 4~50자, `info` 는 선택
 - `keep_login`: `true` 면 14일, `false`(기본) 면 30분 동안 요청이 없을 때 로그인이 풀림
 
