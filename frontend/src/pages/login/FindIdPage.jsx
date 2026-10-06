@@ -16,12 +16,19 @@ function FindIdPage() {
   const nameError = tried && !name.trim() && '이름을 입력해주세요.';
   const phoneError = tried && !PHONE_RE.test(phone) && '휴대폰 번호를 정확히 입력해주세요.';
 
-  const submit = () => {
+  const [serverError, setServerError] = useState('');
+
+  const submit = async () => {
     setTried(true);
     if (!name.trim() || !PHONE_RE.test(phone)) return;
-    const ids = findIds({ name, phone });
-    setNotFound(ids.length === 0);
-    if (ids.length) setFound(ids);
+    try {
+      const ids = await findIds({ name, phone });
+      setServerError('');
+      setNotFound(ids.length === 0);
+      if (ids.length) setFound(ids);
+    } catch (e) {
+      setServerError(e.message);
+    }
   };
 
   if (found) {
@@ -72,7 +79,7 @@ function FindIdPage() {
           setNotFound(false);
         }}
         onKeyDown={(e) => e.key === 'Enter' && submit()}
-        error={phoneError || (notFound && '일치하는 계정을 찾을 수 없어요.')}
+        error={phoneError || serverError || (notFound && '일치하는 계정을 찾을 수 없어요.')}
       />
 
       <button className="main-login-button auth-submit" onClick={submit}>

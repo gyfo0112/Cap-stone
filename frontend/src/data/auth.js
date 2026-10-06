@@ -1,5 +1,8 @@
-// 로그인·회원가입 mock — 계정을 이 브라우저 localStorage에 저장한다(비밀번호는 SHA-256 해시로만).
-// 서버 로그인 API가 생기면 이 파일의 함수 본문만 fetch로 바꾸면 화면은 그대로 쓴다.
+// 로그인·회원가입 — VITE_USE_BACKEND=true면 백엔드 /api/users API(세션 쿠키 방식), 아니면 mock.
+// mock은 계정을 이 브라우저 localStorage에 저장한다(비밀번호는 SHA-256 해시로만). 화면은 둘 다 같은 함수를 쓴다.
+// 백엔드 모드에서도 로그인 표시(useAuth)는 브라우저에 사본을 두고, 새로 열 때 restoreSession()이 서버에 확인한다.
+import { USE_BACKEND, api, setUnauthorizedHandler } from '../api/http';
+
 const ACCOUNTS_KEY = 'mf-accounts';
 const SESSION_KEY = 'mf-session';
 const SESSION_EVENT = 'mf-session-change';
@@ -55,13 +58,13 @@ export function subscribeSession(callback) {
   };
 }
 
-export async function signup({ userId, password, name, phone, role = 'guardian' }) {
+async function mockSignup({ userId, password, name, phone, role = 'guardian' }) {
   const accounts = readAccounts();
   if (accounts.some((a) => sameId(a, userId))) throw new Error('이미 사용 중인 아이디예요.');
   writeAccounts([...accounts.filter((a) => !DEMO_ACCOUNTS.includes(a)), { userId, name: name.trim(), phone, role, pwHash: await hash(password) }]);
 }
 
-export async function login(userId, password, keep) {
+async function mockLogin(userId, password, keep) {
   const account = readAccounts().find((a) => sameId(a, userId));
   if (!account || account.pwHash !== (await hash(password))) {
     throw new Error('아이디 또는 비밀번호가 올바르지 않아요.');
@@ -78,23 +81,111 @@ export async function login(userId, password, keep) {
   window.dispatchEvent(new Event(SESSION_EVENT));
 }
 
-export function logout() {
+function clearSession() {
   sessionStorage.removeItem(SESSION_KEY);
   localStorage.removeItem(SESSION_KEY);
   window.dispatchEvent(new Event(SESSION_EVENT));
 }
 
+setUnauthorizedHandler(clearSession);
+
 // 이름+휴대폰이 같은 계정의 아이디를 가려서(ab****) 돌려준다. 없으면 빈 배열.
-export function findIds(info) {
+function mockFindIds(info) {
   return readAccounts()
     .filter((a) => matches(a, info))
     .map((a) => a.userId.slice(0, 2) + '*'.repeat(Math.max(a.userId.length - 2, 2)));
 }
 
-export const verifyAccount = (info) => readAccounts().some((a) => sameId(a, info.userId) && matches(a, info));
+const mockVerify = (info) => readAccounts().some((a) => sameId(a, info.userId) && matches(a, info));
 
-export async function resetPassword(info, newPassword) {
-  if (!verifyAccount(info)) throw new Error('일치하는 계정을 찾을 수 없어요.');
+async function mockResetPassword(info, newPassword) {
+  if (!mockVerify(info)) throw new Error('일치하는 계정을 찾을 수 없어요.');
   const pwHash = await hash(newPassword);
   writeAccounts(readAccounts().map((a) => (sameId(a, info.userId) ? { ...a, pwHash } : a)));
 }
+
+// ---- 백엔드(/api/users) 연결 ----
+// 백엔드 users에는 아직 역할(role) 컬럼이 없어서, 가입할 때 고른 역할은 이 브라우저에만 기억한다(기본 보호자).
+const ROLES_KEY = 'mf-roles';
+const readRoles = () => {
+  try {
+    return JSON.parse(localStorage.getItem(ROLES_KEY)) ?? {};
+  } catch {
+    return {};
+  }
+};
+const roleOf = (userId) => readRoles()[userId] ?? 'guardian';
+
+// 백엔드 회원 응답 → 프론트 세션. 휴대폰 번호는 백엔드의 info 컬럼에 들어 있다
+const toSession = (u) => ({ userId: u.user_id, name: u.user_name, phone: u.info ?? '', role: roleOf(u.user_id) });
+
+function writeSession(session, keep) {
+  sessionStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(SESSION_KEY);
+  (keep ? localStorage : sessionStorage).setItem(SESSION_KEY, JSON.stringify(session));
+  window.dispatchEvent(new Event(SESSION_EVENT));
+}
+
+const apiInfo = ({ userId, name, phone }) => ({ user_id: userId, user_name: name.trim(), info: phone });
+
+async function apiSignup({ userId, password, name, phone, role = 'guardian' }) {
+  await api('POST', '/api/users/signup', { user_id: userId, user_pw: password, user_name: name.trim(), info: phone });
+  localStorage.setItem(ROLES_KEY, JSON.stringify({ ...readRoles(), [userId]: role }));
+}
+
+async function apiLogin(userId, password, keep) {
+  const user = await api('POST', '/api/users/login', { user_id: userId, user_pw: password, keep_login: Boolean(keep) });
+  writeSession(toSession(user), keep);
+}
+
+async function apiLogout() {
+  try {
+    await api('POST', '/api/users/logout');
+  } catch {
+    /* 서버에 못 닿아도 이 브라우저의 로그인 표시는 지운다 */
+  }
+  clearSession();
+}
+
+// 새로 열 때 서버 세션이 아직 살아 있는지 확인 — 만료됐으면 401 → 로그인 표시가 지워진다
+export async function restoreSession() {
+  if (!USE_BACKEND) return;
+  const raw = getSessionRaw();
+  if (!raw) return;
+  try {
+    const user = await api('GET', '/api/users/me');
+    const session = JSON.stringify(toSession(user));
+    if (session !== raw) {
+      const store = sessionStorage.getItem(SESSION_KEY) ? sessionStorage : localStorage;
+      store.setItem(SESSION_KEY, session);
+      window.dispatchEvent(new Event(SESSION_EVENT));
+    }
+  } catch {
+    /* 401이면 http.js가 로그인 표시를 지웠고, 서버가 꺼져 있으면 그대로 둔다 */
+  }
+}
+
+// ---- 화면이 쓰는 함수: 모드에 따라 백엔드 또는 mock ----
+export const signup = (form) => (USE_BACKEND ? apiSignup(form) : mockSignup(form));
+export const login = (userId, password, keep) =>
+  USE_BACKEND ? apiLogin(userId, password, keep) : mockLogin(userId, password, keep);
+export const logout = () => (USE_BACKEND ? apiLogout() : clearSession());
+// 이름+휴대폰이 같은 계정의 아이디를 가려서(ab****) 돌려준다. 없으면 빈 배열.
+export const findIds = ({ name, phone }) =>
+  USE_BACKEND
+    ? api('POST', '/api/users/find-id', { user_name: name.trim(), info: phone })
+    : Promise.resolve(mockFindIds({ name, phone }));
+export async function verifyAccount(info) {
+  if (!USE_BACKEND) return mockVerify(info);
+  try {
+    await api('POST', '/api/users/verify', apiInfo(info));
+    return true;
+  } catch (e) {
+    if (e.status === 404) return false; // 일치하는 계정 없음
+    throw e;
+  }
+}
+export const resetPassword = (info, newPassword) =>
+  USE_BACKEND
+    ? api('POST', '/api/users/reset-password', { ...apiInfo(info), user_pw: newPassword })
+    : mockResetPassword(info, newPassword);

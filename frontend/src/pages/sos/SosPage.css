@@ -75,47 +75,9 @@
   color: #555;
 }
 
-.guardian-box {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 
-  padding: 18px;
 
-  border-radius: 16px;
 
-  background: #e9f1fb;
-
-  margin-bottom: 25px;
-}
-
-.guardian-box p {
-  margin: 5px 0 0;
-  color: #777;
-  font-size: 13px;
-}
-
-.guardian-toggle {
-  width: 56px;
-  height: 32px;
-
-  background: #3473b9;
-
-  border-radius: 20px;
-
-  padding: 3px;
-}
-
-.guardian-toggle div {
-  width: 26px;
-  height: 26px;
-
-  background: white;
-
-  border-radius: 50%;
-
-  margin-left: auto;
-}
 
 .safe-place {
   display: flex;

@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { restoreSession } from './data/auth';
 import App from './App';
 import LoginPage from './pages/login/LoginPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -14,6 +16,11 @@ import { useCurrentLocation } from './hooks/useCurrentLocation';
 // 지도·경로·도움요청·설정은 공통 틀(좌측 메뉴/하단 탭 + 지도)을 쓰는 App 하나가 그리므로
 // startMenu로 '처음 열 메뉴'만 정한다. 들어온 뒤 메뉴 이동은 App 안에서 상태값으로 한다.
 export default function AppRouter() {
+  // 처음 열 때 서버 세션이 아직 유효한지 확인(백엔드 모드). 만료됐으면 로그인 표시가 풀린다
+  useEffect(() => {
+    restoreSession();
+  }, []);
+
   return (
     <Routes>
       <Route path="/" element={<App />} />

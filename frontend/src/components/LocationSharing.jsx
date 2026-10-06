@@ -62,6 +62,7 @@ function GuardianView({ user, connections }) {
 
   return (
     <>
+      <p className="shareHint">연결한 보호 대상의 위치를 지도에서 실시간으로 볼 수 있어요. 공유는 여기서 켜고 끌 수 있어요.</p>
       {connections.length === 0 && <p className="shareHint">연결된 보호 대상이 없어요. 아래에서 연결 코드를 입력하세요.</p>}
       {connections.map((c) => (
         <div className="shareItem" key={c.otherId}>
@@ -148,6 +149,7 @@ function ProtectedView({ user, connections }) {
 
   return (
     <>
+      <p className="shareHint">보호자가 공유를 켜면 내 위치가 보호자에게 전달돼요. 공유 중에는 화면에 표시가 떠요.</p>
       {connections.length === 0 && <p className="shareHint">연결된 보호자가 없어요. 연결 코드를 만들어 보호자에게 알려주세요.</p>}
       {connections.map((c) => (
         <div className="shareItem" key={c.otherId}>

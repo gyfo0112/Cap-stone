@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { UserPlus, UserRound } from 'lucide-react';
+import { RoleBadge } from '../../components/RoleBadge';
 import { LocationSharing } from '../../components/LocationSharing';
 import { ToggleGroup } from '../../components/ToggleGroup';
-import { addContact, getContacts, removeContact } from '../../data/contacts';
 import { PRIORITY_OPTIONS, THEME_OPTIONS } from '../../data/routeData';
 import { useAuth } from '../../hooks/useAuth';
+import { useContacts } from '../../hooks/useContacts';
 import { useStoredState } from '../../hooks/useStoredState';
 
 const NOTIF_ITEMS = [
@@ -18,7 +19,7 @@ const NOTIF_ITEMS = [
 export function SettingsPanel({ routePriority, onRoutePriorityChange, theme, onThemeChange, onOpenLogin }) {
   const { user, logout } = useAuth();
   const [notif, setNotif] = useStoredState('mf-notif', { zoneEntry: true, nightRecalc: true, arrival: false });
-  const [contacts, setContacts] = useState(getContacts);
+  const { contacts, needLogin, error: contactError, add: addContact, remove: deleteContact } = useContacts();
   const [addingContact, setAddingContact] = useState(false);
   const [newName, setNewName] = useState('');
   const [newPhone, setNewPhone] = useState('');
@@ -26,11 +27,11 @@ export function SettingsPanel({ routePriority, onRoutePriorityChange, theme, onT
 
   const toggleNotif = (key) => setNotif((n) => ({ ...n, [key]: !n[key] }));
 
-  const submitContact = () => {
+  const submitContact = async () => {
     const tel_name = newName.trim();
     const tel_num = newPhone.trim();
     if (!tel_name || !tel_num) return;
-    setContacts(addContact({ tel_name, tel_num, tel_type: newType }));
+    if (!(await addContact({ tel_name, tel_num, tel_type: newType }))) return; // 실패하면 폼을 그대로 두고 오류 표시
     setNewName('');
     setNewPhone('');
     setNewType('보조');
@@ -49,7 +50,10 @@ export function SettingsPanel({ routePriority, onRoutePriorityChange, theme, onT
             <UserRound size={20} />
           </div>
           <div className="guardianInfo">
-            <strong>{user ? user.name : '로그인하세요'}</strong>
+            <strong>
+              {user ? user.name : '로그인하세요'}
+              {user && <RoleBadge role={user.role} />}
+            </strong>
             <span>{user ? `@${user.userId}` : '연락처·즐겨찾기를 안전하게 보관'}</span>
           </div>
           <button className="accountButton" onClick={user ? logout : onOpenLogin}>
@@ -59,7 +63,7 @@ export function SettingsPanel({ routePriority, onRoutePriorityChange, theme, onT
       </div>
 
       <div className="settingsCard">
-        <h3>실시간 위치 공유</h3>
+        <h3>{user?.role === 'protected' ? '내 위치 공유' : '실시간 위치 공유'}</h3>
         <LocationSharing />
       </div>
 
@@ -70,9 +74,10 @@ export function SettingsPanel({ routePriority, onRoutePriorityChange, theme, onT
       </div>
 
       <div className="settingsCard">
-        <h3>보호자 연락처</h3>
+        <h3>{user?.role === 'guardian' ? '긴급 연락처' : '보호자 연락처'}</h3>
 
-        {contacts.length === 0 && <p className="settingsDescription">등록된 보호자가 없어요.</p>}
+        {needLogin && <p className="settingsDescription">로그인하면 보호자 연락처를 저장할 수 있어요.</p>}
+        {!needLogin && contacts.length === 0 && <p className="settingsDescription">등록된 보호자가 없어요.</p>}
         {contacts.map((c, i) => (
           <div key={c.tel_uuid}>
             {i > 0 && <div className="guardianDivider" />}
@@ -85,7 +90,7 @@ export function SettingsPanel({ routePriority, onRoutePriorityChange, theme, onT
               <span className="guardianBadge">{c.tel_type}</span>
               <button
                 className="guardianRemoveButton"
-                onClick={() => setContacts(removeContact(c.tel_uuid))}
+                onClick={() => deleteContact(c.tel_uuid)}
                 aria-label={`${c.tel_name} 연락처 삭제`}
               >
                 ×
@@ -94,7 +99,9 @@ export function SettingsPanel({ routePriority, onRoutePriorityChange, theme, onT
           </div>
         ))}
 
-        {addingContact ? (
+        {contactError && <p className="shareError">{contactError}</p>}
+
+        {needLogin ? null : addingContact ? (
           <div className="addContactForm">
             <input
               className="addContactInput"

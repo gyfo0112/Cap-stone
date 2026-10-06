@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   Phone,
-  Share,
   ShieldCheck,
   Siren,
 } from 'lucide-react';
@@ -25,7 +24,6 @@ const NEARBY = [
 export function SosOverlay({ onClose }) {
   const [state, setState] = useState('idle'); // idle | pressing | sent
   const [countdown, setCountdown] = useState(3);
-  const [sharing, setSharing] = useState(true);
   const timerRef = useRef(null);
   const startRef = useRef(0);
 
@@ -89,23 +87,6 @@ export function SosOverlay({ onClose }) {
 
       <div className="mfRouteSheet">
         <span className="mfGrabHandle" />
-
-        <div className="mfGuardianCard">
-          <span className="mfGuardianIcon">
-            <Share size={16} />
-          </span>
-          <div>
-            <strong>보호자 실시간 위치 공유</strong>
-            <span>엄마 · 김서연{sharing ? ' (공유 화면 예시)' : ''}</span>
-          </div>
-          <button
-            className={sharing ? 'mfSwitch on' : 'mfSwitch'}
-            onClick={() => setSharing((v) => !v)}
-            aria-label="보호자 공유 토글"
-          >
-            <span />
-          </button>
-        </div>
 
         <h3 className="mfSectionLabel">주변 안전시설</h3>
         <div className="mfNearbyList">

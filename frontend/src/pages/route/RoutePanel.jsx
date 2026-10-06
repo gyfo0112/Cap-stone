@@ -18,7 +18,7 @@ import { hasKakaoRestKey, searchPlaces } from '../../api/kakaoLocal';
 import { addRecent, clearRecents, getRecents, removeRecent } from '../../data/recents';
 import { GRADE_COLOR, GRADE_SOFT, ROUTE_OPTIONS, SEGMENTS } from '../../data/routeData';
 import { QuickPlaces } from '../../components/QuickPlaces';
-import { addFavorite, getFavorites, removeFavoriteByName } from '../../data/favorites';
+import { useFavorites } from '../../hooks/useFavorites';
 import { scoreGrade } from '../../hooks/useIsMobile';
 
 // 데스크탑의 3개 "경로 옵션" 버튼을 mock 대안 경로 2개(safe/shortest) 중 하나에 매핑한다.
@@ -54,15 +54,10 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
   const [notice, setNotice] = useState('');
   // 최근 검색 — 모바일 경로설정 화면과 같은 저장소(recents.js)라 PC·모바일 기록이 공유된다
   const [recents, setRecents] = useState(getRecents);
-  // 즐겨찾기 — 모바일 경로설정 화면과 같은 저장소(favorites.js). 검색 추천의 별표로 추가/해제
-  const [favorites, setFavorites] = useState(getFavorites);
-  const isFavorite = (name) => favorites.some((f) => f.marker_name === name);
-  const toggleFavorite = (place) =>
-    setFavorites(
-      isFavorite(place.name)
-        ? removeFavoriteByName(place.name)
-        : addFavorite({ marker_name: place.name, latitude: place.lat, longitude: place.lng }),
-    );
+  // 즐겨찾기 — 모바일 경로설정 화면과 같은 저장소(백엔드 또는 mock). 검색 추천의 별표로 추가/해제
+  const { favorites, needLogin: favNeedLogin, error: favError, isFavorite, toggle: toggleFavorite, remove: removeFavorite } =
+    useFavorites();
+  const [showFavorites, setShowFavorites] = useState(false); // 집/회사 아래 즐겨찾기 목록 펼치기
   // 추천 목록에서 고른 장소 — 고른 뒤엔 목록을 다시 띄우지 않고, 최근 검색에 주소를 같이 남긴다
   const [pickedPlace, setPickedPlace] = useState(null);
 
@@ -294,7 +289,7 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
                     </button>
                     <button
                       className="routeDropRemove routeDropStar active"
-                      onClick={() => setFavorites(removeFavoriteByName(f.marker_name))}
+                      onClick={() => removeFavorite(f.marker_uuid)}
                       aria-label={`${f.marker_name} 즐겨찾기 해제`}
                     >
                       <Star size={15} fill="currentColor" />
@@ -340,6 +335,41 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
       {/* 집/회사 바로가기 — 주소는 사용자가 정해 저장하고, 누르면 바로 검색 */}
       <QuickPlaces className="routeQuickRow" onGo={(name, sub) => searchRecent({ name, sub })} />
 
+      {/* 즐겨찾기 — 모바일 경로 입력 화면의 "즐겨찾기" 버튼과 같은 목록. 누르면 바로 길찾기, 별표로 해제 */}
+      <button
+        className={showFavorites ? 'favToggle open' : 'favToggle'}
+        onClick={() => setShowFavorites((v) => !v)}
+        aria-expanded={showFavorites}
+      >
+        <Star size={16} fill={showFavorites ? 'currentColor' : 'none'} />
+        즐겨찾기{favorites.length > 0 && ` ${favorites.length}`}
+      </button>
+      {showFavorites && (
+        <div className="favList">
+          {favNeedLogin && <p className="routeDropEmpty">로그인하면 즐겨찾기를 저장할 수 있어요.</p>}
+          {!favNeedLogin && favorites.length === 0 && (
+            <p className="routeDropEmpty">즐겨찾기한 장소가 없어요. 도착지 검색 결과에서 별표를 눌러 추가하세요.</p>
+          )}
+          {favorites.map((f) => (
+            <div className="routeDropRow" key={f.marker_uuid}>
+              <button className="routeDropItem" onClick={() => searchRecent({ name: f.marker_name, sub: '' })}>
+                <Star size={18} className="routeDropIcon routeDropIconAccent" fill="currentColor" />
+                <span className="routeDropText">
+                  <strong>{f.marker_name}</strong>
+                </span>
+              </button>
+              <button
+                className="routeDropRemove routeDropStar active"
+                onClick={() => removeFavorite(f.marker_uuid)}
+                aria-label={`${f.marker_name} 즐겨찾기 해제`}
+              >
+                <Star size={15} fill="currentColor" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <h3 className="sectionTitle">경로 옵션</h3>
 
       <div className="routeOptions">
@@ -360,7 +390,7 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
         <Search size={22} />
         경로 검색하기
       </button>
-      {notice && <p className="routeNotice">{notice}</p>}
+      {(notice || favError) && <p className="routeNotice">{notice || favError}</p>}
 
       {resultsReady && (
         <div className="routeResultCard">

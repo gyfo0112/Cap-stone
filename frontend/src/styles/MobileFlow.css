@@ -1096,45 +1096,10 @@
   opacity: 0.85;
 }
 
-.mfGuardianCard {
-  width: 100%;
-  padding: 4px 0 18px;
-  border-bottom: 1px solid var(--mf-border-soft);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 18px;
-}
 
-.mfGuardianIcon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: #1e4fa0;
-  color: #fff;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 
-.mfGuardianCard > div {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  color: var(--mf-text-primary);
-}
 
-.mfGuardianCard strong {
-  font-size: 13.5px;
-  font-weight: 700;
-}
 
-.mfGuardianCard span {
-  font-size: 12px;
-  color: var(--mf-text-secondary);
-}
 
 .mfSwitch {
   width: 44px;
@@ -1758,4 +1723,13 @@
 
 .mfPrimaryBtn:disabled {
   opacity: 0.5;
+}
+
+/* 공유 중 띠(28px)가 맨 위에 떠 있는 동안 화면들을 그만큼 내린다 */
+.hasShareBanner .mfScreen {
+  padding-top: calc(20px + 28px + env(safe-area-inset-top));
+}
+
+.hasShareBanner .mfMapOverlay {
+  top: calc(40px + env(safe-area-inset-top));
 }

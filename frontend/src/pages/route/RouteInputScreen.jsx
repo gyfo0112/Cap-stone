@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { hasKakaoRestKey, searchPlaces } from '../../api/kakaoLocal';
 import { ScoreBadge } from '../../components/ScoreBadge';
-import { addFavorite, getFavorites, removeFavoriteByName } from '../../data/favorites';
+import { useFavorites } from '../../hooks/useFavorites';
 import { addRecent, clearRecents, getRecents, removeRecent } from '../../data/recents';
 import { MobileHeader } from '../../components/layout/MobileHeader';
 
@@ -22,20 +22,11 @@ export function RouteInputScreen({ initialDestination, originLabel, onBack, onPi
   const [places, setPlaces] = useState(null); // 마지막으로 완료된 검색 결과
   const [placesQuery, setPlacesQuery] = useState(''); // places가 어떤 검색어의 결과인지
   const [searching, setSearching] = useState(false);
-  const [favorites, setFavorites] = useState(getFavorites);
+  const { favorites, error: favError, isFavorite, toggle: toggleFavorite, remove: removeFavorite } = useFavorites();
   const [showFavorites, setShowFavorites] = useState(false);
   const query = destination.trim();
   const canSearch = hasKakaoRestKey();
   const showingSearch = Boolean(query) && canSearch;
-
-  const isFavorite = (name) => favorites.some((f) => f.marker_name === name);
-  const toggleFavorite = (place) => {
-    setFavorites(
-      isFavorite(place.name)
-        ? removeFavoriteByName(place.name)
-        : addFavorite({ marker_name: place.name, latitude: place.lat, longitude: place.lng }),
-    );
-  };
 
   // 카카오 REST 키가 있으면 실제 장소 검색(디바운스), 없으면 mock 최근검색만 필터링.
   useEffect(() => {
@@ -100,6 +91,8 @@ export function RouteInputScreen({ initialDestination, originLabel, onBack, onPi
         </button>
       </div>
 
+      {favError && <p className="mfEmptyHint">{favError}</p>}
+
       {showingSearch ? (
         <>
           <h3 className="mfSectionLabel">검색 결과</h3>
@@ -149,7 +142,7 @@ export function RouteInputScreen({ initialDestination, originLabel, onBack, onPi
                 </button>
                 <button
                   className="mfFavoriteToggle active"
-                  onClick={() => setFavorites(removeFavoriteByName(f.marker_name))}
+                  onClick={() => removeFavorite(f.marker_uuid)}
                   aria-label="즐겨찾기 해제"
                 >
                   <Star size={16} fill="currentColor" />

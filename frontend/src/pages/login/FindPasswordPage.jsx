@@ -31,11 +31,16 @@ function FindPasswordPage() {
     confirm: confirm !== newPw && '비밀번호가 일치하지 않아요.',
   };
 
-  const verify = () => {
+  const verify = async () => {
     setTried(true);
     if (Object.values(verifyErrors).some(Boolean)) return;
-    if (!verifyAccount(info)) {
-      setServerError('일치하는 계정을 찾을 수 없어요.');
+    try {
+      if (!(await verifyAccount(info))) {
+        setServerError('일치하는 계정을 찾을 수 없어요.');
+        return;
+      }
+    } catch (e) {
+      setServerError(e.message);
       return;
     }
     setTried(false);

@@ -9,7 +9,9 @@ export function useSharing(user) {
     const liveFriends = connections
       .filter((c) => c.location)
       .map((c) => ({ id: c.otherId, name: c.name, ...c.location }));
-    return { connections, liveFriends, shared: connections.some((c) => c.sharing) };
+    // 보호 대상 계정: 지금 내 위치를 받고 있는 보호자 이름들(공유 중 표시에 쓴다)
+    const sharingWith = user?.role === 'protected' ? connections.filter((c) => c.sharing).map((c) => c.name) : [];
+    return { connections, liveFriends, sharingWith, shared: connections.some((c) => c.sharing) };
   }, [raw, user]);
 }
 

@@ -1818,3 +1818,111 @@ button:focus-visible,
   border: 3px solid #fff;
   box-shadow: 0 0 0 6px rgba(31, 157, 85, 0.2);
 }
+
+/* PC 경로설정 — 집/회사 아래 즐겨찾기 버튼과 목록 */
+.favToggle {
+  width: 100%;
+  height: 44px;
+  margin: -8px 0 20px;
+  border: 1px solid var(--mf-border);
+  border-radius: 14px;
+  background: var(--mf-surface);
+  color: var(--mf-text-secondary);
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.favToggle:hover {
+  color: var(--mf-text-primary);
+}
+
+.favToggle.open {
+  border-color: #f5a524;
+  color: #d97706;
+}
+
+.favList {
+  margin: -8px 0 20px;
+  border: 1px solid var(--mf-border);
+  border-radius: 14px;
+  background: var(--mf-surface);
+  overflow: hidden;
+}
+
+.favList .routeDropRow + .routeDropRow {
+  border-top: 1px solid var(--mf-border-soft);
+}
+
+/* 계정 구분 뱃지 (보호자 / 보호 대상) */
+.roleBadge {
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: var(--mf-accent-soft);
+  color: var(--mf-accent-text);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.roleBadge.protected {
+  background: rgba(31, 157, 85, 0.14);
+  color: #1f9d55;
+}
+
+.sidebarUserSub {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding-left: 48px; /* 이름 글자와 같은 세로줄에 맞춘다 */
+}
+
+.sidebarUserSub .roleBadge {
+  margin-left: 0;
+}
+
+.sidebarUserSub .logoutLink {
+  padding: 4px 0;
+}
+
+/* 보호 대상 계정: 내 위치가 공유되는 동안 계속 보이는 표시 */
+.shareBanner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #1f9d55;
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.shareBanner.desktop {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  z-index: 6;
+  transform: translateX(-50%);
+  padding: 7px 14px;
+  border-radius: 99px;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(16, 24, 33, 0.25);
+}
+
+.shareBanner.mobile {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 65; /* 길찾기·SOS 화면(50~60) 위에서도 항상 보이게 */
+  height: calc(28px + env(safe-area-inset-top));
+  padding: env(safe-area-inset-top) 12px 0;
+}

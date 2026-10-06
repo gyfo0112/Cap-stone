@@ -1,5 +1,6 @@
 import { Bell, MapPin, Route, Settings, Siren, UserRound } from 'lucide-react';
 import logo from '../../images/logo.png';
+import { RoleBadge } from '../RoleBadge';
 import { useAuth } from '../../hooks/useAuth';
 import { MobileTabBar } from './MobileTabBar';
 
@@ -58,9 +59,12 @@ export function Sidebar({ isMobile, mobileTab, onSelectMobileTab, menu, onSelect
               <UserRound size={22} />
               <span>{user.name}</span>
             </div>
-            <button className="logoutLink" onClick={logout}>
-              로그아웃
-            </button>
+            <div className="sidebarUserSub">
+              <RoleBadge role={user.role} />
+              <button className="logoutLink" onClick={logout}>
+                로그아웃
+              </button>
+            </div>
           </div>
         ) : (
           <button className="loginButton" onClick={onOpenLogin}>

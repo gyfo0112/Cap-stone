@@ -108,17 +108,6 @@ function SosPage({ onCancel, location }) {
           )}
         </p>
 
-        <div className="guardian-box">
-          <div>
-            <strong>보호자 실시간 위치 공유</strong>
-            <p>엄마 · 김서연 (30분간 공유 중)</p>
-          </div>
-
-          <div className="guardian-toggle">
-            <div></div>
-          </div>
-        </div>
-
         <h3>주변 안전시설</h3>
 
         <div className="safe-place">

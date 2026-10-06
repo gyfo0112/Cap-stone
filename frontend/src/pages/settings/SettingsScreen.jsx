@@ -5,11 +5,12 @@ import {
   UserRound,
   X,
 } from 'lucide-react';
+import { RoleBadge } from '../../components/RoleBadge';
 import { LocationSharing } from '../../components/LocationSharing';
 import { ToggleGroup } from '../../components/ToggleGroup';
-import { addContact, getContacts, removeContact } from '../../data/contacts';
 import { PRIORITY_OPTIONS, THEME_OPTIONS } from '../../data/routeData';
 import { useAuth } from '../../hooks/useAuth';
+import { useContacts } from '../../hooks/useContacts';
 import { useStoredState } from '../../hooks/useStoredState';
 import { MobileHeader } from '../../components/layout/MobileHeader';
 
@@ -22,7 +23,7 @@ const NOTIF_ITEMS = [
 export function SettingsScreen({ routePriority, onRoutePriorityChange, theme, onThemeChange, onOpenLogin }) {
   const { user, logout } = useAuth();
   const [notif, setNotif] = useStoredState('mf-notif', { zoneEntry: true, nightRecalc: true, arrival: false });
-  const [contacts, setContacts] = useState(getContacts);
+  const { contacts, needLogin, error: contactError, add: addContact, remove: deleteContact } = useContacts();
   const [addingContact, setAddingContact] = useState(false);
   const [newName, setNewName] = useState('');
   const [newPhone, setNewPhone] = useState('');
@@ -30,18 +31,16 @@ export function SettingsScreen({ routePriority, onRoutePriorityChange, theme, on
 
   const toggleNotif = (key) => setNotif((n) => ({ ...n, [key]: !n[key] }));
 
-  const submitContact = () => {
+  const submitContact = async () => {
     const tel_name = newName.trim();
     const tel_num = newPhone.trim();
     if (!tel_name || !tel_num) return;
-    setContacts(addContact({ tel_name, tel_num, tel_type: newType }));
+    if (!(await addContact({ tel_name, tel_num, tel_type: newType }))) return; // 실패하면 폼을 그대로 두고 오류 표시
     setNewName('');
     setNewPhone('');
     setNewType('보조');
     setAddingContact(false);
   };
-
-  const deleteContact = (tel_uuid) => setContacts(removeContact(tel_uuid));
 
   return (
     <div className="mfScreen mfScreenTabbed">
@@ -54,7 +53,10 @@ export function SettingsScreen({ routePriority, onRoutePriorityChange, theme, on
             <UserRound size={20} />
           </span>
           <div className="mfContactInfo">
-            <strong>{user.name}</strong>
+            <strong>
+              {user.name}
+              <RoleBadge role={user.role} />
+            </strong>
             <span>@{user.userId}</span>
           </div>
           <button className="mfOutlineBtn" onClick={logout}>
@@ -75,7 +77,7 @@ export function SettingsScreen({ routePriority, onRoutePriorityChange, theme, on
       )}
 
       <div className="mfSettingsCard">
-        <strong>실시간 위치 공유</strong>
+        <strong>{user?.role === 'protected' ? '내 위치 공유' : '실시간 위치 공유'}</strong>
         <LocationSharing />
       </div>
 
@@ -86,8 +88,9 @@ export function SettingsScreen({ routePriority, onRoutePriorityChange, theme, on
       </div>
 
       <div className="mfSettingsCard">
-        <strong>보호자 연락처</strong>
-        {contacts.length === 0 && <p className="mfEmptyHint">등록된 보호자가 없어요.</p>}
+        <strong>{user?.role === 'guardian' ? '긴급 연락처' : '보호자 연락처'}</strong>
+        {needLogin && <p className="mfEmptyHint">로그인하면 보호자 연락처를 저장할 수 있어요.</p>}
+        {!needLogin && contacts.length === 0 && <p className="mfEmptyHint">등록된 보호자가 없어요.</p>}
         {contacts.map((c) => (
           <div className="mfContactRow" key={c.tel_uuid}>
             <span className="mfContactAvatar">{c.relation || c.tel_name[0]}</span>
@@ -106,7 +109,9 @@ export function SettingsScreen({ routePriority, onRoutePriorityChange, theme, on
           </div>
         ))}
 
-        {addingContact ? (
+        {contactError && <p className="shareError">{contactError}</p>}
+
+        {needLogin ? null : addingContact ? (
           <div className="mfAddContactForm">
             <input
               className="mfAddContactInput"

@@ -11,6 +11,7 @@ import { useIsMobile } from './hooks/useIsMobile';
 import { useLocationBroadcast, useSharing } from './hooks/useSharing';
 import { useStoredState } from './hooks/useStoredState';
 import { useTheme } from './hooks/useTheme';
+import { ShareBanner } from './components/ShareBanner';
 import { Sidebar } from './components/layout/Sidebar';
 import { HelpPanel } from './pages/help/HelpPanel';
 import { CrimeLayerScreen } from './pages/map/CrimeLayerScreen';
@@ -57,7 +58,7 @@ function App({ startMenu = 'map' }) {
 
   // 실시간 위치 공유 — 보호자는 보호 대상의 위치를 지도에 받고, 보호 대상은 공유가 켜진 동안 위치를 올린다
   const { user } = useAuth();
-  const { liveFriends, shared } = useSharing(user);
+  const { liveFriends, sharingWith, shared } = useSharing(user);
   useLocationBroadcast(user, shared);
 
   const [onboardingDone, setOnboardingDone] = useState(() => {
@@ -154,6 +155,13 @@ function App({ startMenu = 'map' }) {
   // 설정 중이던 값이 돌아왔을 때 그대로 남는다(SafetyMap/frontend 통합본 방식).
   const fullPageOpen = loginOpen || desktopSosOpen;
 
+  // 모바일은 공유 중 띠가 화면 맨 위를 차지하니, 그동안 화면들이 그만큼 아래로 내려오게 html에 표시를 단다
+  const mobileBannerOn = isMobile && !fullPageOpen && sharingWith.length > 0;
+  useEffect(() => {
+    document.documentElement.classList.toggle('hasShareBanner', mobileBannerOn);
+    return () => document.documentElement.classList.remove('hasShareBanner');
+  }, [mobileBannerOn]);
+
   // PC 가운데 정보 패널 접기 — 지도를 넓게 보고 싶을 때. 새로고침해도 유지.
   const [panelCollapsed, setPanelCollapsed] = useStoredState('mf-panel-collapsed', false);
   const collapsed = panelCollapsed && !isMobile;
@@ -244,6 +252,7 @@ function App({ startMenu = 'map' }) {
             onLayerStatus={onLayerStatus}
           />
         )}
+        {!isMobile && <ShareBanner names={sharingWith} variant="desktop" />}
         {/* PC: 지도 오른쪽 아래 현재 위치 버튼 (모바일은 아래쪽 시트 기준으로 따로 배치) */}
         {!isMobile && !fullPageOpen && <MapControls desktop onLocate={myLocation.refresh} />}
       </main>
@@ -329,6 +338,7 @@ function App({ startMenu = 'map' }) {
       {isMobile && onboardingDone && !sosOpen && <SosFab onOpen={() => setSosOpen(true)} />}
       {isMobile && sosOpen && <SosOverlay onClose={() => setSosOpen(false)} />}
     </div>
+    {mobileBannerOn && <ShareBanner names={sharingWith} variant="mobile" />}
     {loginOpen && <LoginPage onBack={() => setLoginOpen(false)} />}
     {desktopSosOpen && <SosPage onCancel={() => setDesktopSosOpen(false)} location={myLocation} />}
     </>
