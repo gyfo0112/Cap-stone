@@ -5,6 +5,7 @@ import { useMarkerLayers } from '../hooks/useMarkerLayers';
 // App.jsx의 메인 지도 + SosPage.jsx의 SOS 화면 지도가 함께 쓰는 카카오맵 컴포넌트.
 // 두 화면이 동시에 마운트되는 일이 없어(SOS는 전체화면 전환) id="map" 중복 걱정은 없다.
 const SEOUL_CENTER = { lat: 37.5665, lng: 126.978 };
+const NO_FRIENDS = [];
 
 function MapPlaceholder({ text }) {
   return (
@@ -16,7 +17,7 @@ function MapPlaceholder({ text }) {
   );
 }
 
-export function MapView({ layers, location, pickMode, onCenterIdle, onLayerStatus }) {
+export function MapView({ layers, location, liveFriends, pickMode, onCenterIdle, onLayerStatus }) {
   const apiKey = import.meta.env.VITE_KAKAO_MAP_KEY;
   if (!apiKey) {
     return <MapPlaceholder text=".env.local 파일에 VITE_KAKAO_MAP_KEY를 설정하세요." />;
@@ -26,6 +27,7 @@ export function MapView({ layers, location, pickMode, onCenterIdle, onLayerStatu
       apiKey={apiKey}
       layers={layers}
       location={location}
+      liveFriends={liveFriends}
       pickMode={pickMode}
       onCenterIdle={onCenterIdle}
       onLayerStatus={onLayerStatus}
@@ -33,11 +35,12 @@ export function MapView({ layers, location, pickMode, onCenterIdle, onLayerStatu
   );
 }
 
-function KakaoMap({ apiKey, layers, location, pickMode, onCenterIdle, onLayerStatus }) {
+function KakaoMap({ apiKey, layers, location, liveFriends = NO_FRIENDS, pickMode, onCenterIdle, onLayerStatus }) {
   const boxRef = useRef(null);
   const [error, setError] = useState('');
   const [map, setMap] = useState(null);
   const meOverlayRef = useRef(null);
+  const friendOverlaysRef = useRef(new Map()); // 보호 대상 id → 지도 위 표시
 
   // 지도 영역 크기가 바뀌면(PC 정보 패널 접기/펴기, 창 크기 변경) 카카오맵은 스스로 다시 그리지
   // 않아 빈 공간이 생긴다 — 크기 변화를 감지해 relayout 해준다.
@@ -79,6 +82,38 @@ function KakaoMap({ apiKey, layers, location, pickMode, onCenterIdle, onLayerSta
       meOverlayRef.current.setPosition(pos);
     }
   }, [map, location]);
+
+  // 위치 공유 중인 보호 대상(보호자 화면) — 이름표 달린 초록 점. 처음 나타날 때만 그쪽으로 지도를 옮긴다.
+  useEffect(() => {
+    if (!map) return;
+    const { kakao } = window;
+    const overlays = friendOverlaysRef.current;
+    const seen = new Set();
+    liveFriends.forEach((f) => {
+      seen.add(f.id);
+      const pos = new kakao.maps.LatLng(f.lat, f.lng);
+      const existing = overlays.get(f.id);
+      if (existing) {
+        existing.setPosition(pos);
+        return;
+      }
+      const el = document.createElement('div');
+      el.className = 'kakaoFriend';
+      const label = document.createElement('span');
+      label.textContent = f.name;
+      el.append(label, document.createElement('i'));
+      const overlay = new kakao.maps.CustomOverlay({ position: pos, content: el, zIndex: 9 });
+      overlay.setMap(map);
+      overlays.set(f.id, overlay);
+      map.panTo(pos);
+    });
+    overlays.forEach((overlay, id) => {
+      if (!seen.has(id)) {
+        overlay.setMap(null);
+        overlays.delete(id);
+      }
+    });
+  }, [map, liveFriends]);
 
   useEffect(() => {
     let cancelled = false;

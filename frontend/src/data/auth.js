@@ -4,6 +4,15 @@ const ACCOUNTS_KEY = 'mf-accounts';
 const SESSION_KEY = 'mf-session';
 const SESSION_EVENT = 'mf-session-change';
 
+// role: 'guardian'(보호자) | 'protected'(보호 대상: 자녀·노약자). 위치 공유를 켜고 끌 수 있는 건 보호자뿐이다.
+export const ROLES = { guardian: '보호자', protected: '보호 대상' };
+
+// 시연·테스트용 기본 계정 — 보호자 test1234 / test1234, 보호 대상 child1234 / child1234 (해시는 SHA-256)
+const DEMO_ACCOUNTS = [
+  { userId: 'test1234', name: '테스트', phone: '010-0000-0000', role: 'guardian', pwHash: '937e8d5fbb48bd4949536cd65b8d35c426b80d2f830c5c308e2cdec422ae2244' },
+  { userId: 'child1234', name: '보호대상', phone: '010-0000-0001', role: 'protected', pwHash: '29ca52f6df0ebd54ca5eb81e019f76bc2c5bc2719a7c7b5ea7d59f37a4d8cbec' },
+];
+
 const digits = (v) => v.replace(/\D/g, '');
 
 async function hash(text) {
@@ -11,13 +20,8 @@ async function hash(text) {
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-// 시연·테스트용 기본 계정 (아이디 test1234 / 비밀번호 test1234) — 해시는 SHA-256
-const DEMO_ACCOUNT = {
-  userId: 'test1234',
-  name: '테스트',
-  phone: '010-0000-0000',
-  pwHash: '937e8d5fbb48bd4949536cd65b8d35c426b80d2f830c5c308e2cdec422ae2244',
-};
+const sameId = (a, b) => a.userId.toLowerCase() === b.toLowerCase();
+const matches = (a, { name, phone }) => a.name === name.trim() && digits(a.phone) === digits(phone);
 
 function readAccounts() {
   let stored = [];
@@ -27,12 +31,17 @@ function readAccounts() {
     /* 저장소를 못 읽으면 기본 계정만 */
   }
   // 비밀번호 재설정 등으로 이미 저장돼 있으면 저장된 쪽을 쓴다
-  return stored.some((a) => sameId(a, DEMO_ACCOUNT.userId)) ? stored : [DEMO_ACCOUNT, ...stored];
+  const demos = DEMO_ACCOUNTS.filter((d) => !stored.some((a) => sameId(a, d.userId)));
+  return [...demos, ...stored];
 }
 
 const writeAccounts = (list) => localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(list));
-const sameId = (a, b) => a.userId.toLowerCase() === b.toLowerCase();
-const matches = (a, { name, phone }) => a.name === name.trim() && digits(a.phone) === digits(phone);
+
+// 다른 계정의 이름·역할 조회(위치 공유 목록 표시용). 비밀번호 해시는 내보내지 않는다.
+export function lookupAccount(userId) {
+  const a = readAccounts().find((acc) => sameId(acc, userId));
+  return a ? { userId: a.userId, name: a.name, role: a.role ?? 'guardian' } : null;
+}
 
 // 로그인 유지를 켜면 localStorage, 끄면 sessionStorage(탭을 닫으면 로그아웃)
 export const getSessionRaw = () => sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY);
@@ -46,10 +55,10 @@ export function subscribeSession(callback) {
   };
 }
 
-export async function signup({ userId, password, name, phone }) {
+export async function signup({ userId, password, name, phone, role = 'guardian' }) {
   const accounts = readAccounts();
   if (accounts.some((a) => sameId(a, userId))) throw new Error('이미 사용 중인 아이디예요.');
-  writeAccounts([...accounts, { userId, name: name.trim(), phone, pwHash: await hash(password) }]);
+  writeAccounts([...accounts.filter((a) => !DEMO_ACCOUNTS.includes(a)), { userId, name: name.trim(), phone, role, pwHash: await hash(password) }]);
 }
 
 export async function login(userId, password, keep) {
@@ -57,7 +66,12 @@ export async function login(userId, password, keep) {
   if (!account || account.pwHash !== (await hash(password))) {
     throw new Error('아이디 또는 비밀번호가 올바르지 않아요.');
   }
-  const session = JSON.stringify({ userId: account.userId, name: account.name, phone: account.phone });
+  const session = JSON.stringify({
+    userId: account.userId,
+    name: account.name,
+    phone: account.phone,
+    role: account.role ?? 'guardian',
+  });
   sessionStorage.removeItem(SESSION_KEY);
   localStorage.removeItem(SESSION_KEY);
   (keep ? localStorage : sessionStorage).setItem(SESSION_KEY, session);

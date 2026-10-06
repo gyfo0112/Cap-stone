@@ -5,8 +5,10 @@ import './styles/App.css';
 import LoginPage from './pages/login/LoginPage';
 import SosPage from './pages/sos/SosPage';
 import { MapView } from './components/KakaoMapView';
+import { useAuth } from './hooks/useAuth';
 import { useCurrentLocation } from './hooks/useCurrentLocation';
 import { useIsMobile } from './hooks/useIsMobile';
+import { useLocationBroadcast, useSharing } from './hooks/useSharing';
 import { useStoredState } from './hooks/useStoredState';
 import { useTheme } from './hooks/useTheme';
 import { Sidebar } from './components/layout/Sidebar';
@@ -52,6 +54,11 @@ function App({ startMenu = 'map' }) {
   const isMobile = useIsMobile();
   // 실제 GPS 위치 + (REST 키 있으면) 주소. 실패해도 각 화면이 알아서 mock으로 대체.
   const myLocation = useCurrentLocation();
+
+  // 실시간 위치 공유 — 보호자는 보호 대상의 위치를 지도에 받고, 보호 대상은 공유가 켜진 동안 위치를 올린다
+  const { user } = useAuth();
+  const { liveFriends, shared } = useSharing(user);
+  useLocationBroadcast(user, shared);
 
   const [onboardingDone, setOnboardingDone] = useState(() => {
     try {
@@ -231,6 +238,7 @@ function App({ startMenu = 'map' }) {
           <MapView
             layers={layers}
             location={myLocation}
+            liveFriends={liveFriends}
             pickMode={mapPickerOpen}
             onCenterIdle={onCenterIdle}
             onLayerStatus={onLayerStatus}

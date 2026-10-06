@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { UserPlus, UserRound } from 'lucide-react';
+import { LocationSharing } from '../../components/LocationSharing';
 import { ToggleGroup } from '../../components/ToggleGroup';
 import { addContact, getContacts, removeContact } from '../../data/contacts';
 import { PRIORITY_OPTIONS, THEME_OPTIONS } from '../../data/routeData';
@@ -55,6 +56,11 @@ export function SettingsPanel({ routePriority, onRoutePriorityChange, theme, onT
             {user ? '로그아웃' : '로그인'}
           </button>
         </div>
+      </div>
+
+      <div className="settingsCard">
+        <h3>실시간 위치 공유</h3>
+        <LocationSharing />
       </div>
 
       <div className="settingsCard">

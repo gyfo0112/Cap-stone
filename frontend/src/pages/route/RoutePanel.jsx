@@ -69,9 +69,17 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
   // 네이버 지도처럼 출발지/도착지 입력창을 눌렀을 때만 아래에 목록(최근 검색·검색 추천)을 띄운다
   const [activeField, setActiveField] = useState(null); // null | 'origin' | 'dest'
 
+  // 출발지에서 고른 장소 — 도착지의 pickedPlace와 같은 역할(고른 뒤엔 추천 목록을 다시 띄우지 않음)
+  const [pickedOrigin, setPickedOrigin] = useState(null);
+
   const query = destination.trim();
   const canSearch = hasKakaoRestKey();
-  const showSuggestions = activeField === 'dest' && query && canSearch && pickedPlace?.name !== query;
+  // 눌러둔 입력창(출발지/도착지)에 글자를 치면 그 글자로 카카오 검색 추천을 띄운다.
+  // 출발지가 기본값(현재 위치 주소)이거나 이미 고른 장소면 검색하지 않고 최근 검색을 보여준다.
+  const activeText = (activeField === 'origin' ? origin : destination).trim();
+  const picked = activeField === 'origin' ? pickedOrigin : pickedPlace;
+  const isDefaultOrigin = activeField === 'origin' && (activeText === (originLabel || '') || activeText === '현재 위치');
+  const showSuggestions = Boolean(activeField) && activeText && canSearch && picked?.name !== activeText && !isDefaultOrigin;
 
   // 목록에서 고르거나 Enter/Esc를 누르면 목록을 닫고 입력창 포커스도 뺀다
   const closeDropdown = () => {
@@ -85,6 +93,7 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
   const clearOrigin = () => {
     originTouched.current = true;
     setOrigin('');
+    setPickedOrigin(null);
     originInputRef.current?.focus();
   };
   const clearDestination = () => {
@@ -99,7 +108,7 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
     let cancelled = false;
     const timer = setTimeout(() => {
       setSearching(true);
-      searchPlaces(query)
+      searchPlaces(activeText)
         .then((r) => !cancelled && setPlaces(r))
         .catch(() => !cancelled && setPlaces([]))
         .finally(() => !cancelled && setSearching(false));
@@ -108,11 +117,17 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [query, showSuggestions]);
+  }, [activeText, showSuggestions]);
 
   const pickPlace = (place) => {
-    setDestination(place.name);
-    setPickedPlace(place);
+    if (activeField === 'origin') {
+      originTouched.current = true;
+      setOrigin(place.name);
+      setPickedOrigin(place);
+    } else {
+      setDestination(place.name);
+      setPickedPlace(place);
+    }
     setPlaces([]);
     closeDropdown();
   };
@@ -121,6 +136,7 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
   const pickOrigin = (name) => {
     originTouched.current = name !== null;
     setOrigin(name ?? (originLabel || '현재 위치'));
+    setPickedOrigin(name === null ? null : { name });
     closeDropdown();
   };
 
@@ -175,6 +191,7 @@ export function RoutePanel({ originLabel, routePriority, onStartNavigation }) {
               onChange={(e) => {
                 originTouched.current = true;
                 setOrigin(e.target.value);
+                setPickedOrigin(null);
               }}
             />
             {origin && (

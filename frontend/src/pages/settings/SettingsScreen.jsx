@@ -5,6 +5,7 @@ import {
   UserRound,
   X,
 } from 'lucide-react';
+import { LocationSharing } from '../../components/LocationSharing';
 import { ToggleGroup } from '../../components/ToggleGroup';
 import { addContact, getContacts, removeContact } from '../../data/contacts';
 import { PRIORITY_OPTIONS, THEME_OPTIONS } from '../../data/routeData';
@@ -72,6 +73,11 @@ export function SettingsScreen({ routePriority, onRoutePriorityChange, theme, on
           <ChevronRight size={20} className="mfAccountChevron" />
         </button>
       )}
+
+      <div className="mfSettingsCard">
+        <strong>실시간 위치 공유</strong>
+        <LocationSharing />
+      </div>
 
       <div className="mfSettingsCard">
         <strong>기본 안전 우선도</strong>
