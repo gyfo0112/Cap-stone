@@ -21,6 +21,8 @@ public class SecurityConfig {
                     // 로그인 없이 쓸 수 있는 API
                     .requestMatchers(
                             "/api/markers/**",
+                            "/api/routes",
+                            "/api/safety-score",
                             "/api/users/signup",
                             "/api/users/login",
                             "/api/users/logout",
