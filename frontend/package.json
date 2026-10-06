@@ -8,7 +8,8 @@
     "build": "vite build",
     "build:spring": "vite build --mode spring",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:safemap": "node --test tests/safemap.test.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.42.0",

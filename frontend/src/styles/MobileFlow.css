@@ -1733,3 +1733,39 @@
 .hasShareBanner .mfMapOverlay {
   top: calc(40px + env(safe-area-inset-top));
 }
+
+/* Actual transparent Safemap WMS layer controls (desktop and mobile). */
+.crimePanelDesktop { padding: 0 18px 20px; }
+.crimePanelDesktop .crimeSheet { border-radius: 16px; padding: 16px; max-height: none; box-shadow: none; border: 1px solid var(--mf-border, #ddd); }
+.crimeSheet .mfCrimeTopText { flex: 1; }
+.crimeClose { display: grid; place-items: center; border: 0; background: transparent; color: inherit; padding: 8px; cursor: pointer; }
+.crimeStatus { font-size: 13px; line-height: 1.6; margin: 14px 0; overflow-wrap: anywhere; }
+.crimeNote { font-size: 12px; line-height: 1.6; color: var(--mf-text-secondary); margin: 10px 0; }
+.crimeSource { font-size: 12px; color: var(--mf-text-primary); text-decoration: underline; }
+.crimeAttribution { position: absolute; z-index: 5; left: 12px; bottom: 32px; display: flex; flex-wrap: wrap; gap: 4px 10px; max-width: calc(100% - 100px); padding: 5px 8px; border-radius: 7px; background: var(--mf-surface, white); color: var(--mf-text-primary); font-size: 11px; pointer-events: auto; }
+.crimeAttribution a { color: inherit; }
+@media (max-width: 767px) { .crimeAttribution { top: 122px; bottom: auto; left: 14px; max-width: calc(100% - 28px); } }
+
+/* 범죄정보 진하기 조절 아래에 표시하는 색상 안내 */
+.crimeRiskLegend {
+  margin-top: 22px;
+  padding-bottom: 4px;
+}
+.crimeRiskGradient {
+  width: 100%;
+  height: 14px;
+  border-radius: 999px;
+  background: linear-gradient(to right, #fff3ad 0%, #facc15 25%, #fb923c 50%, #ef4444 75%, #b91c1c 100%);
+  box-shadow: inset 0 0 0 1px rgba(120, 53, 15, 0.1);
+}
+.crimeRiskLabels {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 9px;
+  color: var(--mf-text-primary, #1c2027);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+.crimeRiskLabels span:nth-child(2) { text-align: center; }
+.crimeRiskLabels span:last-child { text-align: right; }
