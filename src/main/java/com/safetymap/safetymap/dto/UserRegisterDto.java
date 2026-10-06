@@ -6,6 +6,8 @@ public class UserRegisterDto {
     private String user_id;
     private String user_pw;
     private String info;
+    // 계정 구분: guardian(보호자, 기본값) / protected(보호 대상)
+    private String role;
 
     public UserRegisterDto() {
 
@@ -48,5 +50,13 @@ public class UserRegisterDto {
 
     public void setInfo(String info) {
         this.info = info;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 }
