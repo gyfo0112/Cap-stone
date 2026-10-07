@@ -29,7 +29,7 @@ export function useContacts() {
       setError('');
       return true;
     } catch (e) {
-      setError(e.message);
+      alert(e.message); // 입력·중복 같은 요청 오류는 alert로 알린다 (오류 페이지로 보내지 않음)
       return false;
     }
   };

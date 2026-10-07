@@ -29,6 +29,14 @@ public class UserController {
         return dto;
     }
 
+    // uuid를 알고있지 않을 대의 유저 정보 조회. Auth로부터 uuid가 포함된 유저정보를 추출함
+    @GetMapping("/me")
+    public UserPublicDto getMe(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        return userService.getUserInfo(userDetails.getUserUuid());
+    }
+
     // 회원가입
     @PostMapping("/signup")
     public void registerUser(@RequestBody UserRegisterDto dto) {

@@ -105,8 +105,9 @@ async function mockResetPassword(info, newPassword) {
 }
 
 // ---- 백엔드(/api/users) 연결 ----
-// 백엔드 회원 응답 → 프론트 세션. 휴대폰 번호는 백엔드의 info 컬럼에 들어 있다
-const toSession = (u) => ({ userId: u.user_id, name: u.user_name, phone: u.info ?? '', role: u.role ?? 'guardian' });
+// 백엔드 회원 응답(UserPublicDto) → 프론트 세션. 휴대폰 번호는 백엔드의 info 컬럼에 들어 있다.
+// 백엔드에 role 컬럼이 없어 지금은 모두 보호자로 다룬다(있으면 서버 값을 쓴다).
+const toSession = (u) => ({ userId: u.user_id, name: u.user_name, phone: u.info ?? '', role: u.role ?? 'guardian', userUuid: u.user_uuid });
 
 function writeSession(session, keep) {
   sessionStorage.removeItem(SESSION_KEY);
@@ -117,19 +118,37 @@ function writeSession(session, keep) {
 
 const apiInfo = ({ userId, name, phone }) => ({ user_id: userId, user_name: name.trim(), info: phone });
 
-async function apiSignup({ userId, password, name, phone, role = 'guardian' }) {
-  // role(guardian | protected)은 서버가 저장하고, 로그인·me 응답에 실려 와서 다른 기기에서도 유지된다
-  await api('POST', '/api/users/signup', { user_id: userId, user_pw: password, user_name: name.trim(), info: phone, role });
+// 연락처·비밀번호 변경 API가 주소에 내 user_uuid를 요구한다. 로그인할 때 /api/users/me 로 받아 세션에 둔다.
+export function getUserUuid() {
+  let uuid = null;
+  try {
+    uuid = JSON.parse(getSessionRaw())?.userUuid;
+  } catch {
+    /* 세션 표시가 깨졌으면 없는 것으로 */
+  }
+  if (!uuid) throw new Error('내 계정 정보를 불러오지 못했어요. 다시 로그인해주세요.');
+  return uuid;
 }
 
+async function apiSignup({ userId, password, name, phone }) {
+  await api('POST', '/api/users/signup', { user_id: userId, user_pw: password, user_name: name.trim(), info: phone });
+}
+
+// 스프링 formLogin: 폼으로 POST /login → 성공이면 /, 실패면 /login?error 로 리다이렉트(http.js가 해석)
 async function apiLogin(userId, password, keep) {
-  const user = await api('POST', '/api/users/login', { user_id: userId, user_pw: password, keep_login: Boolean(keep) });
-  writeSession(toSession(user), keep);
+  await api('POST', '/login', new URLSearchParams({ user_id: userId, user_pw: password }));
+  let session = { userId, name: userId, phone: '', role: 'guardian', userUuid: null };
+  try {
+    session = toSession(await api('GET', '/api/users/me'));
+  } catch {
+    /* /api/users/me 가 아직 없거나 실패하면 아이디만으로 로그인 표시 — userUuid가 필요한 기능은 안내 후 막힌다 */
+  }
+  writeSession(session, keep);
 }
 
 async function apiLogout() {
   try {
-    await api('POST', '/api/users/logout');
+    await api('POST', '/logout');
   } catch {
     /* 서버에 못 닿아도 이 브라우저의 로그인 표시는 지운다 */
   }

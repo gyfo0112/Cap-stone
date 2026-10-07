@@ -16,6 +16,11 @@ public class SecurityConfig {
 
         http
 
+                // =========================
+                // CSRF 비활성화
+                // =========================
+                .csrf(csrf -> csrf.disable())
+
                 .authorizeHttpRequests(auth -> auth
 
                         // =========================
