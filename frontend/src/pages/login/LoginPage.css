@@ -321,7 +321,7 @@
   color: var(--mf-text-primary);
 }
 
-/* 아이디 찾기 · 비밀번호 찾기 · 회원가입 */
+/* 회원가입 */
 .auth-field {
   margin-bottom: 14px;
 }

@@ -94,10 +94,6 @@ function LoginPage({ onBack }) {
           </button>
 
           <div className="login-links">
-            <button onClick={() => navigate('/find-id')}>아이디 찾기</button>
-            <span></span>
-            <button onClick={() => navigate('/find-password')}>비밀번호 찾기</button>
-            <span></span>
             <button className="signup-link" onClick={() => navigate('/signup')}>
               회원가입
             </button>

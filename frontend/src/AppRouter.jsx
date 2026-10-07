@@ -4,8 +4,6 @@ import { restoreSession } from './data/auth';
 import App from './App';
 import LoginPage from './pages/login/LoginPage';
 import NotFoundPage from './pages/NotFoundPage';
-import FindIdPage from './pages/login/FindIdPage';
-import FindPasswordPage from './pages/login/FindPasswordPage';
 import SignupPage from './pages/login/SignupPage';
 import SosPage from './pages/sos/SosPage';
 import { useCurrentLocation } from './hooks/useCurrentLocation';
@@ -29,8 +27,6 @@ export default function AppRouter() {
       <Route path="/help" element={<App startMenu="help" />} />
       <Route path="/settings" element={<App startMenu="settings" />} />
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/find-id" element={<FindIdPage />} />
-      <Route path="/find-password" element={<FindPasswordPage />} />
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/sos" element={<SosRoute />} />
       {/* 목록에 없는 주소 */}

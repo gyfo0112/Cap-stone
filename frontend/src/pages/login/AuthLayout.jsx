@@ -5,7 +5,7 @@ import './LoginPage.css';
 import logo from '../../images/logo.png';
 import { PW_MAX } from './rules';
 
-// 아이디 찾기 · 비밀번호 찾기 · 회원가입 공통 틀 — 로그인 화면과 같은 카드 모양을 쓴다
+// 회원가입 공통 틀 — 로그인 화면과 같은 카드 모양을 쓴다
 export function AuthLayout({ icon, title, desc, children }) {
   const navigate = useNavigate();
   const toLogin = () => navigate('/login');

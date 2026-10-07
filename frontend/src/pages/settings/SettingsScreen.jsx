@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { RoleBadge } from '../../components/RoleBadge';
 import { LocationSharing } from '../../components/LocationSharing';
+import { PasswordChange } from '../../components/PasswordChange';
 import { ToggleGroup } from '../../components/ToggleGroup';
 import { PRIORITY_OPTIONS, THEME_OPTIONS } from '../../data/routeData';
 import { useAuth } from '../../hooks/useAuth';
@@ -74,6 +75,13 @@ export function SettingsScreen({ routePriority, onRoutePriorityChange, theme, on
           </div>
           <ChevronRight size={20} className="mfAccountChevron" />
         </button>
+      )}
+
+      {user && (
+        <div className="mfSettingsCard">
+          <strong>비밀번호</strong>
+          <PasswordChange mobile />
+        </div>
       )}
 
       <div className="mfSettingsCard">

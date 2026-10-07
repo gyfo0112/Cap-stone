@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { UserPlus, UserRound } from 'lucide-react';
 import { RoleBadge } from '../../components/RoleBadge';
 import { LocationSharing } from '../../components/LocationSharing';
+import { PasswordChange } from '../../components/PasswordChange';
 import { ToggleGroup } from '../../components/ToggleGroup';
 import { PRIORITY_OPTIONS, THEME_OPTIONS } from '../../data/routeData';
 import { useAuth } from '../../hooks/useAuth';
@@ -61,6 +62,13 @@ export function SettingsPanel({ routePriority, onRoutePriorityChange, theme, onT
           </button>
         </div>
       </div>
+
+      {user && (
+        <div className="settingsCard">
+          <h3>비밀번호</h3>
+          <PasswordChange />
+        </div>
+      )}
 
       <div className="settingsCard">
         <h3>{user?.role === 'protected' ? '내 위치 공유' : '실시간 위치 공유'}</h3>

@@ -16,15 +16,12 @@ const DEMO_ACCOUNTS = [
   { userId: 'child1234', name: '보호대상', phone: '010-0000-0001', role: 'protected', pwHash: '29ca52f6df0ebd54ca5eb81e019f76bc2c5bc2719a7c7b5ea7d59f37a4d8cbec' },
 ];
 
-const digits = (v) => v.replace(/\D/g, '');
-
 async function hash(text) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 const sameId = (a, b) => a.userId.toLowerCase() === b.toLowerCase();
-const matches = (a, { name, phone }) => a.name === name.trim() && digits(a.phone) === digits(phone);
 
 function readAccounts() {
   let stored = [];
@@ -89,21 +86,6 @@ function clearSession() {
 
 setUnauthorizedHandler(clearSession);
 
-// 이름+휴대폰이 같은 계정의 아이디를 가려서(ab****) 돌려준다. 없으면 빈 배열.
-function mockFindIds(info) {
-  return readAccounts()
-    .filter((a) => matches(a, info))
-    .map((a) => a.userId.slice(0, 2) + '*'.repeat(Math.max(a.userId.length - 2, 2)));
-}
-
-const mockVerify = (info) => readAccounts().some((a) => sameId(a, info.userId) && matches(a, info));
-
-async function mockResetPassword(info, newPassword) {
-  if (!mockVerify(info)) throw new Error('일치하는 계정을 찾을 수 없어요.');
-  const pwHash = await hash(newPassword);
-  writeAccounts(readAccounts().map((a) => (sameId(a, info.userId) ? { ...a, pwHash } : a)));
-}
-
 // ---- 백엔드(/api/users) 연결 ----
 // 백엔드 회원 응답(UserPublicDto) → 프론트 세션. 휴대폰 번호는 백엔드의 info 컬럼에 들어 있다.
 // 백엔드에 role 컬럼이 없어 지금은 모두 보호자로 다룬다(있으면 서버 값을 쓴다).
@@ -115,8 +97,6 @@ function writeSession(session, keep) {
   (keep ? localStorage : sessionStorage).setItem(SESSION_KEY, JSON.stringify(session));
   window.dispatchEvent(new Event(SESSION_EVENT));
 }
-
-const apiInfo = ({ userId, name, phone }) => ({ user_id: userId, user_name: name.trim(), info: phone });
 
 // 연락처·비밀번호 변경 API가 주소에 내 user_uuid를 요구한다. 로그인할 때 /api/users/me 로 받아 세션에 둔다.
 export function getUserUuid() {
@@ -178,22 +158,16 @@ export const signup = (form) => (USE_BACKEND ? apiSignup(form) : mockSignup(form
 export const login = (userId, password, keep) =>
   USE_BACKEND ? apiLogin(userId, password, keep) : mockLogin(userId, password, keep);
 export const logout = () => (USE_BACKEND ? apiLogout() : clearSession());
-// 이름+휴대폰이 같은 계정의 아이디를 가려서(ab****) 돌려준다. 없으면 빈 배열.
-export const findIds = ({ name, phone }) =>
-  USE_BACKEND
-    ? api('POST', '/api/users/find-id', { user_name: name.trim(), info: phone })
-    : Promise.resolve(mockFindIds({ name, phone }));
-export async function verifyAccount(info) {
-  if (!USE_BACKEND) return mockVerify(info);
-  try {
-    await api('POST', '/api/users/verify', apiInfo(info));
-    return true;
-  } catch (e) {
-    if (e.status === 404) return false; // 일치하는 계정 없음
-    throw e;
-  }
+// 비밀번호 변경 — 백엔드는 PATCH /api/users/me/password/{내 uuid} (현재·새·새 확인). 틀리면 400 + 글자 메시지
+async function mockChangePassword(userId, oldPassword, newPassword) {
+  const accounts = readAccounts();
+  const account = accounts.find((a) => sameId(a, userId));
+  if (!account || account.pwHash !== (await hash(oldPassword))) throw new Error('현재 비밀번호가 일치하지 않습니다.');
+  const pwHash = await hash(newPassword);
+  writeAccounts(accounts.map((a) => (a === account ? { ...a, pwHash } : a)));
 }
-export const resetPassword = (info, newPassword) =>
+
+export const changePassword = (userId, { oldPassword, newPassword, confirmNewPassword }) =>
   USE_BACKEND
-    ? api('POST', '/api/users/reset-password', { ...apiInfo(info), user_pw: newPassword })
-    : mockResetPassword(info, newPassword);
+    ? api('PATCH', `/api/users/me/password/${getUserUuid()}`, { oldPassword, newPassword, confirmNewPassword })
+    : mockChangePassword(userId, oldPassword, newPassword);
