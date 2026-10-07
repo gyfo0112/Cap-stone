@@ -5,125 +5,195 @@
 
 # 10/07 13:08 유저정보, 시큐리티 관련, 예외처리 관련 전부 작성 완료. 프론트 분들과 백엔드 분들이 사용할 AI 맥락 전달 프롬프트도 작성해놓을게요. 
 
-## 프론트 분들은 아래 내용을 AI에게 복붙해서 맥락 전달을 하시면 됩니다 : 
-현재 Spring Boot + React(Vite) 기반 SafetyMap 프로젝트를 개발 중입니다.
+## 프론트 분들은 아래 내용을 AI에게 복붙해서 맥락 전달을 하시면 됩니다(10/07 14:15 업데이트) : 
+SafetyMap 프로젝트의 프론트엔드 작업을 이어서 진행해주세요.
 
-아래는 백엔드 User/Security 구현의 최신 상태입니다. 이 내용을 현재 프로젝트의 확정된 백엔드 계약으로 간주하고, 프론트엔드 API 연결 작업 시 기준으로 사용해주세요.
+현재 백엔드의 User/Security 관련 구현은 아래 기준으로 완료되어 있습니다.
+프론트 수정 시 이 내용을 최신 연결 계약으로 간주해주세요.
 
-[기본 구조]
-- Spring Boot: localhost:8080
-- React/Vite: localhost:5173
-- Vite에서 /api 요청은 Spring Boot 8080으로 proxy
-- React에서는 가능하면 절대주소가 아니라 /api/... 상대경로 사용
-- 최종적으로 npm run build:spring을 통해 Spring static 리소스로 빌드 예정
+[프로젝트 구조]
+- Spring Boot 백엔드
+- React + Vite 프론트엔드
+- 개발 시 React는 localhost:5173
+- Spring Boot는 localhost:8080
+- Vite에서 /api 요청은 Spring Boot로 proxy
+- 프론트 API 호출은 가능하면 /api/... 상대경로 사용
 
-[Spring Security]
+[인증 방식]
 Spring Security의 formLogin + 세션 인증을 사용합니다.
 
 로그인:
 POST /login
 
-파라미터명:
+요청 형식:
+application/x-www-form-urlencoded
+
+파라미터:
 - user_id
 - user_pw
-
-중요:
-Spring Security formLogin이므로 로그인 요청은 JSON이 아니라
-application/x-www-form-urlencoded 형식으로 보내야 합니다.
 
 예:
 user_id=test&user_pw=1234
 
-로그인 성공:
-- 서버 세션 생성
-- JSESSIONID 쿠키 사용
-- 기본 성공 위치는 /
-- 이후 인증 API에서는 세션을 기반으로 사용자 판별
+로그인 성공 시:
+- Spring Security 세션 생성
+- JSESSIONID 사용
+- 이후 인증이 필요한 API는 세션을 기준으로 현재 사용자를 판별
 
 로그아웃:
 POST /logout
 
-비로그인 상태에서 보호된 경로 접근 시 현재는 별도의 401 JSON 처리를 만들지 않았고,
-Spring Security의 로그인 페이지 /login 리다이렉트 동작을 사용합니다.
+현재 CSRF는 SecurityConfig에서 비활성화되어 있습니다.
+따라서 프론트에서 CSRF 토큰을 처리할 필요는 없습니다.
+
+세션 쿠키 처리를 위해 fetch 사용 시 필요한 경우:
+credentials: 'include'
+를 유지해주세요.
+
+[현재 로그인 사용자 조회]
+프론트 연결 요구에 맞춰 다음 API가 추가되었습니다.
+
+GET /api/users/me
+
+이 API는 현재 로그인한 사용자의 정보를 반환합니다.
+
+로그인 이후 흐름은 다음과 같이 사용할 수 있습니다.
+
+POST /login
+→ 로그인 성공
+→ GET /api/users/me
+→ 현재 로그인 사용자 정보 획득
+
+클라이언트가 자기 UUID를 미리 알고 있을 필요는 없습니다.
 
 [회원가입]
 POST /api/users/signup
 
-JSON Body:
-UserRegisterDto 형식
-
-회원가입 ID가 중복되면:
+중복 user_id:
 409 Conflict
+
+비밀번호는 백엔드에서 BCrypt로 암호화하여 저장합니다.
 
 [사용자 정보]
 GET /api/users/{user_uuid}
 
-응답은 UserPublicDto입니다.
-비밀번호 및 BCrypt 해시는 응답하지 않습니다.
+UserPublicDto를 반환합니다.
 
-[전화번호]
-전화번호 등록:
+주의:
+비밀번호 및 BCrypt 해시는 프론트에 반환하지 않습니다.
+
+[전화번호 관리]
+
+등록:
 POST /api/users/me/tels
 
-- 로그인 사용자 UUID는 서버에서 AuthenticationPrincipal을 통해 얻습니다.
-- 따라서 user_uuid를 body에 별도로 보낼 필요 없습니다.
-- Body는 UserTelRegisterDto
+Body:
+- tel_num
+- tel_name
+- tel_type
 
-전화번호 목록:
+현재 로그인 사용자의 UUID는 서버가 AuthenticationPrincipal에서 가져가므로
+프론트가 user_uuid를 별도로 전송하지 않습니다.
+
+목록:
 GET /api/users/me/tels/{user_uuid}
 
-- URL의 user_uuid와 로그인 사용자의 UUID가 다르면 403
+URL의 user_uuid와 현재 로그인 사용자의 UUID가 다르면:
+403 Forbidden
 
-전화번호 삭제:
+삭제:
 DELETE /api/users/me/tels/{tel_uuid}
 
-- 사용자 UUID는 AuthenticationPrincipal에서 판별
-- 다른 사용자의 연락처를 삭제할 수 없음
+삭제 대상 사용자는 서버에서 현재 로그인 사용자를 기준으로 판별합니다.
 
 [비밀번호 변경]
+초기 기획에 포함된 기능이므로 프론트에 구현해주세요.
+
+API:
 PATCH /api/users/me/password/{user_uuid}
 
-Body:
-UserPasswordChangeDto
+Body는 다음 필드를 사용합니다.
+
 - oldPassword
 - newPassword
 - confirmNewPassword
 
-URL의 user_uuid와 로그인 사용자의 UUID가 다르면:
+예:
+{
+  "oldPassword": "현재 비밀번호",
+  "newPassword": "새 비밀번호",
+  "confirmNewPassword": "새 비밀번호 확인"
+}
+
+응답/예외:
+- 정상 변경 → 성공
+- 새 비밀번호와 확인 비밀번호 불일치 → 400 Bad Request
+- 현재 비밀번호 불일치 → 400 Bad Request
+- URL의 user_uuid가 현재 로그인 사용자와 다름 → 403 Forbidden
+- 사용자를 찾을 수 없음 → 404 Not Found
+
+프론트에서는 400 오류를 별도 오류 페이지로 보내기보다
+alert 또는 입력창 주변 오류 메시지로 처리하는 것을 권장합니다.
+
+[아이디 찾기 / 비밀번호 찾기]
+이 기능은 제거하는 방향입니다.
+
+현재 회원가입 과정에서 이메일, 휴대폰 인증 등의 본인 인증 수단을 받지 않기 때문에
+아이디/비밀번호 찾기를 신뢰성 있게 구현할 방법이 없습니다.
+
+따라서 아래 기능 및 관련 화면/API 호출은 제거해주세요.
+
+- /find-id
+- /find-password
+- /api/users/find-id
+- /api/users/verify
+- /api/users/reset-password
+
+관련 React Router, 페이지, 버튼, 링크도 함께 정리해주세요.
+
+[공통 예외]
+백엔드는 현재 다음 HTTP 상태 코드를 사용합니다.
+
+400 Bad Request
+→ 잘못된 입력
+
 403 Forbidden
+→ 로그인했지만 해당 사용자 리소스에 접근 권한 없음
 
-새 비밀번호와 확인 비밀번호 불일치:
-400 Bad Request
+404 Not Found
+→ 사용자나 리소스 없음
 
-현재 비밀번호 불일치:
-400 Bad Request
+409 Conflict
+→ 중복 데이터
 
-[공통 백엔드 예외]
-현재 공통 예외 체계:
-- 400 Bad Request
-- 403 Forbidden
-- 404 Not Found
-- 409 Conflict
-- 500 Internal Server Error
+500 Internal Server Error
+→ 서버 내부 오류
 
-프론트에서는 모든 오류를 오류 페이지로 이동시키지 말고 상황에 따라 처리해주세요.
+프론트에서 모든 예외를 오류 페이지로 이동시키지 마세요.
 
 권장:
-- 400: alert 또는 input 주변 메시지
-- 403: 권한 없음 메시지 또는 필요 시 오류 페이지
-- 404: 대상 자체가 없으면 404 UI
-- 409: 중복 등의 alert
-- 500: 공통 서버 오류 처리
+- 400 → alert / inline validation
+- 403 → 권한 없음 안내
+- 404 → 상황에 따라 404 UI
+- 409 → 중복 안내 alert
+- 500 → 공통 서버 오류 안내
 
-[중요]
-현재 프론트에 mock/localStorage 구현이 일부 존재할 수 있습니다.
-백엔드 연결 대상 기능에서는 실제 API 호출로 전환해주세요.
+[Mock 관련]
+현재 프론트에는 USE_BACKEND 또는 localStorage 기반 mock 코드가 일부 남아 있을 수 있습니다.
 
-기존 API 호출 코드와 현재 백엔드 계약이 다를 경우 백엔드 계약을 기준으로 수정하되,
-임의로 백엔드 API 주소를 변경하지 말고 차이가 있으면 먼저 알려주세요.
+지금 단계에서는 mock 제거를 반드시 수행할 필요는 없지만,
+최종 프론트-백엔드 결합 단계에서는 실제 API만 사용하도록 정리할 예정입니다.
 
-또한 CSRF 설정은 실제 SecurityConfig를 확인한 뒤 작업해주세요.
-추측으로 CSRF를 비활성화했다고 가정하지 마세요.
+따라서 새로운 기능을 추가할 때는 mock보다는 실제 Spring API 계약을 기준으로 작성해주세요.
+
+[작업 요청]
+현재 프론트 프로젝트를 확인한 뒤 다음을 우선 반영해주세요.
+
+1. GET /api/users/me 기반 로그인 사용자 조회 반영
+2. 아이디 찾기 / 비밀번호 찾기 기능 제거
+3. 비밀번호 변경 UI 및 PATCH API 연결
+4. 기존 로그인/회원가입/연락처 연결이 위 계약과 일치하는지 점검
+5. 백엔드 API 주소나 DTO 형식을 임의로 변경하지 말고, 불일치가 있으면 먼저 알려주세요.
 
 
 
