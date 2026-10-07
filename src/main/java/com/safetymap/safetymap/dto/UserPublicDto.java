@@ -5,14 +5,12 @@ public class UserPublicDto {
     private String user_uuid;
     private String user_name;
     private String user_id;
-    private String user_pw;
     private String info;
 
-    public UserPublicDto(String user_uuid, String user_name, String user_id, String user_pw, String info) {
+    public UserPublicDto(String user_uuid, String user_name, String user_id, String info) {
         this.user_uuid = user_uuid;
         this.user_name = user_name;
         this.user_id = user_id;
-        this.user_pw = user_pw;
         this.info = info;
     }
 
@@ -38,14 +36,6 @@ public class UserPublicDto {
 
     public void setUser_id(String user_id) {
         this.user_id = user_id;
-    }
-
-    public String getUser_pw() {
-        return user_pw;
-    }
-
-    public void setUser_pw(String user_pw) {
-        this.user_pw = user_pw;
     }
 
     public String getInfo() {

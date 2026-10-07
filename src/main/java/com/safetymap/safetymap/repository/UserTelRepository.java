@@ -12,4 +12,7 @@ public interface UserTelRepository extends JpaRepository<UserTel, Integer> {
 
     // 유저 uuid와 tel uuid로 하나 삭제
     void deleteByUser_User_uuidAndTel_uuid(String user_uuid, String tel_uuid);
+
+    // uuid 두 개로 데이터가 존재하는지 확인 (예외처리용)
+    boolean existsByUser_User_uuidAndTel_uuid(String user_uuid, String tel_uuid);
 }

@@ -1,6 +1,7 @@
 package com.safetymap.safetymap.controller;
 
 import com.safetymap.safetymap.dto.*;
+import com.safetymap.safetymap.exception.ForbiddenException;
 import com.safetymap.safetymap.security.CustomUserDetails;
 import com.safetymap.safetymap.service.UserService;
 
@@ -37,14 +38,16 @@ public class UserController {
 
     // 전화번호 등록
     @PostMapping("/me/tels")
-    public void registerTel(@RequestBody UserTelRegisterDto dto) {
+    public void registerTel(@RequestBody UserTelRegisterDto dto, @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        userService.registerUserTel(dto);
+        userService.registerUserTel(dto, userDetails.getUserUuid());
     }
 
     // 전화번호 조회
     @GetMapping("/me/tels/{user_uuid}")
-    public Slice<UserTelListDto> getUserTel(@PathVariable String user_uuid) {
+    public Slice<UserTelListDto> getUserTel(@PathVariable String user_uuid, @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        checkUserUuid(user_uuid, userDetails);
 
         return userService.getTelList(user_uuid);
     }
@@ -57,10 +60,25 @@ public class UserController {
     }
 
     // 비밀번호 변경
-    @PatchMapping("/me/password")
-    public boolean changePassword(@RequestBody UserPasswordChangeDto dto, @AuthenticationPrincipal CustomUserDetails userDetails) {
+    @PatchMapping("/me/password/{user_uuid}")
+    public void changePassword(@RequestBody UserPasswordChangeDto dto,
+                               @PathVariable String user_uuid,
+                               @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        // 구 비번과 다름, 새 비번 확인과 다를 경우 false반환. 정상 변경 시 true 반환
-        return userService.changePassword(dto, userDetails.getUserUuid());
+        checkUserUuid(user_uuid, userDetails);
+
+        userService.changePassword(dto, userDetails.getUserUuid());
+    }
+
+    // 현재 로그인한 계정의 uuid와 요청 uuid가 같은지 비교하기 위한 메서드
+    private void checkUserUuid(
+            String user_uuid,
+            CustomUserDetails userDetails) {
+
+        if (!user_uuid.equals(userDetails.getUserUuid())) {
+            throw new ForbiddenException(
+                    "다른 사용자의 정보에 접근할 수 없습니다."
+            );
+        }
     }
 }
