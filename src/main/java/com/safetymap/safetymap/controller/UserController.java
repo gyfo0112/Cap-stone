@@ -71,7 +71,7 @@ public class UserController {
     }
 
     // 현재 로그인한 계정의 uuid와 요청 uuid가 같은지 비교하기 위한 메서드
-    private void checkUserUuid(String user_uuid, @AuthenticationPrincipal CustomUserDetails userDetails) {
+    private void checkUserUuid(String user_uuid, CustomUserDetails userDetails) {
 
         if (!user_uuid.equals(userDetails.getUserUuid())) {
             throw new ForbiddenException(
