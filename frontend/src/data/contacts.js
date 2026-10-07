@@ -1,6 +1,7 @@
-// 보호자 연락처 — VITE_USE_BACKEND=true면 백엔드 /api/users/me/tels(로그인 필요), 아니면 브라우저 저장소 mock.
+// 보호자 연락처 — VITE_USE_BACKEND=true면 백엔드 /api/users/me/tels(로그인 필요, 목록은 주소에 내 uuid), 아니면 브라우저 저장소 mock.
 // 필드명은 백엔드 UserTel(tel_uuid/tel_num/tel_name/tel_type)과 같다.
 import { USE_BACKEND, api } from '../api/http';
+import { getUserUuid } from './auth';
 
 const STORAGE_KEY = 'mf-contacts';
 
@@ -26,7 +27,8 @@ function save(list) {
 
 // 화면이 쓰는 함수 — 추가/삭제 뒤에는 최신 목록을 돌려준다 (실패하면 서버 메시지를 담은 Error)
 export async function listContacts() {
-  return USE_BACKEND ? api('GET', '/api/users/me/tels') : getContacts();
+  // 백엔드 목록 응답은 Slice({ content: [...] })
+  return USE_BACKEND ? (await api('GET', `/api/users/me/tels/${getUserUuid()}`)).content : getContacts();
 }
 
 export async function addContact({ tel_name, tel_num, tel_type }) {
