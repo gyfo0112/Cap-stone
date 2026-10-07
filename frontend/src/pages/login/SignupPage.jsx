@@ -1,20 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserPlus, BadgeInfo, UserRound, Phone, ShieldCheck } from 'lucide-react';
-import { ToggleGroup } from '../../components/ToggleGroup';
+import { UserPlus, BadgeInfo, UserRound, Phone } from 'lucide-react';
 import { signup } from '../../data/auth';
 import { AuthLayout, AuthField, AuthDone, PasswordField } from './AuthLayout';
 import { formatPhone, PHONE_RE, PW_MIN, ID_RE } from './rules';
 
-// 가입 유형 — 위치 공유를 켜고 끄는 건 보호자만, 보호 대상(자녀·노약자)은 공유 상태만 볼 수 있다
-const ROLE_OPTIONS = [
-  { key: 'guardian', label: '보호자', icon: ShieldCheck },
-  { key: 'protected', label: '보호 대상', icon: UserRound },
-];
-
 function SignupPage() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ role: 'guardian', userId: '', password: '', confirm: '', name: '', phone: '' });
+  const [form, setForm] = useState({ userId: '', password: '', confirm: '', name: '', phone: '' });
   const [tried, setTried] = useState(false);
   const [idTaken, setIdTaken] = useState('');
   const [done, setDone] = useState(false);
@@ -62,15 +55,6 @@ function SignupPage() {
       title="회원가입"
       desc="가입하고 안전한 귀갓길을 함께 만들어보세요."
     >
-      <div className="auth-field">
-        <ToggleGroup
-          options={ROLE_OPTIONS}
-          value={form.role}
-          onChange={(role) => setForm((f) => ({ ...f, role }))}
-          label="가입 유형"
-        />
-        <p className="auth-msg">자녀·노약자라면 '보호 대상'을 선택하세요. 보호자와 연결하면 위치를 공유할 수 있어요.</p>
-      </div>
       <AuthField
         icon={<BadgeInfo size={21} />}
         placeholder="아이디 (영문·숫자 4~20자)"
