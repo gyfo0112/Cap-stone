@@ -12,6 +12,7 @@ import java.util.List;
 
 // 즐겨찾기. 모두 로그인이 필요하고, 로그인한 사용자 본인의 즐겨찾기만 다룬다
 // 누구의 즐겨찾기인지는 UserController 와 같은 방식으로 로그인 정보에서 꺼낸다 (userDetails.getUserUuid())
+// 중복·존재·소유권 검사는 FavoriteService 가 하고, 오류는 공통 예외 → GlobalExceptionHandler 가 상태코드로 응답한다
 @RestController
 @RequestMapping("/api/favorites")
 public class FavoriteController {
@@ -32,29 +33,27 @@ public class FavoriteController {
     // 즐겨찾기 담기
     //  1) 이미 있는 마커:  { "marker_uuid": "...", "fav_name": "..." }
     //  2) 검색한 장소:     { "marker_name": "우리집", "latitude": 37.5, "longitude": 127.0, "fav_name": "집" }
+    // 요청이 잘못되면 400, 없는 marker_uuid 면 404, 이미 담았으면 409 (FavoriteService)
     @PostMapping
-    public boolean favoriteAdd(@RequestBody FavoriteRegisterDto dto, @AuthenticationPrincipal CustomUserDetails userDetails) {
+    public void favoriteAdd(@RequestBody FavoriteRegisterDto dto, @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        // 담았으면 true. 이미 담았거나, 마커를 찾을 수 없거나, 요청이 잘못됐으면 false 반환
-        return favoriteService.addFavorite(userDetails.getUserUuid(), dto);
+        favoriteService.addFavorite(userDetails.getUserUuid(), dto);
     }
 
-    // 즐겨찾기 이름 변경
+    // 즐겨찾기 이름 변경. 내 즐겨찾기에 없는 마커면 404
     @PatchMapping("/{marker_uuid}")
-    public boolean favoriteRename(@PathVariable("marker_uuid") String marker_uuid,
-                                  @RequestBody FavoriteEditRequestDto dto,
-                                  @AuthenticationPrincipal CustomUserDetails userDetails) {
+    public void favoriteRename(@PathVariable("marker_uuid") String marker_uuid,
+                               @RequestBody FavoriteEditRequestDto dto,
+                               @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        // 바꿨으면 true. 내 즐겨찾기에 없는 마커면 false 반환
-        return favoriteService.renameFavorite(userDetails.getUserUuid(), marker_uuid, dto);
+        favoriteService.renameFavorite(userDetails.getUserUuid(), marker_uuid, dto);
     }
 
-    // 즐겨찾기 해제
+    // 즐겨찾기 해제. 내 즐겨찾기에 없는 마커면 404
     @DeleteMapping("/{marker_uuid}")
-    public boolean favoriteDelete(@PathVariable("marker_uuid") String marker_uuid,
-                                  @AuthenticationPrincipal CustomUserDetails userDetails) {
+    public void favoriteDelete(@PathVariable("marker_uuid") String marker_uuid,
+                               @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        // 해제했으면 true. 내 즐겨찾기에 없는 마커면 false 반환
-        return favoriteService.deleteFavorite(userDetails.getUserUuid(), marker_uuid);
+        favoriteService.deleteFavorite(userDetails.getUserUuid(), marker_uuid);
     }
 }
