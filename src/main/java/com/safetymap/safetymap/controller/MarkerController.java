@@ -25,7 +25,7 @@ public class MarkerController {
                                             @RequestParam("max_longitude") double max_longitude,
                                             @RequestParam(name = "marker_type", required = false) String marker_type) {
 
-        // 범위가 잘못됐거나 해당하는 마커가 없으면 빈 목록 반환
+        // 해당하는 마커가 없으면 빈 목록. 범위가 뒤집혀 있으면 400 (MarkerService)
         return markerService.getMarkersInBounds(min_latitude, max_latitude, min_longitude, max_longitude, marker_type);
     }
 
@@ -33,7 +33,7 @@ public class MarkerController {
     @GetMapping("/{marker_uuid}")
     public MarkerPublicDto markerDetail(@PathVariable("marker_uuid") String marker_uuid) {
 
-        // 없는 마커면 빈 응답(null) 반환
+        // 없는 마커면 404 (MarkerService)
         return markerService.getMarker(marker_uuid);
     }
 }

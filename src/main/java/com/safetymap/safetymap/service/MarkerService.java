@@ -2,6 +2,8 @@ package com.safetymap.safetymap.service;
 
 import com.safetymap.safetymap.dto.MarkerPublicDto;
 import com.safetymap.safetymap.entity.Marker;
+import com.safetymap.safetymap.exception.BadRequestException;
+import com.safetymap.safetymap.exception.NotFoundException;
 import com.safetymap.safetymap.repository.MarkerRepository;
 import org.springframework.stereotype.Service;
 
@@ -32,10 +34,13 @@ public class MarkerService {
 
         List<Marker> listRaw;
 
-        // 지도 범위가 뒤집혀 있으면(최소 > 최대) 조회하지 않고 빈 목록
+        // 지도 범위가 뒤집혀 있으면(최소 > 최대) 잘못된 요청 → 400
         if (min_latitude > max_latitude || min_longitude > max_longitude) {
-            listRaw = new ArrayList<>();
-        } else if (marker_type == null || marker_type.isBlank()) {
+            throw new BadRequestException("지도 범위가 올바르지 않습니다.");
+        }
+
+        // PLACE(사용자 즐겨찾기 장소)는 일반 지도 조회에 내보내지 않는다 (기존 정책 유지)
+        if (marker_type == null || marker_type.isBlank()) {
             listRaw = markerRepository.findAllInBounds(min_latitude, max_latitude, min_longitude, max_longitude);
         } else if (PLACE_TYPE.equals(marker_type.trim())) {
             listRaw = new ArrayList<>();
@@ -52,24 +57,19 @@ public class MarkerService {
         return list;
     }
 
-    // UUID로 마커 1개 가져오기 (없으면 null)
+    // UUID로 마커 1개 가져오기 (없으면 404)
     public MarkerPublicDto getMarker(String marker_uuid) {
-        Marker marker = getMarkerEntity(marker_uuid);
-
-        if (marker == null) {
-            return null;
-        }
-
-        return toMarkerPublicDto(marker);
+        return toMarkerPublicDto(getMarkerEntity(marker_uuid));
     }
 
-    // 즐겨찾기 서비스에서 마커 엔티티가 필요할 때 쓴다 (없으면 null)
+    // 마커 엔티티 가져오기. 즐겨찾기 서비스도 이걸 쓴다 (없으면 404)
     public Marker getMarkerEntity(String marker_uuid) {
         if (marker_uuid == null || marker_uuid.isBlank()) {
-            return null;
+            throw new NotFoundException("마커를 찾을 수 없습니다.");
         }
 
-        return markerRepository.findByMarkerUuid(marker_uuid.trim()).orElse(null);
+        return markerRepository.findByMarkerUuid(marker_uuid.trim())
+                .orElseThrow(() -> new NotFoundException("마커를 찾을 수 없습니다."));
     }
 
     // 같은 이름·좌표의 장소 마커 찾기 (없으면 null)
