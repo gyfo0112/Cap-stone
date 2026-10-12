@@ -58,10 +58,27 @@ export function subscribeSession(callback) {
   };
 }
 
-async function mockSignup({ userId, password, name, phone, role = 'guardian' }) {
-  const accounts = readAccounts();
-  if (accounts.some((a) => sameId(a, userId))) throw new Error('이미 사용 중인 아이디예요.');
-  writeAccounts([...accounts.filter((a) => !DEMO_ACCOUNTS.includes(a)), { userId, name: name.trim(), phone, role, pwHash: await hash(password) }]);
+async function mockSignup({ userId, password, name, phone }) {
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+
+    const exists = users.some((user) => user.userId === userId);
+
+    if (exists) {
+        throw new Error('이미 사용 중인 아이디입니다.');
+    }
+
+    const newUser = {
+        userId,
+        name: name.trim(),
+        phone,
+        pwHash: await hashPassword(password)
+    };
+
+    users.push(newUser);
+
+    localStorage.setItem('users', JSON.stringify(users));
+
+    return newUser;
 }
 
 async function mockLogin(userId, password, keep) {
